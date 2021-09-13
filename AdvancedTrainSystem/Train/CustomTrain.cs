@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RogersSierra.Train
+namespace AdvancedTrainSystem.Train
 {
     /// <summary>
     /// Custom train in which every carriage consists of invisible and visible models.

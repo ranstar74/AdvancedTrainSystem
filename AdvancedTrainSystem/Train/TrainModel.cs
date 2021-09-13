@@ -1,6 +1,6 @@
 ﻿using FusionLibrary;
 
-namespace RogersSierra.Train
+namespace AdvancedTrainSystem.Train
 {
     /// <summary>
     /// Contains both invisible and visible models of the train.

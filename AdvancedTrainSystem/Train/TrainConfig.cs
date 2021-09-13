@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace RogersSierra.Train
+namespace AdvancedTrainSystem.Train
 {
     public class TrainConfig
     {

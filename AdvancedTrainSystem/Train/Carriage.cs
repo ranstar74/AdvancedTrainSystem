@@ -1,6 +1,6 @@
 ﻿using GTA;
 
-namespace RogersSierra.Train
+namespace AdvancedTrainSystem.Train
 {
     /// <summary>
     /// Train carriage.
