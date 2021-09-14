@@ -1,10 +1,12 @@
-﻿using AdvancedTrainSystem.Natives;
-using AdvancedTrainSystem.Data;
+﻿using AdvancedTrainSystem.Data;
+using AdvancedTrainSystem.Natives;
+using AdvancedTrainSystem.Train.Components;
 using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
 using GTA.Native;
+using RageComponent;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace AdvancedTrainSystem.Train
         /// <summary>
         /// All spawned <see cref="CustomTrain"/> instances.
         /// </summary>
-        public static readonly List<CustomTrain> AllTrains = new List<CustomTrain>();
+        internal static readonly List<CustomTrain> AllTrains = new List<CustomTrain>();
 
         /// <summary>
         /// Coupled trains.
@@ -69,6 +71,15 @@ namespace AdvancedTrainSystem.Train
         private static int GuidCounter;
 
         /// <summary>
+        /// All train components.
+        /// </summary>
+        public Components<CustomTrain> TrainComponents = new Components<CustomTrain>();
+
+        public SpeedComponent SpeedComponent;
+        public BrakeComponent BrakeComponent;
+        public BoilerComponent BoilerComponent;
+
+        /// <summary>
         /// Constructs new instance of <see cref="CustomTrain"/>.
         /// </summary>
         /// <param name="config">Config of the train needs to be spawned.</param>
@@ -101,6 +112,8 @@ namespace AdvancedTrainSystem.Train
                     Blip.Name = config.BlipName;
                 }
             }
+
+            TrainComponents.RegisterComponents(this);
 
             AllTrains.Add(this);
         }

@@ -32,5 +32,15 @@ namespace AdvancedTrainSystem.Natives
         {
             Function.Call(Hash.SET_TRAIN_SPEED, train, speed);
         }
+
+        /// <summary>
+        /// Sets train cruise speed. Needs to be called once.
+        /// </summary>
+        /// <param name="train">Train whose speed needs to be changed.</param>
+        /// <param name="speed">Speed in m/s.</param>
+        internal static void SetTrainCruiseSpeed(Vehicle train, float speed)
+        {
+            Function.Call(Hash.SET_TRAIN_CRUISE_SPEED, train, speed);
+        }
     }
 }
