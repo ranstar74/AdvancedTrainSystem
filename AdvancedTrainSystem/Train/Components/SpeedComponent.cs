@@ -4,6 +4,7 @@ using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
 using System;
+using FusionLibrary.Extensions;
 
 namespace AdvancedTrainSystem.Train.Components
 {
@@ -76,9 +77,14 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public float DriveWheelSpeed { get; private set; }
 
+        public SpeedComponent() : base()
+        {
+
+        }
+
         public override void Start()
         {
-            NVehicle.SetTrainCruiseSpeed((Vehicle) Entity, 0);
+            ((Vehicle)Entity).SetTrainCruiseSpeed(0);
         }
 
         public override void OnTick()
@@ -91,9 +97,9 @@ namespace AdvancedTrainSystem.Train.Components
             _prevSpeed = Speed;
 
             float velocty = Entity.Velocity.Length();
-            float airBrakeInput = Controller.BrakeComponent.AirbrakeForce;
-            float steamBrakeInput = 1 - Controller.BrakeComponent.SteamBrake;
-            float boilerPressure = Controller.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
+            float airBrakeInput = Base.BrakeComponent.AirbrakeForce;
+            float steamBrakeInput = 1 - Base.BrakeComponent.SteamBrake;
+            float boilerPressure = Base.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
 
             // Calculate forces
 
@@ -143,7 +149,7 @@ namespace AdvancedTrainSystem.Train.Components
             DriveWheelSpeed = baseWheelSpeed * wheelTraction * steamBrakeInput * forceDirection;
 
             // Set speed
-            Controller.Speed = Speed;
+            Base.Speed = Speed;
 
             // Check if train is accelerating
             IsTrainAccelerating = Math.Abs(steamForce) > 0;
@@ -165,6 +171,8 @@ namespace AdvancedTrainSystem.Train.Components
             {
                 _onTrainStartInvoked = false;
             }
+
+            GTA.UI.Screen.ShowSubtitle("ok");
         }
     }
 }

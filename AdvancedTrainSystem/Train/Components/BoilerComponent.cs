@@ -20,6 +20,11 @@ namespace AdvancedTrainSystem.Train.Components
 
         private float _releaseTime = 0;
 
+        public BoilerComponent() : base()
+        {
+
+        }
+
         public override void Start()
         {
             Pressure = 260;
@@ -40,7 +45,7 @@ namespace AdvancedTrainSystem.Train.Components
                 Pressure -= 10f * Game.LastFrameTime;
             }
 
-            var throttle = Controller.SpeedComponent.Throttle;
+            var throttle = Base.SpeedComponent.Throttle;
 
             Pressure -= 3.1f * throttle * Game.LastFrameTime;
 

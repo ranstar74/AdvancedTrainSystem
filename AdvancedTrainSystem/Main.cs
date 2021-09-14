@@ -5,11 +5,11 @@ using System;
 
 namespace AdvancedTrainSystem
 {
-    internal class Main : Script
+    public class Main : Script
     {
         private bool _firstTick = true;
 
-        internal Main()
+        public Main()
         {
             Tick += OnTick;
         }

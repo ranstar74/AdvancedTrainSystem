@@ -51,7 +51,7 @@ namespace AdvancedTrainSystem.Train
                     value += _coupledTrains.Sum(x => x.Speed);
 
                 _speed = value;
-                NVehicle.SetTrainSpeed(TrainHead, value);
+                TrainHead.SetTrainSpeed(_speed);
             }
         }
 
@@ -73,8 +73,9 @@ namespace AdvancedTrainSystem.Train
         /// <summary>
         /// All train components.
         /// </summary>
-        public Components<CustomTrain> TrainComponents = new Components<CustomTrain>();
+        public ComponentsHandler<CustomTrain> TrainComponents;
 
+        [Entity(EntityProperty = nameof(TrainHead))]
         public SpeedComponent SpeedComponent;
         public BrakeComponent BrakeComponent;
         public BoilerComponent BoilerComponent;
@@ -113,6 +114,7 @@ namespace AdvancedTrainSystem.Train
                 }
             }
 
+            TrainComponents = ComponentsHandler<CustomTrain>.RegisterComponentHandler();
             TrainComponents.RegisterComponents(this);
 
             AllTrains.Add(this);

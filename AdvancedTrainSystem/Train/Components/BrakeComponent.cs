@@ -17,5 +17,10 @@ namespace AdvancedTrainSystem.Train.Components
         /// Steam brake blocks any wheel movement.
         /// </summary>
         public int SteamBrake { get; set; }
+
+        public BrakeComponent() : base()
+        {
+
+        }
     }
 }
