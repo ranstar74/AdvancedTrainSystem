@@ -22,6 +22,10 @@ namespace AdvancedTrainSystem.Train
         /// </summary>
         public bool IsDerailed { get; set; }
 
+        public Carriage Next { get; set; }
+
+        public Carriage Previous { get; set; }
+
         /// <summary>
         /// Constructs new instance of <see cref="Carriage"/>.
         /// </summary>
@@ -38,7 +42,18 @@ namespace AdvancedTrainSystem.Train
         /// </summary>
         public void Derail()
         {
-            
+            InvisibleVehicle.IsCollisionEnabled = false;
+            VisibleVehicle.Detach();
+
+            if(Game.Player.Character.IsInVehicle(InvisibleVehicle))
+            {
+                Game.Player.Character.Task.WarpIntoVehicle(VisibleVehicle, Game.Player.Character.SeatIndex);
+            }
+
+            IsDerailed = true;
+
+            if (Previous != null)
+                Previous.Derail();
         }
 
         /// <summary>

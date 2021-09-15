@@ -20,16 +20,17 @@ namespace AdvancedTrainSystem.Train.Components
 
         private float _releaseTime = 0;
 
-        public BoilerComponent() : base()
-        {
-
-        }
-
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public override void Start()
         {
             Pressure = 260;
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public override void OnTick()
         {
             Pressure += 3f * Game.LastFrameTime;

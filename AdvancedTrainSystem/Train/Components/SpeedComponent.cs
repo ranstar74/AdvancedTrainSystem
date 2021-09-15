@@ -1,18 +1,19 @@
-﻿using AdvancedTrainSystem.Natives;
-using FusionLibrary;
+﻿using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
 using System;
-using FusionLibrary.Extensions;
 
 namespace AdvancedTrainSystem.Train.Components
 {
     /// <summary>
-    /// Calculates speed of the train based on input data.
+    /// Calculates speed of the train.
     /// </summary>
     public class SpeedComponent : Component<CustomTrain>
     {
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public override Entity Entity { get; set; }
 
         /// <summary>
@@ -77,16 +78,17 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public float DriveWheelSpeed { get; private set; }
 
-        public SpeedComponent() : base()
-        {
-
-        }
-
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public override void Start()
         {
             ((Vehicle)Entity).SetTrainCruiseSpeed(0);
         }
 
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
         public override void OnTick()
         {
             // TODO: Take uphill/downhill into account
@@ -171,8 +173,6 @@ namespace AdvancedTrainSystem.Train.Components
             {
                 _onTrainStartInvoked = false;
             }
-
-            GTA.UI.Screen.ShowSubtitle("ok");
         }
     }
 }

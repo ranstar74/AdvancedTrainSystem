@@ -47,9 +47,6 @@ namespace AdvancedTrainSystem.Train
             get => _speed;
             set
             {
-                if (_coupledTrains != null)
-                    value += _coupledTrains.Sum(x => x.Speed);
-
                 _speed = value;
                 TrainHead.SetTrainSpeed(_speed);
             }
@@ -68,7 +65,7 @@ namespace AdvancedTrainSystem.Train
         /// <summary>
         /// Counter of spawned trains as Guid.
         /// </summary>
-        private static int GuidCounter;
+        private static int GuidCounter = Game.GameTime;
 
         /// <summary>
         /// All train components.
@@ -77,6 +74,8 @@ namespace AdvancedTrainSystem.Train
 
         [Entity(EntityProperty = nameof(TrainHead))]
         public SpeedComponent SpeedComponent;
+        [Entity(EntityProperty = nameof(TrainHead))]
+        public CollisionComponent CollisionComponent;
         public BrakeComponent BrakeComponent;
         public BoilerComponent BoilerComponent;
 
@@ -152,6 +151,7 @@ namespace AdvancedTrainSystem.Train
             // Set number of carriages as decorator so we can recover them after reload
             trainHead.Decorator().SetInt(Constants.TrainCarriagesNumber, config.Models.Count);
 
+            Carriage nextCarriage = null;
             var carriages = new List<Carriage>();
             // Spawn all carriages from config models
             for (int i = 0; i < config.Models.Count; i++)
@@ -181,7 +181,15 @@ namespace AdvancedTrainSystem.Train
                 visibleVehicle.AttachTo(invisibleVehicle);
 
                 // Create carriage from spawned vehicles
-                carriages.Add(new Carriage(invisibleVehicle, visibleVehicle));
+                var newCarriage = new Carriage(invisibleVehicle, visibleVehicle);
+                newCarriage.Next = nextCarriage;
+
+                carriages.Add(newCarriage);
+
+                // Fill linked list
+                if (nextCarriage != null)
+                    nextCarriage.Previous = newCarriage;
+                nextCarriage = newCarriage;
             }
 
             return new CustomTrain(config, carriages, trainHead);
