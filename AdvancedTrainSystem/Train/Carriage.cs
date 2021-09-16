@@ -22,8 +22,14 @@ namespace AdvancedTrainSystem.Train
         /// </summary>
         public bool IsDerailed { get; set; }
 
+        /// <summary>
+        /// Carriage that is next to this one (towards front). For tender it will be locomotive.
+        /// </summary>
         public Carriage Next { get; set; }
 
+        /// <summary>
+        /// Carriage that is behind this one (towards back). For locomotive it will be tender.
+        /// </summary>
         public Carriage Previous { get; set; }
 
         /// <summary>
@@ -37,24 +43,24 @@ namespace AdvancedTrainSystem.Train
             VisibleVehicle = visibleVehicle;
         }
 
-        /// <summary>
-        /// Derails carriage and all carriages after it.
-        /// </summary>
-        public void Derail()
-        {
-            InvisibleVehicle.IsCollisionEnabled = false;
-            VisibleVehicle.Detach();
+        ///// <summary>
+        ///// Derails carriage and all carriages after it.
+        ///// </summary>
+        //public void Derail()
+        //{
+        //    InvisibleVehicle.IsCollisionEnabled = false;
+        //    VisibleVehicle.Detach();
 
-            if(Game.Player.Character.IsInVehicle(InvisibleVehicle))
-            {
-                Game.Player.Character.Task.WarpIntoVehicle(VisibleVehicle, Game.Player.Character.SeatIndex);
-            }
+        //    if(Game.Player.Character.IsInVehicle(InvisibleVehicle))
+        //    {
+        //        Game.Player.Character.Task.WarpIntoVehicle(VisibleVehicle, Game.Player.Character.SeatIndex);
+        //    }
 
-            IsDerailed = true;
+        //    IsDerailed = true;
 
-            if (Previous != null)
-                Previous.Derail();
-        }
+        //    if (Previous != null)
+        //        Previous.Derail();
+        //}
 
         /// <summary>
         /// Decouples carriage from the rest of the train.

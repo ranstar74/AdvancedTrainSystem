@@ -188,7 +188,12 @@ namespace AdvancedTrainSystem.Train
 
                 // Fill linked list
                 if (nextCarriage != null)
+                {
                     nextCarriage.Previous = newCarriage;
+
+                    Function.Call(Hash.ATTACH_VEHICLE_TO_TRAILER, newCarriage.VisibleVehicle, nextCarriage.VisibleVehicle, 180);
+                }
+
                 nextCarriage = newCarriage;
             }
 
@@ -244,18 +249,18 @@ namespace AdvancedTrainSystem.Train
 
         private void Tick()
         {
-            var thisTrainSpeedNegative = Speed < 0;
-            for(int i = 0; i < _coupledTrains.Count; i++)
-            {
-                var coupledTrain = _coupledTrains[i];
-                var coupledTrainSpeedNegative = coupledTrain.Speed < 0;
+            //var thisTrainSpeedNegative = Speed < 0;
+            //for(int i = 0; i < _coupledTrains.Count; i++)
+            //{
+            //    var coupledTrain = _coupledTrains[i];
+            //    var coupledTrainSpeedNegative = coupledTrain.Speed < 0;
 
-                if(thisTrainSpeedNegative != coupledTrainSpeedNegative)
-                {
-                    Decouple(coupledTrain);
-                    coupledTrain.Decouple(this);
-                }
-            }
+            //    if(thisTrainSpeedNegative != coupledTrainSpeedNegative)
+            //    {
+            //        Decouple(coupledTrain);
+            //        coupledTrain.Decouple(this);
+            //    }
+            //}
         }
 
         /// <summary>

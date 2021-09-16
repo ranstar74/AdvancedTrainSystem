@@ -30,6 +30,16 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public OnCollision OnCollision { get; set; }
 
+        /// <summary>
+        /// Whether train is derailed or not.
+        /// </summary>
+        public bool IsDerailed { get; private set; }
+
+        /// <summary>
+        /// Used to process something in one frame after derail.
+        /// </summary>
+        private bool _needToProcessAfterDerail = false;
+
         private Vector3 _previousForwardAngle = Vector3.Zero;
         private readonly List<Vehicle> _closestVehicles = new List<Vehicle>();
         private float _closestVehiclesUpdateTime;
@@ -44,28 +54,17 @@ namespace AdvancedTrainSystem.Train.Components
 
         private void DerailOnCollision(CollisionInfo colInfo)
         {
-            if (!colInfo.CollidingVehicle.IsCustomTrain())
-                return;
+            // Only collide with trains
+            //if (!colInfo.CollidingVehicle.IsCustomTrain())
+            //    return;
 
             var mass = HandlingData.GetByVehicleModel(colInfo.CollidingVehicle.Model).Mass;
             var energy = mass * colInfo.SpeedDifference;
 
+            if (energy < 100000)
+                return;
 
-            //if (energy > 50000)
-            foreach(var carriage in Base.Carriages)
-            {
-                carriage.InvisibleVehicle.IsCollisionEnabled = false;
-            }
-            foreach (var carriage in Base.Carriages)
-            {
-                carriage.VisibleVehicle.Detach();
-
-                if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
-                {
-                    Game.Player.Character.Task.WarpIntoVehicle(carriage.VisibleVehicle, Game.Player.Character.SeatIndex);
-                }
-            }
-            //colInfo.Carriage.Derail();
+            Derail();
         }
 
         /// <summary>
@@ -73,27 +72,9 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void OnTick()
         {
-            ProcessDerail();
+            ProcessSpeedDerail();
             GetClosestVehicles();
             ProcessCollision();
-
-
-
-            //// Derail if train crashed with something heavy
-            //if(Train.VisibleModel.HasCollided)
-            //{
-            //    var counter = 0;
-            //    var closestEntities = World.GetNearbyEntities(Train.VisibleModel.Position, 20);
-            //    for (int i = 0; i < closestEntities.Count(); i++)
-            //    {
-            //        if(closestEntities[i].HasCollided)
-            //        {
-            //            counter++;
-            //        }
-            //    }
-
-            //    GTA.UI.Screen.ShowSubtitle($"Collided entities: {counter}");
-            //}
         }
 
         /// <summary>
@@ -101,6 +82,33 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         private void ProcessCollision()
         {
+            // We do this after one frame because it doesn't work if you do this in
+            // same frame with derail
+            if(_needToProcessAfterDerail)
+            {
+                // Process all carriages from locomotive to last one
+                for (int i = 0; i < Base.Carriages.Count; i++)
+                {
+                    var carriage = Base.Carriages[i];
+
+                    // Attach carriage as trailer to next carriage if theres one
+                    if (carriage.Next != null)
+                    {
+                        carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 80);
+                    }
+
+                    // If player was in train we want to teleport him to
+                    // visible model because invisible one no longer working
+                    if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
+                    {
+                        Game.Player.Character.Task.WarpIntoVehicle(carriage.VisibleVehicle, Game.Player.Character.SeatIndex);
+                    }
+                }
+            }
+
+            if (IsDerailed)
+                return;
+
             // TODO: Implement support of multiple colliding vehicles
 
             // Process every closest vehicle
@@ -162,7 +170,29 @@ namespace AdvancedTrainSystem.Train.Components
             }
         }
 
-        private void ProcessDerail()
+        /// <summary>
+        /// Derails train with all carriages.
+        /// </summary>
+        public void Derail()
+        {
+            if (IsDerailed)
+                return;
+
+            // Process all carriages from locomotive to last one
+            for (int i = 0; i < Base.Carriages.Count; i++)
+            {
+                var carriage = Base.Carriages[i];
+
+                // Disable invisible vehicle collision first and then detach
+                // visible model, otherwise they will collide with eachother
+                carriage.InvisibleVehicle.IsCollisionEnabled = false;
+                carriage.VisibleVehicle.Detach();
+            }
+            _needToProcessAfterDerail = true;
+            IsDerailed = true;
+        }
+
+        private void ProcessSpeedDerail()
         {
             // Derail if train going is too fast on sharp corner
 
@@ -177,7 +207,7 @@ namespace AdvancedTrainSystem.Train.Components
                 {
                     if (FusionUtils.Random.NextDouble() >= 0.3f)
                     {
-                        //Derail();
+                        Derail();
                     }
                 }
             }
