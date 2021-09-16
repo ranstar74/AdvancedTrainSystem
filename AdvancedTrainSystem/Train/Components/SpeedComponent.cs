@@ -91,6 +91,12 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void OnTick()
         {
+            if(Base.CollisionComponent.IsDerailed)
+            {
+                Speed = 0;
+                return;
+            }
+            
             // TODO: Take uphill/downhill into account
 
             // Acceleration = (v1 - v2) / t

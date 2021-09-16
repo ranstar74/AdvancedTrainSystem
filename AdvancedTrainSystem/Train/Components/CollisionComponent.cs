@@ -4,6 +4,7 @@ using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
+using GTA.Native;
 using RageComponent;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,13 @@ namespace AdvancedTrainSystem.Train.Components
         /// Used to process something in one frame after derail.
         /// </summary>
         private bool _needToProcessAfterDerail = false;
+
+        /// <summary>
+        /// Used to detach derailed train after some time. Fixes camera collision bug.
+        /// </summary>
+        private float _detachTime = 0;
+
+        private Vector3 _derailVelocty;
 
         private Vector3 _previousForwardAngle = Vector3.Zero;
         private readonly List<Vehicle> _closestVehicles = new List<Vehicle>();
@@ -82,9 +90,8 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         private void ProcessCollision()
         {
-            // We do this after one frame because it doesn't work if you do this in
-            // same frame with derail
-            if(_needToProcessAfterDerail)
+            // We do this after some time as workaround to camera collision bug
+            if(_needToProcessAfterDerail && _detachTime < Game.GameTime)
             {
                 // Process all carriages from locomotive to last one
                 for (int i = 0; i < Base.Carriages.Count; i++)
@@ -97,13 +104,11 @@ namespace AdvancedTrainSystem.Train.Components
                         carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 80);
                     }
 
-                    // If player was in train we want to teleport him to
-                    // visible model because invisible one no longer working
-                    if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
-                    {
-                        Game.Player.Character.Task.WarpIntoVehicle(carriage.VisibleVehicle, Game.Player.Character.SeatIndex);
-                    }
+                    carriage.VisibleVehicle.Detach();
+
+                    carriage.VisibleVehicle.Velocity = _derailVelocty;
                 }
+                _needToProcessAfterDerail = false;
             }
 
             if (IsDerailed)
@@ -186,9 +191,18 @@ namespace AdvancedTrainSystem.Train.Components
                 // Disable invisible vehicle collision first and then detach
                 // visible model, otherwise they will collide with eachother
                 carriage.InvisibleVehicle.IsCollisionEnabled = false;
-                carriage.VisibleVehicle.Detach();
+
+                // If player was in train we want to teleport him to
+                // visible model because invisible one no longer working
+                if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
+                {
+                    Game.Player.Character.Task.WarpIntoVehicle(carriage.VisibleVehicle, Game.Player.Character.SeatIndex);
+                }
             }
+            _detachTime = Game.GameTime + 50;
             _needToProcessAfterDerail = true;
+            _derailVelocty = Base.GetCarriage(0).InvisibleVehicle.Velocity;
+
             IsDerailed = true;
         }
 
