@@ -26,37 +26,15 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         private float _prevSpeed;
 
-        private float _throttle;
         /// <summary>
         /// How much throttle is opened. 0 is closed, 1 is fully opened.
         /// </summary>
-        public float Throttle
-        {
-            get => _throttle;
-            set
-            {
-                _throttle = value.Clamp(0, 1);
+        public float Throttle { get; internal set; }
 
-                if(Base.CabComponent.ThrottleLeverState != _throttle)
-                    Base.CabComponent.ThrottleLeverState = _throttle;
-            }
-        }
-
-        private float _gear;
         /// <summary>
         /// Gear. Also known as Johnson bar. 1 forward, -1 backward
         /// </summary>
-        public float Gear
-        {
-            get => _gear;
-            set
-            {
-                _gear = value.Clamp(-1, 1);
-
-                if (Base.CabComponent.GearLeverState != _gear)
-                    Base.CabComponent.GearLeverState = _gear;
-            }
-        }
+        public float Gear { get; internal set; }
 
         /// <summary>
         /// How fast train accelerates.
@@ -161,6 +139,14 @@ namespace AdvancedTrainSystem.Train.Components
             float baseWheelSpeed = Math.Abs(Speed);
 
             DriveWheelSpeed = baseWheelSpeed * wheelTraction * steamBrakeInput * forceDirection;
+
+            //GTA.UI.Screen.ShowSubtitle(
+            //    $"F: {frictionForce.ToString("0.00")} " +
+            //    $"D:{dragForce.ToString("0.00")} " +
+            //    $"I: {inerciaForce.ToString("0.00")} " +
+            //    $"S: {steamForce.ToString("0.00")} " +
+            //    $"T: {totalForce.ToString("0.00")} " +
+            //    $"FD: {forceDirection}");
 
             // Set speed
             Base.Speed = Speed;

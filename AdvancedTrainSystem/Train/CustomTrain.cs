@@ -87,7 +87,7 @@ namespace AdvancedTrainSystem.Train
 
         public BrakeComponent BrakeComponent;
         public BoilerComponent BoilerComponent;
-        public CabComponent CabComponent;
+        public ControlComponent ControlComponent;
 
         /// <summary>
         /// Constructs new instance of <see cref="CustomTrain"/>.

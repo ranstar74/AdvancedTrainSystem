@@ -81,7 +81,7 @@
     <Compile Include="Train\Carriage.cs" />
     <Compile Include="Train\Components\BoilerComponent.cs" />
     <Compile Include="Train\Components\BrakeComponent.cs" />
-    <Compile Include="Train\Components\CabComponent.cs" />
+    <Compile Include="Train\Components\ControlComponent.cs" />
     <Compile Include="Train\Components\CollisionComponent.cs" />
     <Compile Include="Train\Components\DynamoComponent.cs" />
     <Compile Include="Train\Components\SpeedComponent.cs" />

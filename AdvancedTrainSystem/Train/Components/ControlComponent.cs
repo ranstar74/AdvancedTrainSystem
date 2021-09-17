@@ -4,9 +4,9 @@ using RageComponent;
 namespace AdvancedTrainSystem.Train.Components
 {
     /// <summary>
-    /// Handles components inside cab, such as throttle and brake levers.
+    /// Handles control components inside cab, such as throttle and brake levers.
     /// </summary>
-    public class CabComponent : Component<CustomTrain>
+    public class ControlComponent : Component<CustomTrain>
     {
         private float _throttleLeverState;
         /// <summary>
@@ -42,7 +42,7 @@ namespace AdvancedTrainSystem.Train.Components
                     return;
 
                 _gearLeverState = value;
-                Base.SpeedComponent.Throttle = _gearLeverState;
+                Base.SpeedComponent.Gear = _gearLeverState;
             }
         }
 
