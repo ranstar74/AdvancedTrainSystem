@@ -36,6 +36,9 @@ namespace AdvancedTrainSystem.Train.Components
             set
             {
                 _throttle = value.Clamp(0, 1);
+
+                if(Base.CabComponent.ThrottleLeverState != _throttle)
+                    Base.CabComponent.ThrottleLeverState = _throttle;
             }
         }
 
@@ -49,6 +52,9 @@ namespace AdvancedTrainSystem.Train.Components
             set
             {
                 _gear = value.Clamp(-1, 1);
+
+                if (Base.CabComponent.GearLeverState != _gear)
+                    Base.CabComponent.GearLeverState = _gear;
             }
         }
 
@@ -106,7 +112,7 @@ namespace AdvancedTrainSystem.Train.Components
 
             float velocty = Entity.Velocity.Length();
             float airBrakeInput = Base.BrakeComponent.AirbrakeForce;
-            float steamBrakeInput = 1 - Base.BrakeComponent.SteamBrake;
+            float steamBrakeInput = 1 - Base.BrakeComponent.FullBrakeForce;
             float boilerPressure = Base.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
 
             // Calculate forces

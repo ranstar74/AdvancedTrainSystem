@@ -9,7 +9,6 @@ using GTA.Native;
 using RageComponent;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AdvancedTrainSystem.Train
 {
@@ -32,6 +31,11 @@ namespace AdvancedTrainSystem.Train
         /// Head (in most cases - locomotive) of the train.
         /// </summary>
         public readonly Vehicle TrainHead;
+
+        /// <summary>
+        /// Visible model of train head (in most cases - locomotive).
+        /// </summary>
+        public readonly Vehicle TrainHeadVisible;
 
         /// <summary>
         /// All carriages of this train.
@@ -74,10 +78,16 @@ namespace AdvancedTrainSystem.Train
 
         [Entity(EntityProperty = nameof(TrainHead))]
         public SpeedComponent SpeedComponent;
+
         [Entity(EntityProperty = nameof(TrainHead))]
         public CollisionComponent CollisionComponent;
+
+        [Entity(EntityProperty = nameof(TrainHeadVisible))]
+        public DynamoComponent DynamoComponent;
+
         public BrakeComponent BrakeComponent;
         public BoilerComponent BoilerComponent;
+        public CabComponent CabComponent;
 
         /// <summary>
         /// Constructs new instance of <see cref="CustomTrain"/>.
@@ -87,6 +97,8 @@ namespace AdvancedTrainSystem.Train
         {
             Carriages = carriages;
             TrainHead = head;
+
+            TrainHeadVisible = GetCarriage(head.Model).VisibleVehicle;
 
             // Set "Guid"
             Guid = GuidCounter++;
@@ -276,11 +288,21 @@ namespace AdvancedTrainSystem.Train
         /// <summary>
         /// Gets train carriage.
         /// </summary>
-        /// <param name="index">Invisible or visible model of the carriage.</param>
+        /// <param name="model">Model of invisible or visible vehicle of carriage.</param>
         /// <returns>Carriage of specified model.</returns>
         public Carriage GetCarriage(CustomModel model)
         {
-            var searchModel = model.Model;
+            return GetCarriage(model.Model);
+        }
+
+        /// <summary>
+        /// Gets train carriage.
+        /// </summary>
+        /// <param name="model">Model of invisible or visible vehicle of carriage.</param>
+        /// <returns>Carriage of specified model.</returns>
+        public Carriage GetCarriage(Model model)
+        {
+            var searchModel = model;
 
             for (int i = 0; i < Carriages.Count; i++)
             {
@@ -289,12 +311,12 @@ namespace AdvancedTrainSystem.Train
                 var invisibleModel = carriage.InvisibleVehicle.Model;
                 var visibleModel = carriage.VisibleVehicle.Model;
 
-                if(searchModel == invisibleModel || searchModel == visibleModel)
+                if (searchModel == invisibleModel || searchModel == visibleModel)
                 {
                     return carriage;
                 }
             }
-            throw new ArgumentException($"Requested carriage {model.Name} is not found.");
+            throw new ArgumentException($"Requested carriage {model.Hash} is not found.");
         }
 
         /// <summary>
