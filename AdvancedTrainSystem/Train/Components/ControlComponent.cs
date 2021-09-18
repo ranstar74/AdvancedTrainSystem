@@ -36,7 +36,7 @@ namespace AdvancedTrainSystem.Train.Components
             get => _gearLeverState;
             set
             {
-                value = value.Clamp(0, 1);
+                value = value.Clamp(-1, 1);
 
                 if (value == _gearLeverState)
                     return;
