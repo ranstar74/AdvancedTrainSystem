@@ -22,25 +22,5 @@ namespace AdvancedTrainSystem.Natives
             return Function.Call<Vehicle>(
                 Hash.CREATE_MISSION_TRAIN, variation, pos.X, pos.Y, pos.Z, dir);
         }
-
-        /// <summary>
-        /// Sets train speed. Needs to be called every frame.
-        /// </summary>
-        /// <param name="train">Train whose speed needs to be changed.</param>
-        /// <param name="speed">Speed in m/s.</param>
-        internal static void SetTrainSpeed(Vehicle train, float speed)
-        {
-            Function.Call(Hash.SET_TRAIN_SPEED, train, speed);
-        }
-
-        /// <summary>
-        /// Sets train cruise speed. Needs to be called once.
-        /// </summary>
-        /// <param name="train">Train whose speed needs to be changed.</param>
-        /// <param name="speed">Speed in m/s.</param>
-        internal static void SetTrainCruiseSpeed(Vehicle train, float speed)
-        {
-            Function.Call(Hash.SET_TRAIN_CRUISE_SPEED, train, speed);
-        }
     }
 }
