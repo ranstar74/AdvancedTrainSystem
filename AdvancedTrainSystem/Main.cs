@@ -1,17 +1,21 @@
 ﻿using AdvancedTrainSystem.Data;
-using AdvancedTrainSystem.Train;
+using FusionLibrary;
 using GTA;
-using GTA.Math;
-using GTA.Native;
 using System;
 using System.Windows.Forms;
 
 namespace AdvancedTrainSystem
 {
+    /// <summary>
+    /// Main class of ATS.
+    /// </summary>
     public class Main : Script
     {
         private bool _firstTick = true;
 
+        /// <summary>
+        /// Constructs new instance of <see cref="Main"/>.
+        /// </summary>
         public Main()
         {
             Tick += OnTick;
@@ -34,8 +38,9 @@ namespace AdvancedTrainSystem
 
                 _firstTick = false;
             }
+            FusionUtils.RandomTrains = false;
 
-            CustomTrain.OnTick();
+            //CustomTrain.OnTick();
         }
     }
 }

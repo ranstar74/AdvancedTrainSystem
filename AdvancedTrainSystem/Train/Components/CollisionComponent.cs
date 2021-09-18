@@ -32,24 +32,34 @@ namespace AdvancedTrainSystem.Train.Components
         public OnCollision OnCollision { get; set; }
 
         /// <summary>
+        /// Invokes on train derail.
+        /// </summary>
+        public Action OnDerail { get; set; }
+
+        /// <summary>
         /// Whether train is derailed or not.
         /// </summary>
         public bool IsDerailed { get; private set; }
 
         /// <summary>
-        /// Used to process something in one frame after derail.
+        /// Previous forward angle of train, used to derail on speed.
         /// </summary>
-        private bool _needToProcessAfterDerail = false;
+        private Vector3 _previousForwardAngle = Vector3.Zero;
 
         /// <summary>
-        /// Used to detach derailed train after some time. Fixes camera collision bug.
+        /// List of closes vehicles to train, not including carriages on this train. 
+        /// Updates every 250ms.
         /// </summary>
-        private float _detachTime = 0;
-
-        private Vector3 _derailVelocty;
-
-        private Vector3 _previousForwardAngle = Vector3.Zero;
         private readonly List<Vehicle> _closestVehicles = new List<Vehicle>();
+
+        /// <summary>
+        /// Predict position of train head in next frame based on speed.
+        /// </summary>
+        public Vector3 HeadPositionNextFrame { get; private set; }
+
+        /// <summary>
+        /// Next closest vehicles list update time.
+        /// </summary>
         private float _closestVehiclesUpdateTime;
 
         /// <summary>
@@ -60,18 +70,12 @@ namespace AdvancedTrainSystem.Train.Components
             OnCollision += DerailOnCollision;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="colInfo"></param>
         private void DerailOnCollision(CollisionInfo colInfo)
         {
-            // Only collide with trains
-            //if (!colInfo.CollidingVehicle.IsCustomTrain())
-            //    return;
-
-            var mass = HandlingData.GetByVehicleModel(colInfo.CollidingVehicle.Model).Mass;
-            var energy = mass * colInfo.SpeedDifference;
-
-            if (energy < 100000)
-                return;
-
             Derail();
         }
 
@@ -90,31 +94,17 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         private void ProcessCollision()
         {
-            // We do this after some time as workaround to camera collision bug
-            if(_needToProcessAfterDerail && _detachTime < Game.GameTime)
-            {
-                // Process all carriages from locomotive to last one
-                for (int i = 0; i < Base.Carriages.Count; i++)
-                {
-                    var carriage = Base.Carriages[i];
-
-                    // Attach carriage as trailer to next carriage if theres one
-                    if (carriage.Next != null)
-                    {
-                        carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 80);
-                    }
-
-                    carriage.VisibleVehicle.Detach();
-
-                    carriage.VisibleVehicle.Velocity = _derailVelocty;
-                }
-                _needToProcessAfterDerail = false;
-            }
-
+            // No point to check collision after derail because visible vehicles
+            // support native game collision
             if (IsDerailed)
                 return;
 
-            // TODO: Implement support of multiple colliding vehicles
+            // When entity speed raises, position starts drift back so we're trying to compensate that
+            var driftOffset = Base.TrainHeadVisible.ForwardVector * Base.Speed * Game.LastFrameTime;
+            var headEdgePosition = Base.TrainHeadVisible.FrontPosition + Vector3.WorldUp + driftOffset;
+
+            // Position in next frame = current position + speed * deltaTime
+            HeadPositionNextFrame = headEdgePosition + driftOffset;
 
             // Process every closest vehicle
             for (int i = 0; i < _closestVehicles.Count; i++)
@@ -126,28 +116,54 @@ namespace AdvancedTrainSystem.Train.Components
                 {
                     var carriage = Base.Carriages[k];
 
-                    // Check if vehicle colliding with carriage
+                    bool hasCarriageCollided = false;
+                    float collidedEntitySpeed = 0;
+
+                    // Collision with other custom train
+                    if(closestVehicle.IsCustomTrain())
+                    {
+                        // Since trains in gta doesn't collide with other trains, we have
+                        // to predicate when train will collide with other train, otherwise
+                        // one train will go into another train and on visible model detach 
+                        // game will have to teleport thems because entity can't be inside another entity
+
+                        CustomTrain closestCustomTrain = CustomTrain.Find(closestVehicle);
+
+                        // Calcualte distance from other train head to this train head
+                        Vector3 closestHeadPosition = closestCustomTrain.CollisionComponent.HeadPositionNextFrame;
+                        float distanceBetweenTrains = closestHeadPosition.DistanceToSquared(HeadPositionNextFrame);
+
+                        // With higher speed there's higher chance that train will "get inside" another train
+                        // so we're trying to minimize that with higher collision detection distance
+                        if (distanceBetweenTrains < Base.Speed / 10)
+                        {
+                            collidedEntitySpeed = closestCustomTrain.Speed;
+                            hasCarriageCollided = true;
+                        }
+                    }
+
+                    // Collision with vehicle
                     if (closestVehicle.IsTouching(carriage.InvisibleVehicle))
                     {
-                        // Calculate the speed difference between two vehicles
-                        var speedDifference = Math.Abs(closestVehicle.Speed - Base.SpeedComponent.Speed);
+                        collidedEntitySpeed = closestVehicle.Speed;
+                        hasCarriageCollided = true;
+                    }
 
+                    // Calculate energy of colliding vehicles
+                    float speedDifference = Math.Abs(collidedEntitySpeed - Base.SpeedComponent.Speed);
+                    float mass = HandlingData.GetByVehicleModel(closestVehicle.Model).Mass;
+                    float energy = mass * collidedEntitySpeed;
+
+                    // TODO: Couple otherwise
+                    if (energy > 100000)
+                        hasCarriageCollided = true;
+
+                    if (hasCarriageCollided)
+                    {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
                     }
                 }
             }
-
-            //if (speedDifference < 3)
-            //{
-            //    if (closestVehicle.IsCustomTrain())
-
-            //        var head = (Vehicle)Entity.FromHandle(headHandle);
-            //    //GTA.UI.Screen.ShowSubtitle($"Handle: {headHandle}", 1);
-
-            //    CustomTrain.Find(headHandle).Couple(Train.CustomTrain);
-            //    //    var couplingTrain = train
-            //    //NVehicle.SetTrainSpeed(train, Train.SpeedComponent.Speed);
-            //}
         }
 
         /// <summary>
@@ -155,11 +171,13 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         private void GetClosestVehicles()
         {
-            // Get all closest vehicles every 250ms
-            if (_closestVehiclesUpdateTime < Game.GameTime)
+            // There's no point to update closest vehicles every tick
+            // cuz its makes big performance impact + theres no way
+            // to vehicle to appear in 120m radius and collide with train within 250ms
+            if(_closestVehiclesUpdateTime > Game.GameTime)
             {
                 _closestVehicles.Clear();
-                var closestVehicles = World.GetNearbyVehicles(Entity.Position, 100);
+                var closestVehicles = World.GetNearbyVehicles(Entity.Position, 120);
 
                 // Remove vehicles that belong to this train
                 for (int i = 0; i < closestVehicles.Length; i++)
@@ -171,7 +189,8 @@ namespace AdvancedTrainSystem.Train.Components
                         _closestVehicles.Add(vehicle);
                     }
                 }
-                _closestVehiclesUpdateTime = Game.GameTime + 1;
+
+                _closestVehiclesUpdateTime = Game.GameTime + 250;
             }
         }
 
@@ -183,6 +202,8 @@ namespace AdvancedTrainSystem.Train.Components
             if (IsDerailed)
                 return;
 
+            OnDerail?.Invoke();
+
             // Process all carriages from locomotive to last one
             for (int i = 0; i < Base.Carriages.Count; i++)
             {
@@ -192,16 +213,54 @@ namespace AdvancedTrainSystem.Train.Components
                 // visible model, otherwise they will collide with eachother
                 carriage.InvisibleVehicle.IsCollisionEnabled = false;
 
-                // If player was in train we want to teleport him to
-                // visible model because invisible one no longer working
+                // TODO: Make player fly like out of cars in gta 4
+                // Throw player out of train
                 if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
                 {
-                    Game.Player.Character.Task.WarpIntoVehicle(carriage.VisibleVehicle, Game.Player.Character.SeatIndex);
+                    Game.Player.Character.Task.LeaveVehicle(LeaveVehicleFlags.BailOut);
+                    Game.Player.Character.Ragdoll(10, RagdollType.Normal);
                 }
+
+                // Attach carriage as trailer to next carriage if theres one
+                if (carriage.Next != null)
+                {
+                    carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 130);
+                }
+
+                // Detach visible vehicle from invisible one and re-apply velocity
+                carriage.VisibleVehicle.Detach();
+                carriage.VisibleVehicle.Velocity = carriage.CustomTrain.TrainHead.Velocity;
             }
-            _detachTime = Game.GameTime + 50;
-            _needToProcessAfterDerail = true;
-            _derailVelocty = Base.GetCarriage(0).InvisibleVehicle.Velocity;
+
+            var trainHead = Base.TrainHeadVisible;
+
+            // Apply different forces to make crash look better
+
+            var direction = Vector3.WorldUp;
+            var rotation = new Vector3(0, 65, 0);
+            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+                trainHead, 3,
+                direction.X, direction.Y, direction.Z,
+                rotation.X, rotation.Y, rotation.Z,
+                trainHead.Bones["fwheel_1"].Index,
+                false, true, true, false, true);
+
+            direction = trainHead.RightVector;
+            rotation = new Vector3(0, 100, 0);
+            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+                trainHead, 5,
+                direction.X, direction.Y, direction.Z,
+                rotation.X, rotation.Y, rotation.Z,
+                trainHead.Bones["fwheel_1"].Index,
+                false, true, true, false, true);
+            direction = trainHead.UpVector;
+            rotation = new Vector3(0, 0, 0);
+            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+                trainHead, 5,
+                direction.X, direction.Y, direction.Z,
+                rotation.X, rotation.Y, rotation.Z,
+                trainHead.Bones["fwheel_1"].Index,
+                false, true, true, false, true);
 
             IsDerailed = true;
         }

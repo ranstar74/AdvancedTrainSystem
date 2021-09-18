@@ -8,6 +8,11 @@ namespace AdvancedTrainSystem.Train
     public class Carriage
     {
         /// <summary>
+        /// <see cref="CustomTrain"/> this carriage belongs to.
+        /// </summary>
+        public CustomTrain CustomTrain { get; set; }
+
+        /// <summary>
         /// Invisible vehicle of carriage. Used only for position and rotation.
         /// </summary>
         public Vehicle InvisibleVehicle { get; set; }
