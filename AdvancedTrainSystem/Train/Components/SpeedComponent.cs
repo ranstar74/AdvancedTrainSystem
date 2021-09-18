@@ -75,7 +75,7 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void OnTick()
         {
-            if(Base.CollisionComponent.IsDerailed)
+            if(Base.DerailComponent.IsDerailed)
             {
                 Speed = 0;
                 return;

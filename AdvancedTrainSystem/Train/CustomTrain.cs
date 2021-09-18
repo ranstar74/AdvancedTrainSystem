@@ -78,10 +78,16 @@ namespace AdvancedTrainSystem.Train
         public SpeedComponent SpeedComponent;
 
         /// <summary>
-        /// Handles train speed.
+        /// Handles train collision.
         /// </summary>
         [Entity(EntityProperty = nameof(TrainHead))]
         public CollisionComponent CollisionComponent;
+
+        /// <summary>
+        /// Handles train derailnment.
+        /// </summary>
+        [Entity(EntityProperty = nameof(TrainHead))]
+        public DerailComponent DerailComponent;
 
         /// <summary>
         /// Handles dynamo generator and train lights.
