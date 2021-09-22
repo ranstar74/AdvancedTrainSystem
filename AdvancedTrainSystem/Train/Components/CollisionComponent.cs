@@ -31,9 +31,19 @@ namespace AdvancedTrainSystem.Train.Components
         public Vector3 HeadPositionNextFrame { get; private set; }
 
         /// <summary>
+        /// Train that pushing this one or trains this one is pushing.
+        /// </summary>
+        public readonly List<CustomTrain> SoftCoupledTrains = new List<CustomTrain>();
+
+        /// <summary>
+        /// Invokes on couple.
+        /// </summary>
+        public OnCouple OnCouple {  get; set; }
+
+        /// <summary>
         /// Next closest vehicles list update time.
         /// </summary>
-        private float _closestVehiclesUpdateTime;
+        private float _closestVehiclesUpdateTime = 0;
 
         /// <summary>
         /// <inheritdoc/>
@@ -42,6 +52,8 @@ namespace AdvancedTrainSystem.Train.Components
         {
             GetClosestVehicles();
             ProcessCollision();
+
+            //GTA.UI.Screen.ShowSubtitle($"{Base.Guid} - {SoftCoupledTrains.Count}");
         }
 
         /// <summary>
@@ -75,14 +87,16 @@ namespace AdvancedTrainSystem.Train.Components
                     float collidedEntitySpeed = 0;
 
                     // Collision with other custom train
-                    if(closestVehicle.IsCustomTrain())
+                    var isClosestVehicleCustomTrain = closestVehicle.IsCustomTrain();
+                    CustomTrain closestCustomTrain = null;
+                    if (isClosestVehicleCustomTrain)
                     {
                         // Since trains in gta doesn't collide with other trains, we have
                         // to predicate when train will collide with other train, otherwise
                         // one train will go into another train and on visible model detach 
                         // game will have to teleport thems because entity can't be inside another entity
 
-                        CustomTrain closestCustomTrain = CustomTrain.Find(closestVehicle);
+                        closestCustomTrain = CustomTrain.Find(closestVehicle);
 
                         // Calcualte distance from other train head to this train head
                         Vector3 closestHeadPosition = closestCustomTrain.CollisionComponent.HeadPositionNextFrame;
@@ -104,18 +118,33 @@ namespace AdvancedTrainSystem.Train.Components
                         hasCarriageCollided = true;
                     }
 
+                    if (!hasCarriageCollided)
+                    {
+                        //if(isClosestVehicleCustomTrain)
+                            //SoftCoupledTrains.Remove(closestCustomTrain);
+                        continue;
+                    }
+
                     // Calculate energy of colliding vehicles
                     float speedDifference = Math.Abs(collidedEntitySpeed - Base.SpeedComponent.Speed);
                     float mass = HandlingData.GetByVehicleModel(closestVehicle.Model).Mass;
                     float energy = mass * collidedEntitySpeed;
 
-                    // TODO: Couple otherwise
-                    if (energy > 100000)
-                        hasCarriageCollided = true;
-
-                    if (hasCarriageCollided)
+                    // Derail if energy is high, otherwise couple
+                    if (energy > 99999100000)
                     {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
+                    }
+                    else
+                    {
+                        if (!isClosestVehicleCustomTrain)
+                            continue;
+
+                        if (!SoftCoupledTrains.Contains(closestCustomTrain))
+                        {
+                            SoftCoupledTrains.Add(closestCustomTrain);
+                            OnCouple?.Invoke(closestCustomTrain, Base.Speed, closestCustomTrain.Speed);
+                        }
                     }
                 }
             }
@@ -129,7 +158,7 @@ namespace AdvancedTrainSystem.Train.Components
             // There's no point to update closest vehicles every tick
             // cuz its makes big performance impact + theres no way
             // to vehicle to appear in 120m radius and collide with train within 250ms
-            if(_closestVehiclesUpdateTime > Game.GameTime)
+            if(_closestVehiclesUpdateTime < Game.GameTime)
             {
                 _closestVehicles.Clear();
                 var closestVehicles = World.GetNearbyVehicles(Entity.Position, 120);

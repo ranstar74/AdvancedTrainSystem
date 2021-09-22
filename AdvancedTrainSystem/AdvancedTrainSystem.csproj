@@ -49,6 +49,9 @@
     <LangVersion>7.3</LangVersion>
     <ErrorReport>prompt</ErrorReport>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FusionLibrary">
       <HintPath>$(GTAPath)\scripts\FusionLibrary.dll</HintPath>
@@ -76,6 +79,8 @@
     <Compile Include="Data\CollisionInfo.cs" />
     <Compile Include="Data\Constants.cs" />
     <Compile Include="Data\OnCollision.cs" />
+    <Compile Include="Data\OnCouple.cs" />
+    <Compile Include="Debug.cs" />
     <Compile Include="Extensions\EntityExtensions.cs" />
     <Compile Include="Extensions\EnumExtensions.cs" />
     <Compile Include="Natives\NVehicle.cs" />
@@ -84,6 +89,7 @@
     <Compile Include="Train\Components\BrakeComponent.cs" />
     <Compile Include="Train\Components\ControlComponent.cs" />
     <Compile Include="Train\Components\CollisionComponent.cs" />
+    <Compile Include="Train\Components\CoupleComponent.cs" />
     <Compile Include="Train\Components\DerailComponent.cs" />
     <Compile Include="Train\Components\DynamoComponent.cs" />
     <Compile Include="Train\Components\SpeedComponent.cs" />

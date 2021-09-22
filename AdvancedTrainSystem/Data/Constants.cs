@@ -33,6 +33,11 @@ namespace AdvancedTrainSystem.Data
         internal const string TrainGuid = "TrainGuid";
 
         /// <summary>
+        /// Direction of the train.
+        /// </summary>
+        internal const string TrainDirection = "TrainDirection";
+
+        /// <summary>
         /// Registers all decorators. Call it in first frame.
         /// </summary>
         internal static void RegisterDecorators()
@@ -42,6 +47,7 @@ namespace AdvancedTrainSystem.Data
             Decorator.Register(TrainHeadHandle, FusionEnums.DecorType.Int);
             Decorator.Register(TrainIsCustom, FusionEnums.DecorType.Bool);
             Decorator.Register(TrainGuid, FusionEnums.DecorType.Int);
+            Decorator.Register(TrainDirection, FusionEnums.DecorType.Bool);
 
             Decorator.Lock();
         }

@@ -23,11 +23,6 @@ namespace AdvancedTrainSystem.Train
         public Vehicle VisibleVehicle { get; set; }
 
         /// <summary>
-        /// Whether train is derailed or not.
-        /// </summary>
-        public bool IsDerailed { get; set; }
-
-        /// <summary>
         /// Carriage that is next to this one (towards front). For tender it will be locomotive.
         /// </summary>
         public Carriage Next { get; set; }
@@ -38,9 +33,19 @@ namespace AdvancedTrainSystem.Train
         public Carriage Previous { get; set; }
 
         /// <summary>
+        /// Whether carriage is coupled with <see cref="Next"/> carriage or not.
+        /// </summary>
+        public bool CoupledWithNext { get; set; }
+
+        /// <summary>
+        /// Whether carriage is coupled with <see cref="Previous"/> carriage or not.
+        /// </summary>
+        public bool CoupleWithPrevious { get; set; }
+
+        /// <summary>
         /// Constructs new instance of <see cref="Carriage"/>.
         /// </summary>
-        /// <param name="invisibleVehicle"><paramref name="InvisibleVehicle"/></param>
+        /// <param name="invisibleVehicle"><paramref name="invisibleVehicle"/></param>
         /// <param name="visibleVehicle"><paramref name="visibleVehicle"/></param>
         public Carriage(Vehicle invisibleVehicle, Vehicle visibleVehicle)
         {
@@ -48,31 +53,15 @@ namespace AdvancedTrainSystem.Train
             VisibleVehicle = visibleVehicle;
         }
 
-        ///// <summary>
-        ///// Derails carriage and all carriages after it.
-        ///// </summary>
-        //public void Derail()
-        //{
-        //    InvisibleVehicle.IsCollisionEnabled = false;
-        //    VisibleVehicle.Detach();
-
-        //    if(Game.Player.Character.IsInVehicle(InvisibleVehicle))
-        //    {
-        //        Game.Player.Character.Task.WarpIntoVehicle(VisibleVehicle, Game.Player.Character.SeatIndex);
-        //    }
-
-        //    IsDerailed = true;
-
-        //    if (Previous != null)
-        //        Previous.Derail();
-        //}
-
         /// <summary>
         /// Decouples carriage from the rest of the train.
         /// </summary>
-        public void Decouple()
+        /// <param name="next">If True, carriage will be decoupled from <see cref="Next"/> carriage,
+        /// otherwise from <see cref="Previous"/></param>
+        public void Decouple(bool next)
         {
-
+            VisibleVehicle.Detach();
+            VisibleVehicle.IsPositionFrozen = true;
         }
     }
 }

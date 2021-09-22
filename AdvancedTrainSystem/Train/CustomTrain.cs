@@ -111,17 +111,30 @@ namespace AdvancedTrainSystem.Train
         public ControlComponent ControlComponent;
 
         /// <summary>
+        /// Handles trains coupling.
+        /// </summary>
+        public CoupleComponent CoupleComponent;
+
+        /// <summary>
+        /// Direction of this train.
+        /// </summary>
+        public bool Direction { get; private set; }
+
+        /// <summary>
         /// Constructs new instance of <see cref="CustomTrain"/>.
         /// </summary>
         /// <param name="config">Config of the train needs to be spawned.</param>
         /// <param name="carriages">Carriage list of train</param>
         /// <param name="head">Head of the train (invisible vehicle)</param>
-        CustomTrain(TrainConfig config, List<Carriage> carriages, Vehicle head)
+        /// <param name="direction">Direction of the train.</param>
+        CustomTrain(TrainConfig config, List<Carriage> carriages, Vehicle head, bool direction)
         {
             Carriages = carriages;
             TrainHead = head;
 
             TrainHeadVisible = GetCarriage(head.Model).VisibleVehicle;
+
+            Direction = direction;
 
             // Set "Guid"
             Guid = GuidCounter++;
@@ -234,6 +247,9 @@ namespace AdvancedTrainSystem.Train
                 // Set handle of visible model as decorator for invisible model so we can recover it after reload
                 invisibleVehicle.Decorator().SetInt(Constants.TrainVisibleCarriageHandle, visibleVehicle.Handle);
 
+                // Set train direction decorator
+                invisibleVehicle.Decorator().SetBool(Constants.TrainDirection, direction);
+
                 // Attach visible model to invisible
                 invisibleVehicle.IsVisible = false;
                 visibleVehicle.AttachTo(invisibleVehicle);
@@ -257,7 +273,7 @@ namespace AdvancedTrainSystem.Train
                 nextCarriage = newCarriage;
             }
 
-            return new CustomTrain(config, carriages, trainHead);
+            return new CustomTrain(config, carriages, trainHead, direction);
         }
 
         /// <summary>
@@ -268,6 +284,7 @@ namespace AdvancedTrainSystem.Train
         public static CustomTrain Respawn(Vehicle trainHead)
         {
             var carriagesNumber = trainHead.Decorator().GetInt(Constants.TrainCarriagesNumber);
+            var direction = trainHead.Decorator().GetBool(Constants.TrainDirection);
 
             var carriages = new List<Carriage>();
             for (int i = 0; i < carriagesNumber; i++)
@@ -288,7 +305,7 @@ namespace AdvancedTrainSystem.Train
                 carriages.Add(new Carriage(invisibleVehicle, visibleVehicle));
             }
 
-            return new CustomTrain(null, carriages, trainHead);
+            return new CustomTrain(null, carriages, trainHead, direction);
         }
 
         /// <summary>
@@ -300,34 +317,6 @@ namespace AdvancedTrainSystem.Train
         {
             return vehicle.Decorator().GetBool(Constants.TrainIsCustom);
         }
-
-        ///// <summary>
-        ///// Calls on tick for every train.
-        ///// </summary>
-        //internal static void OnTick()
-        //{
-        //    for (int i = 0; i < AllTrains.Count; i++)
-        //        AllTrains[i].Tick();
-        //}
-
-        ///// <summary>
-        ///// Processes code every frame.
-        ///// </summary>
-        //private void Tick()
-        //{
-        //    //var thisTrainSpeedNegative = Speed < 0;
-        //    //for(int i = 0; i < _coupledTrains.Count; i++)
-        //    //{
-        //    //    var coupledTrain = _coupledTrains[i];
-        //    //    var coupledTrainSpeedNegative = coupledTrain.Speed < 0;
-
-        //    //    if(thisTrainSpeedNegative != coupledTrainSpeedNegative)
-        //    //    {
-        //    //        Decouple(coupledTrain);
-        //    //        coupledTrain.Decouple(this);
-        //    //    }
-        //    //}
-        //}
 
         /// <summary>
         /// Gets train carriage.
@@ -356,6 +345,8 @@ namespace AdvancedTrainSystem.Train
         /// <returns>Carriage of specified model.</returns>
         public Carriage GetCarriage(Model model)
         {
+            // TODO: Make work if there's few carriages of same model
+
             var searchModel = model;
 
             for (int i = 0; i < Carriages.Count; i++)
@@ -372,29 +363,6 @@ namespace AdvancedTrainSystem.Train
             }
             throw new ArgumentException($"Requested carriage {model.Hash} is not found.");
         }
-
-        ///// <summary>
-        ///// Couples this <see cref="CustomTrain"/> with other <see cref="CustomTrain"/>.
-        ///// This isn't locked couple, it works like "pushing".
-        ///// So it wont work if train goes in opposite direction.
-        ///// You must call <see cref="LockCouple(CustomTrain)"/> in order to lock couple.
-        ///// </summary>
-        ///// <param name="train"></param>
-        //public void Couple(CustomTrain train)
-        //{
-        //    if(!_coupledTrains.Contains(train))
-        //        _coupledTrains.Add(train);
-        //}
-
-        //public void Decouple(CustomTrain train)
-        //{
-        //    _coupledTrains.Remove(train);
-        //}
-
-        //public void LockCouple(CustomTrain train)
-        //{
-
-        //}
 
         /// <summary>
         /// Disposes train.
