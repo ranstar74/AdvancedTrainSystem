@@ -31,11 +31,6 @@ namespace AdvancedTrainSystem.Train.Components
         public Vector3 HeadPositionNextFrame { get; private set; }
 
         /// <summary>
-        /// Train that pushing this one or trains this one is pushing.
-        /// </summary>
-        public readonly List<CustomTrain> SoftCoupledTrains = new List<CustomTrain>();
-
-        /// <summary>
         /// Invokes on couple.
         /// </summary>
         public OnCouple OnCouple {  get; set; }
@@ -52,8 +47,6 @@ namespace AdvancedTrainSystem.Train.Components
         {
             GetClosestVehicles();
             ProcessCollision();
-
-            //GTA.UI.Screen.ShowSubtitle($"{Base.Guid} - {SoftCoupledTrains.Count}");
         }
 
         /// <summary>
@@ -86,7 +79,7 @@ namespace AdvancedTrainSystem.Train.Components
                     bool hasCarriageCollided = false;
                     float collidedEntitySpeed = 0;
 
-                    // Collision with other custom train
+                    // Check for collision with other custom train
                     var isClosestVehicleCustomTrain = closestVehicle.IsCustomTrain();
                     CustomTrain closestCustomTrain = null;
                     if (isClosestVehicleCustomTrain)
@@ -111,39 +104,66 @@ namespace AdvancedTrainSystem.Train.Components
                         }
                     }
 
-                    // Collision with vehicle
+                    // Check for collision with vehicle
                     if (closestVehicle.IsTouching(carriage.InvisibleVehicle))
                     {
                         collidedEntitySpeed = closestVehicle.Speed;
                         hasCarriageCollided = true;
                     }
 
+                    // Don't process collision if carriage didn't collided
                     if (!hasCarriageCollided)
-                    {
-                        //if(isClosestVehicleCustomTrain)
-                            //SoftCoupledTrains.Remove(closestCustomTrain);
                         continue;
-                    }
 
                     // Calculate energy of colliding vehicles
                     float speedDifference = Math.Abs(collidedEntitySpeed - Base.SpeedComponent.Speed);
                     float mass = HandlingData.GetByVehicleModel(closestVehicle.Model).Mass;
-                    float energy = mass * collidedEntitySpeed;
+                    float energy = mass * speedDifference;
 
-                    // Derail if energy is high, otherwise couple
-                    if (energy > 99999100000)
+                    // Derail if energy is high, otherwise push
+                    if (energy > 700000)
                     {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
                     }
                     else
                     {
+                        // Process pushing only for custom trains
                         if (!isClosestVehicleCustomTrain)
                             continue;
 
-                        if (!SoftCoupledTrains.Contains(closestCustomTrain))
+                        // Pushing train (without coupling)
+
+                        // FIX: PUSH RELEASE IN REVERSE DOESN'T WORK
+
+                        // We check which train have bigger acceleration in current frame to detect which one is phushing
+                        // When pushing train starts braking it decelerates very fast its LastFrameAcceleration will be bigger than
+                        // LastFrameAcceleration of another train.
+                        if (Base.SpeedComponent.LastFrameAcceleration > closestCustomTrain.SpeedComponent.LastFrameAcceleration)
                         {
-                            SoftCoupledTrains.Add(closestCustomTrain);
-                            OnCouple?.Invoke(closestCustomTrain, Base.Speed, closestCustomTrain.Speed);
+                            var train = closestCustomTrain;
+                            var s1 = Base.Speed;
+                            var s2 = train.Speed;
+
+                            // Check if they're moving in the same direction
+                            if (s1 * s2 >= 0)
+                            {
+                                // Velocity of colliding object is:
+                                // (M1 * V1 + M2 * V2) / M1 + M2
+
+                                // TODO: Take mass of all carriages into account
+                                // For now we'd assume that mass of train is 1
+
+                                var force = s1 - ((s1 + s2) / 2);
+                                //if (force > 0)
+                                Base.SpeedComponent.ApplyForce(-force);
+                                
+                                var force2 = s2 - ((s2 + s1) / 2);
+                                //if (force2 < 0)
+                                train.SpeedComponent.ApplyForce(-force2);
+
+                                //GTA.UI.Screen.ShowSubtitle($"F1 {force:0.00} F2 {force2:0.00}");
+                                //Debug.Log(this, Base.Guid, s1, s2, force);
+                            }
                         }
                     }
                 }
@@ -173,7 +193,6 @@ namespace AdvancedTrainSystem.Train.Components
                         _closestVehicles.Add(vehicle);
                     }
                 }
-
                 _closestVehiclesUpdateTime = Game.GameTime + 250;
             }
         }

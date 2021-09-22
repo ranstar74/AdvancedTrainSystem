@@ -28,6 +28,11 @@ namespace AdvancedTrainSystem.Train
         public readonly Vehicle TrainHead;
 
         /// <summary>
+        /// Whether player is driving this train or not.
+        /// </summary>
+        public bool IsPlayerDriving => Game.Player.Character.CurrentVehicle == TrainHead;
+
+        /// <summary>
         /// Visible model of train head (in most cases - locomotive).
         /// </summary>
         public readonly Vehicle TrainHeadVisible;
@@ -109,11 +114,6 @@ namespace AdvancedTrainSystem.Train
         /// Handles train control lever such as throttle, gear, brake.
         /// </summary>
         public ControlComponent ControlComponent;
-
-        /// <summary>
-        /// Handles trains coupling.
-        /// </summary>
-        public CoupleComponent CoupleComponent;
 
         /// <summary>
         /// Direction of this train.
