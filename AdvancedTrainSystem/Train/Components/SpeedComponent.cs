@@ -165,7 +165,6 @@ namespace AdvancedTrainSystem.Train.Components
 
             // Check if wheel are sparking
             AreWheelSpark = wheelTraction > 5 && Speed > 0.1f || (steamBrakeInput == 0 && baseWheelSpeed > 1.5f);
-            GTA.UI.Screen.ShowSubtitle(wheelTraction.ToString());
 
             // Invoke OnTrainStart
             var absSpeed = Math.Abs(Speed);
