@@ -1,5 +1,6 @@
 ﻿using AdvancedTrainSystem.Data;
 using AdvancedTrainSystem.Extensions;
+using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
 
@@ -27,7 +28,15 @@ namespace AdvancedTrainSystem.Train.Components
         {
             BoilerLightState = BoilerLightState.Next();
         }
-        
+
+        /// <summary>
+        /// <inheritdoc/>
+        /// </summary>
+        public override void Start()
+        {
+            BoilerLightState = (LightState) Entity.Decorator().GetInt(Constants.TrainLightState);
+        }
+
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
@@ -74,6 +83,8 @@ namespace AdvancedTrainSystem.Train.Components
 
             ((Vehicle)Entity).AreLightsOn = lightState;
             ((Vehicle)Entity).AreHighBeamsOn = highBeamState;
+
+            Entity.Decorator().SetInt(Constants.TrainLightState, (int) BoilerLightState);
         }
     }
 }

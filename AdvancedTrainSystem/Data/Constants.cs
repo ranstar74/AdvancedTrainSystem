@@ -38,6 +38,11 @@ namespace AdvancedTrainSystem.Data
         internal const string TrainDirection = "TrainDirection";
 
         /// <summary>
+        /// Current <see cref="LightState"/>.
+        /// </summary>
+        internal const string TrainLightState = "TrainLightState";
+
+        /// <summary>
         /// Registers all decorators. Call it in first frame.
         /// </summary>
         internal static void RegisterDecorators()
@@ -48,6 +53,7 @@ namespace AdvancedTrainSystem.Data
             Decorator.Register(TrainIsCustom, FusionEnums.DecorType.Bool);
             Decorator.Register(TrainGuid, FusionEnums.DecorType.Int);
             Decorator.Register(TrainDirection, FusionEnums.DecorType.Bool);
+            Decorator.Register(TrainLightState, FusionEnums.DecorType.Int);
 
             Decorator.Lock();
         }
