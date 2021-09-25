@@ -156,7 +156,7 @@ namespace AdvancedTrainSystem.Train
                 // Add blip to train
                 if (config.BlipName != "")
                 {
-                    Blip = TrainHead.AddBlip();
+                    Blip = TrainHeadVisible.AddBlip();
                     Blip.Sprite = (BlipSprite)795;
                     Blip.Color = (BlipColor)70;
                     Blip.Name = config.BlipName;
