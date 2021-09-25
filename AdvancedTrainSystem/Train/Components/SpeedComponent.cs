@@ -114,6 +114,7 @@ namespace AdvancedTrainSystem.Train.Components
             float airBrakeInput = Base.BrakeComponent.AirbrakeForce;
             float steamBrakeInput = 1 - Base.BrakeComponent.FullBrakeForce;
             float boilerPressure = Base.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
+            float absoluteSpeed = Math.Abs(Speed);
 
             // Calculate forces
 
@@ -126,11 +127,11 @@ namespace AdvancedTrainSystem.Train.Components
             // Surface resistance force - wet surface increases resistance
             float surfaceResistance = RainPuddleEditor.Level + 1;
 
-            float wheelRatio = (Speed.Remap(0, 40, 40, 0) + 0.01f) / (DriveWheelSpeed + 0.01f);
+            float wheelRatio = (absoluteSpeed.Remap(0, 40, 40, 0) + 0.01f) / (Math.Abs(DriveWheelSpeed) + 0.01f);
             wheelRatio = wheelRatio / (150 * surfaceResistance.Remap(1, 2, 1, 1.3f)) + 1;
 
             // Friction force = 0.2 * speed * difference between wheel and train speed
-            float frictionForce = 0.2f * Speed / 2 * wheelRatio;
+            float frictionForce = 0.2f * absoluteSpeed / 2 * wheelRatio;
 
             // Brake force
             float brakeForce = Speed * airBrakeInput * 2;
@@ -151,24 +152,25 @@ namespace AdvancedTrainSystem.Train.Components
             // Brake multiplier
             float brakeMultiplier = airBrakeInput.Remap(0, 1, 1, 0);
 
+            float totalResistanceForces = dragForce + inerciaForce + frictionForce;
+            if (Speed < 0)
+                totalResistanceForces *= -1;
             // Combine all forces
-            float totalForce = (steamForce * brakeMultiplier * steamBrakeInput) - dragForce + inerciaForce - frictionForce - brakeForce;
+            float totalForce = 
+                (steamForce * brakeMultiplier * steamBrakeInput) - brakeForce - totalResistanceForces;
             totalForce *= AccelerationMultiplier * Game.LastFrameTime;
 
             // We making it non directional because wheel and speed direction doesn't always match
-            float baseWheelSpeed = Math.Abs(Speed);
-
-            DriveWheelSpeed = baseWheelSpeed * wheelTraction * steamBrakeInput * forceDirection;
+            DriveWheelSpeed = absoluteSpeed * wheelTraction * steamBrakeInput * forceDirection;
 
             // Check if train is accelerating
             IsTrainAccelerating = Math.Abs(steamForce) > 0;
 
             // Check if wheel are sparking
-            AreWheelSpark = wheelTraction > 5 && Speed > 0.1f || (steamBrakeInput == 0 && baseWheelSpeed > 1.5f);
+            AreWheelSpark = wheelTraction > 5 && absoluteSpeed > 0.1f || (steamBrakeInput == 0 && absoluteSpeed > 1.5f);
 
             // Invoke OnTrainStart
-            var absSpeed = Math.Abs(Speed);
-            if (absSpeed > 0.3f && absSpeed < 4f && IsTrainAccelerating)
+            if (absoluteSpeed > 0.3f && absoluteSpeed < 4f && IsTrainAccelerating)
             {
                 if (!_onTrainStartInvoked)
                 {
@@ -187,7 +189,8 @@ namespace AdvancedTrainSystem.Train.Components
             //    $"I: {inerciaForce.ToString("0.00")} " +
             //    $"S: {steamForce.ToString("0.00")} " +
             //    $"T: {totalForce.ToString("0.00")} " +
-            //    $"FD: {forceDirection}");
+            //    $"FD: {forceDirection}" + 
+            //    $"TR: {totalResistanceForces}");
 
             LastForces = totalForce; 
             return totalForce;
