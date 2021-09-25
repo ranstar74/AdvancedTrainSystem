@@ -79,10 +79,6 @@ namespace AdvancedTrainSystem.Train.Components
             {
                 var carriage = Base.Carriages[i];
 
-                // Disable invisible vehicle collision first and then detach
-                // visible model, otherwise they will collide with eachother
-                carriage.InvisibleVehicle.IsCollisionEnabled = false;
-
                 // TODO: Make player fly like out of cars in gta 4
                 // Throw player out of train
                 if (Game.Player.Character.IsInVehicle(carriage.InvisibleVehicle))
@@ -100,6 +96,9 @@ namespace AdvancedTrainSystem.Train.Components
                 // Detach visible vehicle from invisible one and re-apply velocity
                 carriage.VisibleVehicle.Detach();
                 carriage.VisibleVehicle.Velocity = carriage.CustomTrain.TrainHead.Velocity;
+
+                // Delete invisible model as its not longer needed
+                carriage.InvisibleVehicle.Delete();
             }
 
             var trainHead = Base.TrainHeadVisible;

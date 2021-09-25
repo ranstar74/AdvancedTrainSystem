@@ -33,6 +33,8 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void OnTick()
         {
+            // TODO: Add support for other carriages lights
+
             ((Vehicle)Entity).IsEngineRunning = IsDynamoWorking;
             ProcessBoilerLight();
         }

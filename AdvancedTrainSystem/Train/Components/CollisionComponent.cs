@@ -121,7 +121,7 @@ namespace AdvancedTrainSystem.Train.Components
                     float energy = mass * speedDifference;
 
                     // Derail if energy is high, otherwise push
-                    if (energy > 700000)
+                    if (energy > 500000)
                     {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
                     }
@@ -138,6 +138,11 @@ namespace AdvancedTrainSystem.Train.Components
                         // We check which train have bigger acceleration in current frame to detect which one is phushing
                         // When pushing train starts braking it decelerates very fast its LastFrameAcceleration will be bigger than
                         // LastFrameAcceleration of another train.
+                        
+                        //if(Base.IsPlayerDriving)
+                        //    if (Base.IsPlayerDriving)
+                        //        GTA.UI.Screen.ShowSubtitle($"{Base.SpeedComponent.LastForces} {closestCustomTrain.SpeedComponent.LastForces}");
+
                         if (Base.SpeedComponent.LastFrameAcceleration > closestCustomTrain.SpeedComponent.LastFrameAcceleration)
                         {
                             var train = closestCustomTrain;
@@ -155,13 +160,12 @@ namespace AdvancedTrainSystem.Train.Components
 
                                 var force = s1 - ((s1 + s2) / 2);
                                 //if (force > 0)
-                                Base.SpeedComponent.ApplyForce(-force);
-                                
+                                    Base.SpeedComponent.ApplyForce(-force);
+
                                 var force2 = s2 - ((s2 + s1) / 2);
                                 //if (force2 < 0)
-                                train.SpeedComponent.ApplyForce(-force2);
+                                    train.SpeedComponent.ApplyForce(-force2);
 
-                                //GTA.UI.Screen.ShowSubtitle($"F1 {force:0.00} F2 {force2:0.00}");
                                 //Debug.Log(this, Base.Guid, s1, s2, force);
                             }
                         }
