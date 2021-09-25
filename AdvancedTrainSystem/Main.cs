@@ -11,6 +11,8 @@ namespace AdvancedTrainSystem
     /// </summary>
     public class Main : Script
     {
+        private Version Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+
         private bool _firstTick = true;
 
         /// <summary>
@@ -18,6 +20,9 @@ namespace AdvancedTrainSystem
         /// </summary>
         public Main()
         {
+            DateTime buildDate = new DateTime(2000, 1, 1).AddDays(Version.Build).AddSeconds(Version.Revision * 2);
+            System.IO.File.AppendAllText($"./ScriptHookVDotNet.log", $"AdvancedTrainSystem - {Version} ({buildDate})" + Environment.NewLine);
+
             Tick += OnTick;
             KeyDown += OnKeyDown;
             Aborted += MainAborted;
