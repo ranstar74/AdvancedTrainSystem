@@ -24,7 +24,7 @@ namespace AdvancedTrainSystem.Train.Components
         /// <summary>
         /// Absolute value of speed difference between this frame and last frame.
         /// </summary>
-        public float LastFrameAcceleration => Math.Abs(Speed - _prevSpeed);
+        public float LastFrameAcceleration => Speed - _prevSpeed;
 
         /// <summary>
         /// Previous frame <see cref="Speed"/>.
@@ -71,6 +71,8 @@ namespace AdvancedTrainSystem.Train.Components
         /// Last forces that were applied on train.
         /// </summary>
         public float LastForces { get; private set; }
+
+        public float _previousLastForces { get; set; }
 
         /// <summary>
         /// <inheritdoc/>
@@ -192,6 +194,7 @@ namespace AdvancedTrainSystem.Train.Components
             //    $"FD: {forceDirection}" + 
             //    $"TR: {totalResistanceForces}");
 
+            _previousLastForces = LastForces;
             LastForces = totalForce; 
             return totalForce;
         }

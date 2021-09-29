@@ -2,6 +2,7 @@
 using AdvancedTrainSystem.Extensions;
 using FusionLibrary.Extensions;
 using GTA;
+using GTA.Math;
 using RageComponent;
 
 namespace AdvancedTrainSystem.Train.Components
@@ -11,11 +12,21 @@ namespace AdvancedTrainSystem.Train.Components
     /// </summary>
     public class DynamoComponent : Component<CustomTrain>
     {
+        private LightState _boilerLightState = LightState.Disabled;
         /// <summary>
         /// Current state of boiler light.
         /// </summary>
-        public LightState BoilerLightState { get; set; } = LightState.Disabled;
+        public LightState BoilerLightState
+        {
+            get => _boilerLightState;
+            set
+            {
+                _boilerLightState = value;
+                ProcessBoilerLight();
+            }
+        }
 
+        private bool _prevIsDynamoWorking;
         /// <summary>
         /// Whether dynamo generator is currently on or not.
         /// </summary>
@@ -34,7 +45,12 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void Start()
         {
-            BoilerLightState = (LightState) Entity.Decorator().GetInt(Constants.TrainLightState);
+            for (int i = 0; i < Base.Carriages.Count; i++)
+            {
+                Base.Carriages[i].VisibleVehicle.SetPlayerLights(true);
+            }
+
+            BoilerLightState = (LightState)Entity.Decorator().GetInt(Constants.TrainLightState);
         }
 
         /// <summary>
@@ -42,10 +58,10 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override void OnTick()
         {
-            // TODO: Add support for other carriages lights
+            if(IsDynamoWorking != _prevIsDynamoWorking)
+                ProcessBoilerLight();
 
-            ((Vehicle)Entity).IsEngineRunning = IsDynamoWorking;
-            ProcessBoilerLight();
+            _prevIsDynamoWorking = IsDynamoWorking;
         }
 
         /// <summary>
@@ -80,9 +96,18 @@ namespace AdvancedTrainSystem.Train.Components
                         }
                 }
             }
+            // TODO: Fix lights not working for tender
+            for (int i = 0; i < Base.Carriages.Count; i++)
+            {
+                var carriage = Base.Carriages[i].VisibleVehicle;
 
-            ((Vehicle)Entity).AreLightsOn = lightState;
-            ((Vehicle)Entity).AreHighBeamsOn = highBeamState;
+                carriage.AreLightsOn = lightState;
+                carriage.AreHighBeamsOn = highBeamState;
+                carriage.IsEngineRunning = IsDynamoWorking;
+
+                if (carriage != Base.TrainHeadVisible)
+                    carriage.SetLightsBrightness(lightState ? 1 : 0);
+            }
 
             Entity.Decorator().SetInt(Constants.TrainLightState, (int) BoilerLightState);
         }

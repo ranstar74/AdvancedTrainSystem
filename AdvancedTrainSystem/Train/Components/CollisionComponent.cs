@@ -33,7 +33,7 @@ namespace AdvancedTrainSystem.Train.Components
         /// <summary>
         /// Invokes on couple.
         /// </summary>
-        public OnCouple OnCouple {  get; set; }
+        public OnCouple OnCouple { get; set; }
 
         /// <summary>
         /// Next closest vehicles list update time.
@@ -121,7 +121,7 @@ namespace AdvancedTrainSystem.Train.Components
                     float energy = mass * speedDifference;
 
                     // Derail if energy is high, otherwise push
-                    if (energy > 500000)
+                    if (energy > 350000)
                     {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
                     }
@@ -131,44 +131,30 @@ namespace AdvancedTrainSystem.Train.Components
                         if (!isClosestVehicleCustomTrain)
                             continue;
 
-                        // Pushing train (without coupling)
+                        var train = closestCustomTrain;
+                        var s1 = Base.Speed;
+                        var s2 = train.Speed;
 
-                        // FIX: PUSH RELEASE IN REVERSE DOESN'T WORK
+                        var s1Dir = Base.Direction ? s1 : s1 * -1;
+                        var s2Dir = train.Direction ? s2 : s2 * -1;
 
-                        // We check which train have bigger acceleration in current frame to detect which one is phushing
-                        // When pushing train starts braking it decelerates very fast its LastFrameAcceleration will be bigger than
-                        // LastFrameAcceleration of another train.
-                        
-                        //if(Base.IsPlayerDriving)
-                        //    if (Base.IsPlayerDriving)
-                        //        GTA.UI.Screen.ShowSubtitle($"{Base.SpeedComponent.LastForces} {closestCustomTrain.SpeedComponent.LastForces}");
+                        // Velocity of colliding object is:
+                        // (M1 * V1 + M2 * V2) / M1 + M2
 
-                        if (Base.SpeedComponent.LastFrameAcceleration > closestCustomTrain.SpeedComponent.LastFrameAcceleration)
-                        {
-                            var train = closestCustomTrain;
-                            var s1 = Base.Speed;
-                            var s2 = train.Speed;
+                        // TODO: Take mass of all carriages into account
+                        // For now we'd assume that mass of train is 1
 
-                            // Check if they're moving in the same direction
-                            if (s1 * s2 >= 0)
-                            {
-                                // Velocity of colliding object is:
-                                // (M1 * V1 + M2 * V2) / M1 + M2
+                        // Force on this train
+                        var force = s1Dir - ((s1Dir + s2Dir) / 2);
+                        if (!Base.Direction)
+                            force *= -1;
+                        Base.SpeedComponent.ApplyForce(-force);
 
-                                // TODO: Take mass of all carriages into account
-                                // For now we'd assume that mass of train is 1
-
-                                var force = s1 - ((s1 + s2) / 2);
-                                //if (force > 0)
-                                    Base.SpeedComponent.ApplyForce(-force);
-
-                                var force2 = s2 - ((s2 + s1) / 2);
-                                //if (force2 < 0)
-                                    train.SpeedComponent.ApplyForce(-force2);
-
-                                //Debug.Log(this, Base.Guid, s1, s2, force);
-                            }
-                        }
+                        // Force on others train
+                        var force2 = s2Dir - ((s2Dir + s1Dir) / 2);
+                        if (!train.Direction)
+                            force2 *= -1;
+                        train.SpeedComponent.ApplyForce(-force2);
                     }
                 }
             }
@@ -182,7 +168,7 @@ namespace AdvancedTrainSystem.Train.Components
             // There's no point to update closest vehicles every tick
             // cuz its makes big performance impact + theres no way
             // to vehicle to appear in 120m radius and collide with train within 250ms
-            if(_closestVehiclesUpdateTime < Game.GameTime)
+            if (_closestVehiclesUpdateTime < Game.GameTime)
             {
                 _closestVehicles.Clear();
                 var closestVehicles = World.GetNearbyVehicles(Entity.Position, 120);

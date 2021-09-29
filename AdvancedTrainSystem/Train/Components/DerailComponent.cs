@@ -98,7 +98,8 @@ namespace AdvancedTrainSystem.Train.Components
                 carriage.VisibleVehicle.Velocity = carriage.CustomTrain.TrainHead.Velocity;
 
                 // Delete invisible model as its not longer needed
-                carriage.InvisibleVehicle.Delete();
+                carriage.InvisibleVehicle.IsCollisionEnabled = false;
+                //carriage.InvisibleVehicle.Delete();
             }
 
             var trainHead = Base.TrainHeadVisible;
