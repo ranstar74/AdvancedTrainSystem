@@ -9,6 +9,7 @@ using GTA.Native;
 using RageComponent;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Train
 {
@@ -26,6 +27,11 @@ namespace AdvancedTrainSystem.Train
         /// Head (in most cases - locomotive) of the train.
         /// </summary>
         public readonly Vehicle TrainHead;
+
+        /// <summary>
+        /// Last carriage of the train.
+        /// </summary>
+        public readonly Vehicle TrainEnd;
 
         /// <summary>
         /// Whether player is driving this train or not.
@@ -149,6 +155,7 @@ namespace AdvancedTrainSystem.Train
 
                 carriage.CustomTrain = this;
             }
+            TrainEnd = carriages.Last().InvisibleVehicle;
 
             // For new trains
             if (config != null)

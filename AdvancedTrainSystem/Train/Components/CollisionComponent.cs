@@ -6,6 +6,7 @@ using GTA.Math;
 using RageComponent;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Train.Components
 {
@@ -49,6 +50,7 @@ namespace AdvancedTrainSystem.Train.Components
             ProcessCollision();
         }
 
+        private float _previousIntersection = 0;
         /// <summary>
         /// Gets various collision information.
         /// </summary>
@@ -121,7 +123,7 @@ namespace AdvancedTrainSystem.Train.Components
                     float energy = mass * speedDifference;
 
                     // Derail if energy is high, otherwise push
-                    if (energy > 350000)
+                    if (energy > 999350000)
                     {
                         OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
                     }
@@ -155,6 +157,22 @@ namespace AdvancedTrainSystem.Train.Components
                         if (!train.Direction)
                             force2 *= -1;
                         train.SpeedComponent.ApplyForce(-force2);
+
+                        // Detect intersection distance
+                        var distances = new List<float>()
+                            {
+                            Base.TrainHead.FrontPosition.DistanceToSquared(train.TrainHead.FrontPosition),
+                            Base.TrainHead.FrontPosition.DistanceToSquared(train.TrainEnd.RearPosition),
+                            Base.TrainEnd.RearPosition.DistanceToSquared(train.TrainHead.FrontPosition),
+                            Base.TrainEnd.RearPosition.DistanceToSquared(train.TrainEnd.RearPosition),
+                            };
+                        var intersection = (float)Math.Sqrt(distances.Min());
+
+                        if(Base.IsPlayerDriving)
+                            GTA.UI.Screen.ShowSubtitle(intersection.ToString());
+                        //Base.SpeedComponent.ApplyForce(intersection < _previousIntersection ? intersection : -intersection);
+
+                        _previousIntersection = intersection;
                     }
                 }
             }
