@@ -22,9 +22,14 @@ namespace AdvancedTrainSystem.Train.Components
         public float Speed { get; private set; }
 
         /// <summary>
+        /// Absolute speed of the train.
+        /// </summary>
+        public float AbsoluteSpeed {  get; private set; }
+
+        /// <summary>
         /// Absolute value of speed difference between this frame and last frame.
         /// </summary>
-        public float LastFrameAcceleration => Speed - _prevSpeed;
+        public float LastFrameAcceleration => Math.Abs(Speed - _prevSpeed);
 
         /// <summary>
         /// Previous frame <see cref="Speed"/>.
@@ -72,7 +77,10 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public float LastForces { get; private set; }
 
-        public float _previousLastForces { get; set; }
+        /// <summary>
+        /// <see cref="LastForces"/> of previous frame.
+        /// </summary>
+        public float PreviousLastForces { get; set; }
 
         /// <summary>
         /// <inheritdoc/>
@@ -110,13 +118,13 @@ namespace AdvancedTrainSystem.Train.Components
             // TODO: Take uphill/downhill into account
 
             // Acceleration = (v1 - v2) / t
-            float acceleration = (Speed - _prevSpeed) * Game.LastFrameTime;
+            float acceleration = LastFrameAcceleration * Game.LastFrameTime;
 
             float velocty = Entity.Velocity.Length();
             float airBrakeInput = Base.BrakeComponent.AirbrakeForce;
             float steamBrakeInput = 1 - Base.BrakeComponent.FullBrakeForce;
             float boilerPressure = Base.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
-            float absoluteSpeed = Math.Abs(Speed);
+            AbsoluteSpeed = Math.Abs(Speed);
 
             // Calculate forces
 
@@ -129,11 +137,11 @@ namespace AdvancedTrainSystem.Train.Components
             // Surface resistance force - wet surface increases resistance
             float surfaceResistance = RainPuddleEditor.Level + 1;
 
-            float wheelRatio = (absoluteSpeed.Remap(0, 40, 40, 0) + 0.01f) / (Math.Abs(DriveWheelSpeed) + 0.01f);
+            float wheelRatio = (AbsoluteSpeed.Remap(0, 40, 40, 0) + 0.01f) / (Math.Abs(DriveWheelSpeed) + 0.01f);
             wheelRatio = wheelRatio / (150 * surfaceResistance.Remap(1, 2, 1, 1.3f)) + 1;
 
             // Friction force = 0.2 * speed * difference between wheel and train speed
-            float frictionForce = 0.2f * absoluteSpeed / 2 * wheelRatio;
+            float frictionForce = 0.2f * AbsoluteSpeed / 2 * wheelRatio;
 
             // Brake force
             float brakeForce = Speed * airBrakeInput * 2;
@@ -163,16 +171,26 @@ namespace AdvancedTrainSystem.Train.Components
             totalForce *= AccelerationMultiplier * Game.LastFrameTime;
 
             // We making it non directional because wheel and speed direction doesn't always match
-            DriveWheelSpeed = absoluteSpeed * wheelTraction * steamBrakeInput * forceDirection;
+            var driveWheelSpeed = AbsoluteSpeed * wheelTraction * steamBrakeInput * forceDirection;
+
+            // For some reason TrainSetSpeed function cut any speed below about 0.15,
+            // we don't want wheels to spin when train is still
+            // Its probably was implemented as "hack" to stop train
+            if (AbsoluteSpeed < 0.15f)
+                driveWheelSpeed = 0;
+
+            DriveWheelSpeed = driveWheelSpeed;
+
+            GTA.UI.Screen.ShowSubtitle($"S {Speed} AS {AbsoluteSpeed} WT {wheelTraction} DS {DriveWheelSpeed}");
 
             // Check if train is accelerating
             IsTrainAccelerating = Math.Abs(steamForce) > 0;
 
             // Check if wheel are sparking
-            AreWheelSpark = wheelTraction > 5 && absoluteSpeed > 0.1f || (steamBrakeInput == 0 && absoluteSpeed > 1.5f);
+            AreWheelSpark = wheelTraction > 5 && AbsoluteSpeed > 0.1f || (steamBrakeInput == 0 && AbsoluteSpeed > 1.5f);
 
             // Invoke OnTrainStart
-            if (absoluteSpeed > 0.3f && absoluteSpeed < 4f && IsTrainAccelerating)
+            if (AbsoluteSpeed > 0.3f && AbsoluteSpeed < 4f && IsTrainAccelerating)
             {
                 if (!_onTrainStartInvoked)
                 {
@@ -194,7 +212,7 @@ namespace AdvancedTrainSystem.Train.Components
             //    $"FD: {forceDirection}" + 
             //    $"TR: {totalResistanceForces}");
 
-            _previousLastForces = LastForces;
+            PreviousLastForces = LastForces;
             LastForces = totalForce; 
             return totalForce;
         }
