@@ -1,6 +1,8 @@
 ﻿using AdvancedTrainSystem.Data;
 using FusionLibrary;
 using GTA;
+using GTA.Math;
+using GTA.Native;
 using System;
 using System.Windows.Forms;
 
@@ -35,10 +37,30 @@ namespace AdvancedTrainSystem
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if(e.KeyCode == Keys.E)
-            {
-                
-            }
+            //if(e.KeyCode == Keys.E)
+            //{
+            //    var shovel = new CustomModel("prop_ld_shovel");
+            //    shovel.Request();
+
+            //    var prop = World.CreateProp(shovel, Game.Player.Character.Position, true, true);
+
+            //    //prop.AttachTo(Game.Player.Character, Game.Player.Character.Bones[Bone.PHRightHand].RelativePosition, Vector3.Zero);
+            //    Function.Call(Hash.ATTACH_ENTITY_TO_ENTITY,
+            //        prop, Game.Player.Character,
+            //        Game.Player.Character.Bones[Bone.PHRightHand].Index, 0f, 0f, 0f, 0f, 0f, 0f, false, false, false, false, 2, true);
+
+            //    Game.Player.Character.Task.PlayAnimation("random@burial", "a_burial", 1, 5000, AnimationFlags.Loop);
+            //    //Game.Player.Character.Position = new GTA.Math.Vector3(154.92f, 6841.12f, 19.14f);
+            //}
+            //if(e.KeyCode == Keys.Y)
+            //{
+            //    Game.Player.Character.Task.PlayAnimation("random@burial", "a_burial_stop");
+            //}
+            //if(e.KeyCode == Keys.H)
+            //{
+            //    var duration = Function.Call<float>(Hash.GET_ANIM_DURATION, "random@burial", "a_burial");
+            //    Function.Call(Hash.SET_ENTITY_ANIM_CURRENT_TIME, Game.Player.Character, "random@burial", "a_burial", duration / 2);
+            //}
         }
 
         private void OnTick(object sender, EventArgs e)

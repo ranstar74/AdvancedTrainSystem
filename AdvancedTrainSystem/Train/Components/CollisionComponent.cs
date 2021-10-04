@@ -130,7 +130,7 @@ namespace AdvancedTrainSystem.Train.Components
                     // Derail if energy is high, otherwise push
 
                     // Use direction-less speed for trains and regular for vehicles
-                    float othersVehicleSpeed = 
+                    float othersVehicleSpeed =
                         isClosestVehicleCustomTrain ? closestCustomTrain.SpeedComponent.TrackSpeed : closestVehicle.Speed;
                     if (CalculateKineticEnergy(othersVehicleSpeed, closestVehicle) > 150000)
                     {
