@@ -84,6 +84,7 @@
     <Compile Include="Extensions\EntityExtensions.cs" />
     <Compile Include="Extensions\EnumExtensions.cs" />
     <Compile Include="Natives\NVehicle.cs" />
+    <Compile Include="Physics\TrainCollisionSolver.cs" />
     <Compile Include="Train\Carriage.cs" />
     <Compile Include="Train\Components\BoilerComponent.cs" />
     <Compile Include="Train\Components\BrakeComponent.cs" />

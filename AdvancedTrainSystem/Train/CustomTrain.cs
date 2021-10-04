@@ -29,6 +29,11 @@ namespace AdvancedTrainSystem.Train
         public readonly Vehicle TrainHead;
 
         /// <summary>
+        /// Train used by player. If theres no, it will return null.
+        /// </summary>
+        public static CustomTrain ActiveTrain => throw new NotImplementedException();
+
+        /// <summary>
         /// Last carriage of the train.
         /// </summary>
         public readonly Vehicle TrainEnd;
@@ -48,19 +53,10 @@ namespace AdvancedTrainSystem.Train
         /// </summary>
         public readonly List<Carriage> Carriages;
         
-        private float _speed;
         /// <summary>
         /// Speed of this train in m/s.
         /// </summary>
-        public float Speed
-        {
-            get => _speed;
-            set
-            {
-                _speed = value;
-                TrainHead.SetTrainSpeed(_speed);
-            }
-        }
+        public float Speed => SpeedComponent.Speed;
 
         /// <summary>
         /// Unique identificator of this train.
@@ -384,5 +380,17 @@ namespace AdvancedTrainSystem.Train
                 carriage.InvisibleVehicle.Delete();
             }
         }
+
+        /// <summary>
+        /// Implicitely casts <see cref="CustomTrain"/> to <see cref="Entity"/>.
+        /// </summary>
+        /// <param name="customTrain"></param>
+        public static implicit operator Entity(CustomTrain customTrain) => customTrain.TrainHead;
+
+        /// <summary>
+        /// Implicitely casts <see cref="CustomTrain"/> to <see cref="Vehicle"/>.
+        /// </summary>
+        /// <param name="customTrain"></param>
+        public static implicit operator Vehicle(CustomTrain customTrain) => customTrain.TrainHead;
     }
 }
