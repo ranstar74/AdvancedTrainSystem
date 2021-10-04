@@ -1,7 +1,6 @@
 ﻿using AdvancedTrainSystem.Data;
 using FusionLibrary;
 using GTA;
-using GTA.NaturalMotion;
 using System;
 using System.Windows.Forms;
 
@@ -38,7 +37,7 @@ namespace AdvancedTrainSystem
         {
             if(e.KeyCode == Keys.E)
             {
-
+                
             }
         }
 

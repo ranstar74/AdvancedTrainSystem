@@ -19,21 +19,14 @@ namespace AdvancedTrainSystem.Data
         public readonly Vehicle CollidingVehicle;
 
         /// <summary>
-        /// Speed difference between <see cref="Carriage"/> and <see cref="CollidingVehicle"/>.
-        /// </summary>
-        public readonly float SpeedDifference;
-
-        /// <summary>
         /// Constructs new instance of <see cref="CollisionInfo"/>.
         /// </summary>
         /// <param name="carriage"></param>
         /// <param name="collidingVehicle"></param>
-        /// <param name="speedDifference"></param>
-        public CollisionInfo(Carriage carriage, Vehicle collidingVehicle, float speedDifference)
+        public CollisionInfo(Carriage carriage, Vehicle collidingVehicle)
         {
             Carriage = carriage;
             CollidingVehicle = collidingVehicle;
-            SpeedDifference = speedDifference;
         }
     }
 }

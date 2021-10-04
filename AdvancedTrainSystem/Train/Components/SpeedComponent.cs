@@ -1,8 +1,10 @@
-﻿using FusionLibrary;
+﻿using AdvancedTrainSystem.Physics;
+using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
 using System;
+using System.Collections.Generic;
 
 namespace AdvancedTrainSystem.Train.Components
 {
@@ -16,10 +18,35 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public override Entity Entity { get; set; }
 
+        private float _speed;
         /// <summary>
         /// Speed of the train.
         /// </summary>
-        public float Speed { get; private set; }
+        public float Speed
+        {
+            get => _speed;
+            set
+            {
+                _speed = value;
+                Base.TrainHead.SetTrainCruiseSpeed(_speed);
+            }
+        }
+
+        /// <summary>
+        /// Track speed is not depends on train direction. 
+        /// Can be used if u want to move two trains with different direction with same direction.
+        /// </summary>
+        public float TrackSpeed
+        {
+            get => Base.Direction ? Speed : -Speed;
+            set
+            {
+                if (Base.Direction)
+                    Speed = value;
+                else
+                    Speed = -value;
+            }
+        }
 
         /// <summary>
         /// Absolute speed of the train.
@@ -29,12 +56,17 @@ namespace AdvancedTrainSystem.Train.Components
         /// <summary>
         /// Absolute value of speed difference between this frame and last frame.
         /// </summary>
-        public float LastFrameAcceleration => Math.Abs(Speed - _prevSpeed);
+        public float AbsoluteLastFrameAcceleration { get; private set; }
+
+        /// <summary>
+        /// Speed difference between this frame and last frame.
+        /// </summary>
+        public float LastFrameAcceleration { get; private set; }
 
         /// <summary>
         /// Previous frame <see cref="Speed"/>.
         /// </summary>
-        private float _prevSpeed;
+        public float PreviousSpeed;
 
         /// <summary>
         /// How much throttle is opened. 0 is closed, 1 is fully opened.
@@ -82,6 +114,8 @@ namespace AdvancedTrainSystem.Train.Components
         /// </summary>
         public float PreviousLastForces { get; set; }
 
+        private readonly List<(float, int)> _movingPool = new List<(float, int)>();
+
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
@@ -102,11 +136,40 @@ namespace AdvancedTrainSystem.Train.Components
                 return;
             }
 
+            ProcessMove();
+
+            PreviousSpeed = Speed;
+
             Speed += CalculateForces();
 
-            // Set speed
-            _prevSpeed = Base.Speed;
-            Base.Speed = Speed;
+            AbsoluteSpeed = Math.Abs(Speed);
+            LastFrameAcceleration = Speed - PreviousSpeed;
+            AbsoluteLastFrameAcceleration = Math.Abs(LastFrameAcceleration);
+
+            TrainCollisionSolver.Update();
+        }
+
+        /// <summary>
+        /// Processes all pending move actions of <see cref="Move(float)"/>
+        /// </summary>
+        private void ProcessMove()
+        {
+            var movingPoolToRemove = new List<(float, int)>();
+            for (int i = 0; i < _movingPool.Count; i++)
+            {
+                (float distance, int tick) = _movingPool[i];
+
+                if (tick == Game.FrameCount)
+                    continue;
+
+                Speed -= distance;
+                movingPoolToRemove.Add((distance, tick));
+            }
+
+            for (int i = 0; i < movingPoolToRemove.Count; i++)
+            {
+                _movingPool.Remove(movingPoolToRemove[i]);
+            }
         }
 
         /// <summary>
@@ -118,13 +181,12 @@ namespace AdvancedTrainSystem.Train.Components
             // TODO: Take uphill/downhill into account
 
             // Acceleration = (v1 - v2) / t
-            float acceleration = LastFrameAcceleration * Game.LastFrameTime;
+            float acceleration = AbsoluteLastFrameAcceleration * Game.LastFrameTime;
 
             float velocty = Entity.Velocity.Length();
             float airBrakeInput = Base.BrakeComponent.AirbrakeForce;
             float steamBrakeInput = 1 - Base.BrakeComponent.FullBrakeForce;
             float boilerPressure = Base.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
-            AbsoluteSpeed = Math.Abs(Speed);
 
             // Calculate forces
 
@@ -181,7 +243,7 @@ namespace AdvancedTrainSystem.Train.Components
 
             DriveWheelSpeed = driveWheelSpeed;
 
-            GTA.UI.Screen.ShowSubtitle($"S {Speed} AS {AbsoluteSpeed} WT {wheelTraction} DS {DriveWheelSpeed}");
+            //GTA.UI.Screen.ShowSubtitle($"S {Speed} AS {AbsoluteSpeed} WT {wheelTraction} DS {DriveWheelSpeed}");
 
             // Check if train is accelerating
             IsTrainAccelerating = Math.Abs(steamForce) > 0;
@@ -223,6 +285,27 @@ namespace AdvancedTrainSystem.Train.Components
         public void ApplyForce(float force)
         {
             Speed += force;
+        }
+
+        /// <summary>
+        /// Applies some external force on train on track speed.
+        /// </summary>
+        public void ApplyTrackForce(float force)
+        {
+            TrackSpeed += force;
+        }
+
+        /// <summary>
+        /// Moves train on specified distance.
+        /// Please note that this function doesn't have any interpolation, it works as teleport.
+        /// </summary>
+        /// <param name="distance">Distance in meters.</param>
+        public void Move(float distance)
+        {
+            distance *= Game.FPS;
+
+            Speed += distance;
+            _movingPool.Add((distance, Game.FrameCount));
         }
     }
 }

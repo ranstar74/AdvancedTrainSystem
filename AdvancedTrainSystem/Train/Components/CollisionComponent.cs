@@ -1,12 +1,12 @@
 ﻿using AdvancedTrainSystem.Data;
 using AdvancedTrainSystem.Extensions;
+using AdvancedTrainSystem.Physics;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
 using RageComponent;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace AdvancedTrainSystem.Train.Components
 {
@@ -50,7 +50,6 @@ namespace AdvancedTrainSystem.Train.Components
             ProcessCollision();
         }
 
-        private float _previousIntersection = 0;
         /// <summary>
         /// Gets various collision information.
         /// </summary>
@@ -104,6 +103,7 @@ namespace AdvancedTrainSystem.Train.Components
                             collidedEntitySpeed = closestCustomTrain.Speed;
                             hasCarriageCollided = true;
                         }
+
                     }
 
                     // Check for collision with vehicle
@@ -115,67 +115,42 @@ namespace AdvancedTrainSystem.Train.Components
 
                     // Don't process collision if carriage didn't collided
                     if (!hasCarriageCollided)
-                        continue;
+                    {
+                        //if(isClosestVehicleCustomTrain)
+                        //    TrainCollisionSolver.Remove(Base, closestCustomTrain);
 
-                    // Calculate energy of colliding vehicles
-                    float speedDifference = Math.Abs(collidedEntitySpeed - Base.SpeedComponent.Speed);
-                    float mass = HandlingData.GetByVehicleModel(closestVehicle.Model).Mass;
-                    float energy = mass * speedDifference;
+                        continue;
+                    }
 
                     // Derail if energy is high, otherwise push
-                    if (energy > 999350000)
+                    if (CalculateKineticEnergy(closestVehicle) > 150000)
                     {
-                        OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle, speedDifference));
+                        OnCollision?.Invoke(new CollisionInfo(carriage, closestVehicle));
                     }
                     else
                     {
-                        // Process pushing only for custom trains
-                        if (!isClosestVehicleCustomTrain)
-                            continue;
-
-                        var train = closestCustomTrain;
-                        var s1 = Base.Speed;
-                        var s2 = train.Speed;
-
-                        var s1Dir = Base.Direction ? s1 : s1 * -1;
-                        var s2Dir = train.Direction ? s2 : s2 * -1;
-
-                        // Velocity of colliding object is:
-                        // (M1 * V1 + M2 * V2) / M1 + M2
-
-                        // TODO: Take mass of all carriages into account
-                        // For now we'd assume that mass of train is 1
-
-                        // Force on this train
-                        var force = s1Dir - ((s1Dir + s2Dir) / 2);
-                        if (!Base.Direction)
-                            force *= -1;
-                        Base.SpeedComponent.ApplyForce(-force);
-
-                        // Force on others train
-                        var force2 = s2Dir - ((s2Dir + s1Dir) / 2);
-                        if (!train.Direction)
-                            force2 *= -1;
-                        train.SpeedComponent.ApplyForce(-force2);
-
-                        // Detect intersection distance
-                        var distances = new List<float>()
-                            {
-                            Base.TrainHead.FrontPosition.DistanceToSquared(train.TrainHead.FrontPosition),
-                            Base.TrainHead.FrontPosition.DistanceToSquared(train.TrainEnd.RearPosition),
-                            Base.TrainEnd.RearPosition.DistanceToSquared(train.TrainHead.FrontPosition),
-                            Base.TrainEnd.RearPosition.DistanceToSquared(train.TrainEnd.RearPosition),
-                            };
-                        var intersection = (float)Math.Sqrt(distances.Min());
-
-                        if(Base.IsPlayerDriving)
-                            GTA.UI.Screen.ShowSubtitle(intersection.ToString());
-                        //Base.SpeedComponent.ApplyForce(intersection < _previousIntersection ? intersection : -intersection);
-
-                        _previousIntersection = intersection;
+                        if (isClosestVehicleCustomTrain)
+                        {
+                            if (
+                                Base.TrainHead.IsGoingTorwards(closestCustomTrain))
+                                TrainCollisionSolver.Append(Base, closestCustomTrain);
+                            else
+                                TrainCollisionSolver.Remove(Base, closestCustomTrain);
+                        }
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Calculates energy of collision with other vehicle.
+        /// </summary>
+        /// <param name="collidingEntity">Vehicle this train colliding with.</param>
+        private float CalculateKineticEnergy(Vehicle collidingEntity)
+        {
+            float speedDifference = Math.Abs(collidingEntity.Speed - Base.Speed);
+            float mass = HandlingData.GetByVehicleModel(collidingEntity.Model).Mass;
+            return mass * speedDifference;
         }
 
         /// <summary>
