@@ -368,6 +368,10 @@ namespace AdvancedTrainSystem.Core
         /// <returns></returns>
         private Vehicle GetActiveLocomotiveVehicle()
         {
+            // In case if its called before components got initialize
+            if (Components?.DerailComponent == null)
+                return TrainLocomotive.HiddenVehicle;
+
             return Components.DerailComponent.IsDerailed ? 
                 TrainLocomotive.Vehicle : TrainLocomotive.HiddenVehicle;
         }
