@@ -41,36 +41,23 @@ namespace AdvancedTrainSystem.Core.Components
 
             driving.OnEnter += () =>
             {
-                // Make player transparent cuz cab camera will interference with player model
-                Game.Player.Character.IsVisible = false;
-            };
-            driving.OnLeave += () =>
-            {
-                Game.Player.Character.IsVisible = true;
-
-                World.RenderingCamera = null;
-            };
-
-            // In case if script was reloaded we wan't to
-            // restore cab camera
-            if (Game.Player.Character.IsInAdvancedTrain())
-            {
                 // Restore camera rotation too, cuz otherwise
                 // prevAngle will be 0 and script will think
                 // that train rotate and camera will offset
                 prevTrainAngle = train.Rotation.Z;
-            }
 
-            SetCabCamera();
+                // Setup camera for new train
+                SetCabCamera();
+            };
         }
 
         public override void Update()
         {
-            if (World.RenderingCamera != sCabCamera)
-                return;
-
-            if (FusionUtils.IsCameraInFirstPerson())
+            if (FusionUtils.IsCameraInFirstPerson() && driving.IsControlledByPlayer)
             {
+                // Make player transparent cuz cab camera will interference with player model
+                GPlayer.IsVisible = false;
+
                 if (World.RenderingCamera != sCabCamera)
                     World.RenderingCamera = sCabCamera;
 
@@ -80,8 +67,6 @@ namespace AdvancedTrainSystem.Core.Components
                 // to keep rotation synced with train
 
                 float trainAngle = train.Rotation.Z;
-
-                trainAngle -= prevTrainAngle;
 
                 // Get input from controller and rotate camera
 
@@ -93,7 +78,7 @@ namespace AdvancedTrainSystem.Core.Components
                 cabCameraYAxis = cabCameraYAxis.Clamp(-80, 80);
 
                 var newRotation = sCabCamera.Rotation;
-                newRotation.Z -= inputX - trainAngle;
+                newRotation.Z -= inputX - (trainAngle - prevTrainAngle);
                 newRotation.X = cabCameraYAxis;
 
                 sCabCamera.Rotation = newRotation;
@@ -102,10 +87,11 @@ namespace AdvancedTrainSystem.Core.Components
             }
             else
             {
-                Game.Player.Character.IsVisible = true;
-
                 if (World.RenderingCamera == sCabCamera)
+                {
+                    GPlayer.IsVisible = true;
                     World.RenderingCamera = null;
+                }
             }
         }
 
@@ -114,7 +100,7 @@ namespace AdvancedTrainSystem.Core.Components
             if (World.RenderingCamera == sCabCamera)
                 World.RenderingCamera = null;
 
-            Game.Player.Character.IsVisible = true;
+            GPlayer.IsVisible = true;
         }
 
         private void SetCabCamera()
@@ -125,6 +111,8 @@ namespace AdvancedTrainSystem.Core.Components
             Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
                 .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
             sCabCamera.AttachTo(train, cameraPos);
+
+            // FIXME: Align doesn't work if player gets in and out
 
             // Align camera direction with train direction
             sCabCamera.Direction = train.Quaternion * Vector3.RelativeFront;
