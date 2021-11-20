@@ -41,13 +41,21 @@ namespace AdvancedTrainSystem.Core.Components
         public override void Start()
         {
             enterInput.OnControlPressed = OnEnterVehiclePressed;
+
+            // Restore enter after reload
+            if (GPlayer.CurrentVehicle == train.TrainLocomotive.HiddenVehicle)
+                EnterEvents();
         }
 
         public override void Update()
         {
             // In case if player exits train some other way
             if (isPlayerDriving && GPlayer.CurrentVehicle != train.TrainLocomotive.HiddenVehicle)
-                LeaveEvents();
+            {
+                // To prevent fake alarm
+                if(enterDelay < Game.GameTime)
+                    LeaveEvents();
+            }
         }
 
         private void OnEnterVehiclePressed()
