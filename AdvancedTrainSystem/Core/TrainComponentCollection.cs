@@ -24,6 +24,16 @@ namespace AdvancedTrainSystem.Core
         public DerailComponent DerailComponent;
 
         /// <summary>
+        /// Defines behaviour of train cab camera.
+        /// </summary>
+        public CameraComponent CameraComponent;
+
+        /// <summary>
+        /// Defines base enter / leave train actions.
+        /// </summary>
+        public DrivingComponent DrivingComponent;
+
+        /// <summary>
         /// Creates a new instance of <see cref="TrainComponentCollection"/>.
         /// </summary>
         public TrainComponentCollection(Train train) : base(train)
@@ -31,6 +41,8 @@ namespace AdvancedTrainSystem.Core
             PhysxComponent = Create<PhysxComponent>();
             CollisionComponent = Create<CollisionComponent>();
             DerailComponent = Create<DerailComponent>();
+            CameraComponent = Create<CameraComponent>();
+            DrivingComponent = Create<DrivingComponent>();
 
             OnStart();
         }

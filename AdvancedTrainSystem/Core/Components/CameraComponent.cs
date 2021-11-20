@@ -33,8 +33,6 @@ namespace AdvancedTrainSystem.Core.Components
         public CameraComponent(ComponentCollection components) : base(components)
         {
             train = GetParent<Train>();
-
-            SetCabCamera();
         }
 
         public override void Start()
@@ -61,9 +59,9 @@ namespace AdvancedTrainSystem.Core.Components
                 // prevAngle will be 0 and script will think
                 // that train rotate and camera will offset
                 prevTrainAngle = train.Rotation.Z;
-
-                SetCabCamera();
             }
+
+            SetCabCamera();
         }
 
         public override void Update()
@@ -73,6 +71,9 @@ namespace AdvancedTrainSystem.Core.Components
 
             if (FusionUtils.IsCameraInFirstPerson())
             {
+                if (World.RenderingCamera != sCabCamera)
+                    World.RenderingCamera = sCabCamera;
+
                 // When train moves and rotates, camera moves with it
                 // but rotation remains unchanged. So we have to
                 // calculate on how much train rotated this frame
@@ -114,8 +115,6 @@ namespace AdvancedTrainSystem.Core.Components
                 World.RenderingCamera = null;
 
             Game.Player.Character.IsVisible = true;
-
-            sCabCamera?.Delete();
         }
 
         private void SetCabCamera()
@@ -123,7 +122,8 @@ namespace AdvancedTrainSystem.Core.Components
             sCabCamera.Position = train.Position;
             sCabCamera.Rotation = train.Rotation;
 
-            Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"].GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
+            Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
+                .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
             sCabCamera.AttachTo(train, cameraPos);
 
             // Align camera direction with train direction
