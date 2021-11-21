@@ -1,5 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Extensions;
-using FusionLibrary;
+﻿using FusionLibrary;
 using GTA;
 using GTA.Math;
 using RageComponent;
@@ -49,6 +48,7 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
+
             // In case if player exits train some other way
             if (isPlayerDriving && GPlayer.CurrentVehicle != train.TrainLocomotive.HiddenVehicle)
             {
@@ -64,7 +64,7 @@ namespace AdvancedTrainSystem.Core.Components
             if (enterDelay > Game.GameTime)
                 return;
 
-            if (Game.Player.Character.IsInAdvancedTrain())
+            if (isPlayerDriving)
             {
                 Leave();
 
@@ -74,8 +74,8 @@ namespace AdvancedTrainSystem.Core.Components
             // Check if player is close enough to seat
             Vector3 seatPos = ((Vehicle)train).Bones["seat_dside_f"].Position;
 
-            float distanceToSeat = Game.Player.Character.Position.DistanceToSquared(seatPos);
-            if (distanceToSeat > 3.5 * 3.5)
+            float distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
+            if (distanceToSeat > 2f)
                 return;
 
             Enter();
@@ -92,7 +92,7 @@ namespace AdvancedTrainSystem.Core.Components
             // plus because of that if we put player in visible model
             // game will move camera just under train.
             // Maybe custom camera is solution? Someday...
-            Game.Player.Character.Task.WarpIntoVehicle(train.TrainLocomotive.HiddenVehicle, VehicleSeat.Driver);
+            GPlayer.Task.WarpIntoVehicle(train.TrainLocomotive.HiddenVehicle, VehicleSeat.Driver);
 
             EnterEvents();
         }
@@ -102,10 +102,10 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public void Leave()
         {
-            Game.Player.Character.Task.WarpOutOfVehicle(train.TrainLocomotive.HiddenVehicle);
+            GPlayer.Task.LeaveVehicle();
 
             // TODO: Get relative position before entering train instead of hardcoded position
-            Game.Player.Character.PositionNoOffset = ((Vehicle)train).GetOffsetPosition(new Vector3(-0.016f, -4.831f, 2.243f));
+            GPlayer.PositionNoOffset = ((Vehicle)train).GetOffsetPosition(new Vector3(-0.016f, -4.831f, 2.243f));
 
             LeaveEvents();
         }
