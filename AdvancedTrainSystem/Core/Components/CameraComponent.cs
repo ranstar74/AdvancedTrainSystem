@@ -14,6 +14,8 @@ namespace AdvancedTrainSystem.Core.Components
     public class CameraComponent : Component
     {
         public static readonly Camera sCabCamera;
+        private static Train attachedTo;
+        private static bool attachedChanged;
 
         /// <summary>
         /// Current Y angle of the <see cref="sCabCamera"/>.
@@ -47,7 +49,7 @@ namespace AdvancedTrainSystem.Core.Components
                 prevTrainAngle = train.Rotation.Z;
 
                 // Setup camera for new train
-                SetCabCamera();
+                SetCabCamera(train);
             };
         }
 
@@ -59,7 +61,18 @@ namespace AdvancedTrainSystem.Core.Components
                 GPlayer.IsVisible = false;
 
                 if (World.RenderingCamera != sCabCamera)
+                {
                     World.RenderingCamera = sCabCamera;
+
+                    if(attachedChanged)
+                    {
+                        // Align camera direction with train direction
+                        sCabCamera.Direction = train.Quaternion * Vector3.RelativeFront;
+
+                        // Otherwise direction doesn't apply...
+                        Script.Wait(1);
+                    }
+                }
 
                 // When train moves and rotates, camera moves with it
                 // but rotation remains unchanged. So we have to
@@ -103,19 +116,19 @@ namespace AdvancedTrainSystem.Core.Components
             GPlayer.IsVisible = true;
         }
 
-        private void SetCabCamera()
+        private static void SetCabCamera(Train train)
         {
-            sCabCamera.Position = train.Position;
-            sCabCamera.Rotation = train.Rotation;
+            // Don't process if train haven't changed
+            if (train == attachedTo)
+                return;
 
             Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
                 .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
             sCabCamera.AttachTo(train, cameraPos);
 
-            // FIXME: Align doesn't work if player gets in and out
+            attachedChanged = true;
 
-            // Align camera direction with train direction
-            sCabCamera.Direction = train.Quaternion * Vector3.RelativeFront;
+            attachedTo = train;
         }
     }
 }
