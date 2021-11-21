@@ -13,7 +13,7 @@ namespace AdvancedTrainSystem.Core.Components
     /// </summary>
     public class CameraComponent : Component
     {
-        private static readonly Camera sCabCamera;
+        public static readonly Camera sCabCamera;
 
         /// <summary>
         /// Current Y angle of the <see cref="sCabCamera"/>.
