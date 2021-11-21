@@ -15,7 +15,6 @@ namespace AdvancedTrainSystem.Core.Components
     {
         public static readonly Camera sCabCamera;
         private static Train attachedTo;
-        private static bool attachedChanged;
 
         /// <summary>
         /// Current Y angle of the <see cref="sCabCamera"/>.
@@ -64,14 +63,11 @@ namespace AdvancedTrainSystem.Core.Components
                 {
                     World.RenderingCamera = sCabCamera;
 
-                    if(attachedChanged)
-                    {
-                        // Align camera direction with train direction
-                        sCabCamera.Direction = train.Quaternion * Vector3.RelativeFront;
+                    // Align camera direction with train direction
+                    sCabCamera.Direction = train.Quaternion * Vector3.RelativeFront;
 
-                        // Otherwise direction doesn't apply...
-                        Script.Wait(1);
-                    }
+                    // Otherwise direction doesn't apply...
+                    Script.Wait(1);
                 }
 
                 // When train moves and rotates, camera moves with it
@@ -125,8 +121,6 @@ namespace AdvancedTrainSystem.Core.Components
             Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
                 .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
             sCabCamera.AttachTo(train, cameraPos);
-
-            attachedChanged = true;
 
             attachedTo = train;
         }
