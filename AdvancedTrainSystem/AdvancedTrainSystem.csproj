@@ -61,7 +61,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FusionLibrary, Version=1.3.7992.34996, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\FusionLibrary.SHVDN3.1.3.1\lib\net48\FusionLibrary.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>S:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts\FusionLibrary.dll</HintPath>
     </Reference>
     <Reference Include="LemonUI.SHVDN3, Version=1.5.1.0, Culture=neutral, processorArchitecture=AMD64">
       <HintPath>..\packages\LemonUI.SHVDN3.1.5.1\lib\net48\LemonUI.SHVDN3.dll</HintPath>
@@ -110,12 +111,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\Components\Abstract\EngineComponent.cs" />
     <Compile Include="Core\Components\DrivingComponent.cs" />
     <Compile Include="Core\Components\SoundComponent.cs" />
+    <Compile Include="Core\Info\TrainControlBehaviourInfo.cs" />
     <Compile Include="Core\Info\TrainInfo.cs" />
     <Compile Include="Core\TrainSpawnData.cs" />
+    <Compile Include="Core\Utils\BoneUtils.cs" />
     <Compile Include="Core\Utils\TrainSpawnHelper.cs" />
+    <Compile Include="Core\Components\Abstract\AnimComponent.cs" />
+    <Compile Include="ModelHandler.cs" />
+    <Compile Include="Railroad\Components\AnimComponents\SierraBrakeAnimComponent.cs" />
+    <Compile Include="Railroad\Components\AnimComponents\SierraDrivetrainAnimComponent.cs" />
+    <Compile Include="Railroad\Components\AnimComponents\SierraWheelAnimComponent.cs" />
+    <Compile Include="Railroad\Components\SteamComponents\AirbrakeComponent.cs" />
     <Compile Include="Railroad\Components\SteamComponents\ChimneyComponent.cs" />
+    <Compile Include="Railroad\Components\SteamComponents\ControlsComponent.cs" />
+    <Compile Include="Railroad\Components\SteamComponents\SteamEngineComponent.cs" />
     <Compile Include="Railroad\SharedComponents\Abstract\GeneratorComponent.cs" />
     <Compile Include="Railroad\SharedComponents\LightComponent.cs" />
     <Compile Include="Core\Components\CameraComponent.cs" />
@@ -140,7 +152,6 @@
     <Compile Include="Core\Info\TrainMissionInfo.cs" />
     <Compile Include="Core\Info\TrainModelInfo.cs" />
     <Compile Include="Railroad\Components\SteamComponents\SafetyValveComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SteamControlsComponent.cs" />
     <Compile Include="Railroad\DieselTrain.cs" />
     <Compile Include="Railroad\ElectricTrain.cs" />
     <Compile Include="Railroad\Handcar.cs" />
