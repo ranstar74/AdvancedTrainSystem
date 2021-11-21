@@ -37,6 +37,8 @@ namespace AdvancedTrainSystem.Core.Info
         /// </summary>
         public TrainMissionInfo TrainMissionInfo;
 
+        public List<TrainControlBehaviourInfo> ControlBehaviourInfos;
+
         /// <summary>
         /// Gets name of file this config was readed from.
         /// </summary>
