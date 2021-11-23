@@ -55,7 +55,6 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             {
                 train.Carriages[i].Vehicle.SetPlayerLights(true);
             }
-            ((Vehicle)train).SetPlayerLights(true);
 
             UpdateLight();
         }
@@ -114,21 +113,15 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             {
                 Vehicle carriage = train.Carriages[i].Vehicle;
 
-                ProcessVehicle(carriage, lightState, highBeamState);
+                carriage.AreLightsOn = lightState;
+                carriage.AreHighBeamsOn = highBeamState;
+
+                // Turn on/off engine cuz gta without engine
+                // running there's no light
+                carriage.IsEngineRunning = generator.Output > 0f;
+
+                carriage.SetLightsBrightness(generator.Output);
             }
-            ProcessVehicle(train, lightState, highBeamState);
-        }
-
-        private void ProcessVehicle(Vehicle vehicle, bool lightState, bool highBeamState)
-        {
-            vehicle.AreLightsOn = lightState;
-            vehicle.AreHighBeamsOn = highBeamState;
-
-            // Turn on/off engine cuz gta without engine
-            // running there's no light
-            vehicle.IsEngineRunning = generator.Output > 0f;
-
-            vehicle.SetLightsBrightness(generator.Output);
         }
     }
 }

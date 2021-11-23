@@ -153,8 +153,6 @@ namespace AdvancedTrainSystem.Core
                 SetDecorators(carriage.HiddenVehicle);
                 SetDecorators(carriage.Vehicle);
             }
-            SetDecorators(trainLocomotive.HiddenVehicle);
-            SetDecorators(trainLocomotive.Vehicle);
         }
 
         /// <summary>
@@ -383,7 +381,6 @@ namespace AdvancedTrainSystem.Core
         {
             // Could be null if disposed before InitializeComponent
             Components?.OnDispose();
-            TrainLocomotive.Dispose();
 
             for(int i = 0; i < Carriages.Count; i++)
             {
