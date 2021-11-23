@@ -55,6 +55,7 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             {
                 train.Carriages[i].Vehicle.SetPlayerLights(true);
             }
+            ((Vehicle)train).SetPlayerLights(true);
 
             UpdateLight();
         }
@@ -65,6 +66,12 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
         public void SwitchHeadlight()
         {
             LightState = LightState.Next();
+        }
+
+        public override void Update()
+        {
+            if (Game.IsControlJustPressed(Control.VehicleHeadlight))
+                SwitchHeadlight();
         }
 
         /// <summary>
@@ -107,16 +114,21 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             {
                 Vehicle carriage = train.Carriages[i].Vehicle;
 
-                carriage.AreLightsOn = lightState;
-                carriage.AreHighBeamsOn = highBeamState;
-
-                // Turn on/off engine cuz gta without engine
-                // running there's no light
-                carriage.IsEngineRunning = generator.Output > 0f;
-
-                carriage.SetLightsBrightness(generator.Output);
+                ProcessVehicle(carriage, lightState, highBeamState);
             }
+            ProcessVehicle(train, lightState, highBeamState);
         }
 
+        private void ProcessVehicle(Vehicle vehicle, bool lightState, bool highBeamState)
+        {
+            vehicle.AreLightsOn = lightState;
+            vehicle.AreHighBeamsOn = highBeamState;
+
+            // Turn on/off engine cuz gta without engine
+            // running there's no light
+            vehicle.IsEngineRunning = generator.Output > 0f;
+
+            vehicle.SetLightsBrightness(generator.Output);
+        }
     }
 }

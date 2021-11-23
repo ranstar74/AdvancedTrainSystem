@@ -49,11 +49,14 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         public override void Start()
         {
             boiler = Components.GetComponent<BoilerComponent>();
+        }
 
+        public override void Update()
+        {
             // Cut any pressure below threshold
             float pressure = Math.Abs(boiler.PressurePSI - pressureThreshold);
 
-            output = pressure.Remap(0f, maximumPressure, 0f, 1f);
+            output = MathExtensions.Clamp(pressure.Remap(0f, maximumPressure, 0f, 1f), 0f, 1f);
         }
     }
 }
