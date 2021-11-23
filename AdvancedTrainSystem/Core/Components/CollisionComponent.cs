@@ -65,6 +65,7 @@ namespace AdvancedTrainSystem.Core.Components
         {
             GetClosestVehicles();
             ProcessCollision();
+            TrainCollisionSolver.Update();
         }
 
         /// <summary>
