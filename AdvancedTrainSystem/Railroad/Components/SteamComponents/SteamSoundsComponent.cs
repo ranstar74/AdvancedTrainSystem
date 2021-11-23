@@ -1,27 +1,24 @@
-﻿using AdvancedTrainSystem.Railroad.Components.SteamComponents;
+﻿using AdvancedTrainSystem.Core.Components.Abstract;
+using FusionLibrary.Extensions;
 using FusionLibrary.Other;
 using GTA;
-using RageComponent;
+using RageAudio;
 using RageComponent.Core;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace AdvancedTrainSystem.Core.Components
+namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 {
-    public class SoundComponent : Component
+    public class SteamSoundsComponent : SoundComponent
     {
-        // TODO: Make it compatible with any train type
-
-        private readonly RageAudio.AudioPlayer audioPlayer;
-
-        // FMOD Audio Sources
-
-        private RageAudio.AudioSource mainAudioSource;
-
         // FMOD Events
 
-        private RageAudio.AudioEvent chugsEvent;
-        private RageAudio.AudioEvent hissEvent;
-        private RageAudio.AudioEvent wheelSlipEvent;
+        private AudioEvent chugsEvent;
+        private AudioEvent hissEvent;
+        private AudioEvent wheelSlipEvent;
 
         // FMOD Params
 
@@ -30,9 +27,7 @@ namespace AdvancedTrainSystem.Core.Components
         private const string frictionParam = "Friction";
         private const string slipParam = "Slip";
 
-        private readonly Train train;
-        private PhysxComponent physx;
-        private SafetyValveComponent safetyValve;
+        private readonly SafetyValveComponent safetyValve;
 
         /// <summary>
         /// This dictionary contains delay values corresponding to its speed parameter of the chug sound.
@@ -52,29 +47,21 @@ namespace AdvancedTrainSystem.Core.Components
             [125] = 0.83f,
             [100] = 1.00f
         };
+        private float previousChugDelay = -1;
+        private int lastChugPlayTime = 0;
 
-        public SoundComponent(ComponentCollection components) : base(components)
+        public SteamSoundsComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
 
-            // Intialize audio player and load banks
-            audioPlayer = new RageAudio.AudioPlayer();
-            train.TrainInfo.SoundBanks.ForEach(bank =>
-            {
-                audioPlayer.LoadBank(bank);
-            });
-
-            // Create audio source from train and audio events
-            mainAudioSource = audioPlayer.CreateAudioSource(train);
-
-            chugsEvent = mainAudioSource.CreateEvent("event:/Ambient/Chug", true);
-            hissEvent = mainAudioSource.CreateEvent("event:/Ambient/Hiss", true);
-            wheelSlipEvent = mainAudioSource.CreateEvent("event:/Ambient/Slip", true);
         }
 
         public override void Start()
         {
-            physx = Components.GetComponent<PhysxComponent>();
+            base.Start();
+
+            chugsEvent = mainAudioSource.CreateEvent("event:/Ambient/Chug", true);
+            hissEvent = mainAudioSource.CreateEvent("event:/Ambient/Hiss", true);
+            wheelSlipEvent = mainAudioSource.CreateEvent("event:/Ambient/Slip", true);
         }
 
         /// <summary>
@@ -87,12 +74,10 @@ namespace AdvancedTrainSystem.Core.Components
             ProcessWheelSlip();
         }
 
-        private float previousChugDelay = -1;
-        private int lastChugPlayTime = 0;
         private void ProcessChugsEvent()
         {
             // Calculate timer delay so chug sound plays 2 times per wheel rotation
-            float wheelRotationsPerSecond = Math.Abs(physx.DriveWheelSpeed) / 2.4f; //TODO: Use actual drive wheel length
+            float wheelRotationsPerSecond = Math.Abs(physx.DriveWheelSpeed) / 6f; //TODO: Use actual drive wheel length
             //Parent.WheelComponent.DriveWheelLength;
 
             float chugDelay = 500 / wheelRotationsPerSecond;
@@ -121,18 +106,16 @@ namespace AdvancedTrainSystem.Core.Components
 
         private void ProcessWheelSlip()
         {
-            //float speed = Parent.CustomTrain.SpeedComponent.AbsoluteSpeed.Remap(0, 15, 0, 1);
-            float slip = physx.WheelSlipFactor;
+            float speed = physx.AbsoluteSpeed.Remap(0, 15, 0, 1);
+            float slip = physx.WheelSlip;
 
-            //GTA.UI.Screen.ShowSubtitle($"Slip: {slip:0.00}");
-
-            //wheelSlipEvent.SetParameter(speedParam, speed);
+            wheelSlipEvent.SetParameter(speedParam, speed);
             wheelSlipEvent.SetParameter(slipParam, slip);
         }
 
         private void ProcessHissEvent()
         {
-            hissEvent.SetParameter(safetyValveParam, safetyValve.Valve);
+            //hissEvent.SetParameter(safetyValveParam, safetyValve.Valve);
         }
     }
 }

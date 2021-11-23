@@ -113,7 +113,7 @@
   <ItemGroup>
     <Compile Include="Core\Components\Abstract\EngineComponent.cs" />
     <Compile Include="Core\Components\DrivingComponent.cs" />
-    <Compile Include="Core\Components\SoundComponent.cs" />
+    <Compile Include="Core\Components\Abstract\SoundComponent.cs" />
     <Compile Include="Core\Info\TrainControlBehaviourInfo.cs" />
     <Compile Include="Core\Info\TrainInfo.cs" />
     <Compile Include="Core\TrainSpawnData.cs" />
@@ -128,6 +128,7 @@
     <Compile Include="Railroad\Components\SteamComponents\ChimneyComponent.cs" />
     <Compile Include="Railroad\Components\SteamComponents\ControlsComponent.cs" />
     <Compile Include="Railroad\Components\SteamComponents\SteamEngineComponent.cs" />
+    <Compile Include="Railroad\Components\SteamComponents\SteamSoundsComponent.cs" />
     <Compile Include="Railroad\SharedComponents\Abstract\GeneratorComponent.cs" />
     <Compile Include="Railroad\SharedComponents\LightComponent.cs" />
     <Compile Include="Core\Components\CameraComponent.cs" />

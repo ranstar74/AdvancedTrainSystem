@@ -16,6 +16,7 @@ namespace AdvancedTrainSystem.Railroad.Components
         public AirbrakeComponent Airbrake;
         public ControlsComponent Controls;
         public SteamEngineComponent SteamEngine;
+        public SteamSoundsComponent SteamSounds;
 
         // To remove later...
         public SierraDrivetrainAnimComponent SierraDrivetrainAnimComponent;
@@ -34,6 +35,7 @@ namespace AdvancedTrainSystem.Railroad.Components
             Airbrake = Create<AirbrakeComponent>();
             Controls = Create<ControlsComponent>();
             SteamEngine = Create<SteamEngineComponent>();
+            SteamSounds = Create<SteamSoundsComponent>();
 
             SierraDrivetrainAnimComponent = Create<SierraDrivetrainAnimComponent>();
             SierraWheelAnimComponent = Create<SierraWheelAnimComponent>();
