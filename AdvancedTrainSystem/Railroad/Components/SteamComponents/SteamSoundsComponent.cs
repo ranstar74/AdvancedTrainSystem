@@ -19,6 +19,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private AudioEvent chugsEvent;
         private AudioEvent hissEvent;
         private AudioEvent wheelSlipEvent;
+        private AudioEvent moveEvent;
 
         // FMOD Params
 
@@ -27,7 +28,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private const string frictionParam = "Friction";
         private const string slipParam = "Slip";
 
-        private readonly SafetyValveComponent safetyValve;
+        private SafetyValveComponent safetyValve;
 
         /// <summary>
         /// This dictionary contains delay values corresponding to its speed parameter of the chug sound.
@@ -59,9 +60,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             base.Start();
 
+            safetyValve = Components.GetComponent<SafetyValveComponent>();
+
             chugsEvent = mainAudioSource.CreateEvent("event:/Ambient/Chug", true);
             hissEvent = mainAudioSource.CreateEvent("event:/Ambient/Hiss", true);
             wheelSlipEvent = mainAudioSource.CreateEvent("event:/Ambient/Slip", true);
+            moveEvent = mainAudioSource.CreateEvent("event:/Ambient/Move", true);
         }
 
         /// <summary>
@@ -72,6 +76,13 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             ProcessChugsEvent();
             ProcessHissEvent();
             ProcessWheelSlip();
+            ProcessMoveEvent();
+        }
+
+        private void ProcessMoveEvent()
+        {
+            // Added 0.01f cuz otherwise it refuses to play...
+            moveEvent.SetParameter(speedParam, physx.AbsoluteSpeed.Remap(0, 20, 0, 1) + 0.01f);
         }
 
         private void ProcessChugsEvent()
@@ -82,13 +93,9 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             float chugDelay = 500 / wheelRotationsPerSecond;
 
-            // Don't process if delay hasn't changed
-            if (chugDelay == previousChugDelay)
-                return;
-
             // Get speed value and update event parameter
-            float speed = delayToSpeed.GetInterpolatedValue((int)chugDelay);
-            chugsEvent.SetParameter("speed", speed);
+            float speed = delayToSpeed.GetInterpolatedValue(chugDelay);
+            chugsEvent.SetParameter(speedParam, speed);
 
             //GTA.UI.Screen.ShowSubtitle($"Chug Delay: {chugDelay:0} Speed: {speed:0.00}");
 
@@ -109,13 +116,13 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             float speed = physx.AbsoluteSpeed.Remap(0, 15, 0, 1);
             float slip = physx.WheelSlip;
 
-            wheelSlipEvent.SetParameter(speedParam, speed);
+            //wheelSlipEvent.SetParameter(speedParam, speed);
             wheelSlipEvent.SetParameter(slipParam, slip);
         }
 
         private void ProcessHissEvent()
         {
-            //hissEvent.SetParameter(safetyValveParam, safetyValve.Valve);
+            hissEvent.SetParameter(safetyValveParam, safetyValve.Valve);
         }
     }
 }
