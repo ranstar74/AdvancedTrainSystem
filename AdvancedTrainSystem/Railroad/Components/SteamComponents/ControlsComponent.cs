@@ -58,7 +58,32 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                     startValue: info.StartValue,
                     sensitivityMultiplier: info.Sensetivity);
 
-                if(info.AltControl != null)
+                if(info.HandleInfo != null)
+                {
+                    var handleInfo = info.HandleInfo;
+
+                    var handle = new CustomModel(handleInfo.ModelName);
+                    handle.Request();
+
+                    var handleProp = _interactableProps.Add(
+                        model: handle,
+                        entity: interactiveProp,
+                        boneName: handleInfo.BoneName,
+                        movementType: handleInfo.MovementType,
+                        coordinateInteraction: handleInfo.Coordinate,
+                        toggle: false,
+                        min: handleInfo.MinAngle,
+                        max: handleInfo.MaxAngle,
+                        startValue: 0f,
+                        step: 20f,
+                        stepRatio: 1f,
+                        isIncreasing: handleInfo.MaxAngle < handleInfo.MinAngle,
+                        smoothEnd: true);
+                    interactiveProp.OnInteractionStarted += (_, __) => handleProp.Play();
+                    interactiveProp.OnInteractionEnded += (_, __) => handleProp.Stop();
+                }
+
+                if (info.AltControl != null)
                 {
                     interactiveProp.SetupAltControl(
                         control: (GTA.Control)info.AltControl, 

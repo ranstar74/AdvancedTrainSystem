@@ -3,7 +3,7 @@ using static FusionLibrary.FusionEnums;
 
 namespace AdvancedTrainSystem.Core.Info
 {
-    public struct TrainControlBehaviourInfo
+    public class TrainControlBehaviourInfo
     {
         public string ActionName;
         public string ModelName;
@@ -19,5 +19,7 @@ namespace AdvancedTrainSystem.Core.Info
         public float MaxAngle;
         public float StartValue;
         public float Sensetivity;
+
+        public TrainControlBehaviourInfo HandleInfo;
     }
 }
