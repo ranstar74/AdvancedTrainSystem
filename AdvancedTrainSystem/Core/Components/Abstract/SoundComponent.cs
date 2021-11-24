@@ -44,5 +44,10 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
             // Create audio source from train and audio events
             mainAudioSource = audioPlayer.CreateAudioSource(train);
         }
+
+        public override void Dispose()
+        {
+            audioPlayer.Dispose();
+        }
     }
 }
