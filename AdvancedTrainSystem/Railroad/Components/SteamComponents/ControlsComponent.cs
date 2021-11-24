@@ -11,13 +11,25 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 {
     public class ControlsComponent : Component
     {
-        public float Throttle;
+        /// <summary>
+        /// Gets or sets a normalized value indicating how much throttle is opened.
+        /// </summary>
+        public float Throttle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a normalized value indicating how much drain cocks are opened.
+        /// </summary>
+        public float DrainCocks { get; set; }
 
         private readonly Dictionary<string, Action<ControlsComponent, float>> _behaviours = new Dictionary<string, Action<ControlsComponent, float>>()
         {
             ["Throttle"] = (context, value) =>
             {
                 context.Throttle = value;
+            },
+            ["Cocks"] = (context, value) =>
+            {
+                context.DrainCocks = value;
             }
         };
         private readonly InteractiveController _interactableProps = new InteractiveController();
