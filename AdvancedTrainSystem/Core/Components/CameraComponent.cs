@@ -96,7 +96,7 @@ namespace AdvancedTrainSystem.Core.Components
             }
             else
             {
-                if (World.RenderingCamera == sCabCamera)
+                if (World.RenderingCamera == sCabCamera && train.Driver == GPlayer)
                 {
                     GPlayer.IsVisible = true;
                     World.RenderingCamera = null;
