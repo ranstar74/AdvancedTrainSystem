@@ -1,11 +1,8 @@
-﻿using AdvancedTrainSystem.Core.Components.Physics;
-using FusionLibrary;
-using FusionLibrary.Extensions;
+﻿using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
 using RageComponent.Core;
 using System;
-using System.Collections.Generic;
 
 namespace AdvancedTrainSystem.Core.Components
 {
@@ -51,6 +48,16 @@ namespace AdvancedTrainSystem.Core.Components
         }
 
         /// <summary>
+        /// For some reason TrainSetSpeed function cut any speed below about 0.15,
+        /// we don't want wheels to spin when train is still so this 
+        /// speed needs to be used for anything graphical such as wheels.
+        /// <para>
+        /// <see cref="DriveWheelSpeed"/> uses <see cref="VisualSpeed "/> internally.
+        /// </para>
+        /// </summary>
+        public float VisualSpeed => speed > 0.15f ? speed : 0;
+
+        /// <summary>
         /// Track speed is not depends on train direction. 
         /// Can be used if u want to move two trains with different direction with same direction.
         /// </summary>
@@ -85,7 +92,7 @@ namespace AdvancedTrainSystem.Core.Components
         /// Whether wheel slip or not.
         /// </summary>
         /// <remarks>
-        /// Controlled by engine component.
+        /// Controlled by engine component, if theres any.
         /// </remarks>
         public bool DoWheelSlip { get; internal set; }
 
@@ -141,18 +148,12 @@ namespace AdvancedTrainSystem.Core.Components
 
         private void UpdateWheelSpeed()
         {
-            float wheelSpeedTo = DoWheelSlip ? 22f : speed;
+            float wheelSpeedTo = DoWheelSlip ? 22f : VisualSpeed;
 
             // Can't really think of a way calculating these in one
             // And since wheel slip is faked im not sure there point to
-            WheelSlip = MathExtensions.Lerp(WheelSlip, DoWheelSlip ? 1f : 0f, Game.LastFrameTime * 4);
-            DriveWheelSpeed = MathExtensions.Lerp(DriveWheelSpeed, wheelSpeedTo, Game.LastFrameTime * 4);
-
-            // For some reason TrainSetSpeed function cut any speed below about 0.15,
-            // we don't want wheels to spin when train is still
-            // Its probably was implemented as "hack" to stop train
-            if (AbsoluteSpeed < 0.15f)
-                DriveWheelSpeed = 0;
+            WheelSlip = MathExtensions.Lerp(WheelSlip, DoWheelSlip ? 1f : 0f, Game.LastFrameTime * 2);
+            DriveWheelSpeed = MathExtensions.Lerp(DriveWheelSpeed, wheelSpeedTo, Game.LastFrameTime * 2);
         }
 
         /// <summary>
