@@ -22,7 +22,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// Pressure in the boiler drops as the steam is consumed 
         /// and also when water is injected into the boiler.
         /// </remarks>
-        public float Pressure { get; private set; }
+        public float Pressure =>
+            MathExtensions.Clamp(PressurePSI.Remap(0f, maxPsiPressure, 0f, 1f), 0f, 1f);
 
         /// <summary>
         /// Gets a normalized value indicating water level in boiler.
@@ -72,35 +73,11 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             controls = Components.GetComponent<ControlsComponent>();
             safetyValve = Components.GetComponent<SafetyValveComponent>();
 
-            // Todo make proper handling of presure
-            // by adding "coal" as resource, which will be
-            // transformed into pressure. No free energy!
-            Pressure = 1f;
-
-            PressurePSI = Pressure.Remap(0f, 1f, 0f, maxPsiPressure);
+            PressurePSI = 300f;
         }
 
         public override void Update()
         {
-            //Pressure += 3f * Game.LastFrameTime;
-            //SafetyValve = SafetyValve.Clamp(0, 1);
-
-            //SafetyValve = Pressure.Remap(200, 260, 0, 1);
-
-            //// Safety valve
-            //if (Pressure > 260)
-            //{
-            //    _releaseTime = Game.GameTime + 1000;
-            //}
-            //else
-            //{
-            //    _releaseTime = 0;
-            //}
-
-            //var throttle = Parent.Components.SpeedComponent.Throttle;
-
-            //Pressure -= 3.1f * throttle * Game.LastFrameTime;
-
             float gain = GetSteamGain();
             float consumption = GetSteamConsumption();
 
@@ -110,7 +87,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             // Make sure pressure doesn't go outside bounds
             PressurePSI = MathExtensions.Clamp(PressurePSI, 0f, maxPsiPressure);
 
-            //GTA.UI.Screen.ShowSubtitle($"Boiler Pressure: {PressurePSI:0.00}");
+            GTA.UI.Screen.ShowSubtitle($"Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
         }
 
         /// <summary>
@@ -128,9 +105,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private float GetSteamConsumption()
         {
             float throttle = controls.Throttle * 2 * Game.LastFrameTime;
-            float safValve = safetyValve.Valve * 8 * Game.LastFrameTime; 
+            float safValve = safetyValve.Valve * 8 * Game.LastFrameTime;
+            float cocks = controls.DrainCocks * 4 * Game.LastFrameTime;
 
-            return throttle + safValve;
+            return throttle + safValve + cocks;
         }
     }
 }
