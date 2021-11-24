@@ -120,15 +120,14 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             _dynamoSteam.Size = _dynamo.Output;
             _cylinderSteam.SetState(_boiler.Pressure > 0.3f);
-            //_funnelSmoke.Interval = (int) _boiler.Pressure.Remap(0f, 1f, 10000, 55);
+
             _safetyValveSteam.SetState(_safetyValve.Valve > 0.05f);
             _safetyValveSteam.Size = _safetyValve.Valve / 4;
 
-            float drainCockSize = _controls.DrainCocks;//.Remap(0f, 1f, 0f, 1f);
+            float drainCockSize = _controls.DrainCocks;
             drainCockSize *= _boiler.Pressure;
 
             _drainCockSteam.SetState(_controls.DrainCocks > 0.05f && _boiler.Pressure > 0.1f);
-
             _drainCockSteam.Interval = 250;
             _drainCockSteam.Size = drainCockSize;
 
