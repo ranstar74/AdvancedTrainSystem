@@ -67,6 +67,12 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             LightState = LightState.Next();
         }
 
+        public override void Update()
+        {
+            if (Game.IsControlJustPressed(Control.VehicleHeadlight))
+                SwitchHeadlight();
+        }
+
         /// <summary>
         /// Checks if generator is working and depending on that 
         /// settings either <see cref="LightState"/> 
@@ -117,6 +123,5 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
                 carriage.SetLightsBrightness(generator.Output);
             }
         }
-
     }
 }

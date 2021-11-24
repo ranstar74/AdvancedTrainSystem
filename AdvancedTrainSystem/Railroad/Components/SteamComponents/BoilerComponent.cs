@@ -1,4 +1,5 @@
 ﻿using FusionLibrary.Extensions;
+using GTA;
 using RageComponent;
 using RageComponent.Core;
 
@@ -55,6 +56,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         private const float maxPsiPressure = 300;
 
+        private ControlsComponent controls;
+        private SafetyValveComponent safetyValve;
         /// <summary>
         /// Creates a new instance of <see cref="BoilerComponent"/>.
         /// </summary>
@@ -66,6 +69,9 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
         public override void Start()
         {
+            controls = Components.GetComponent<ControlsComponent>();
+            safetyValve = Components.GetComponent<SafetyValveComponent>();
+
             // Todo make proper handling of presure
             // by adding "coal" as resource, which will be
             // transformed into pressure. No free energy!
@@ -91,29 +97,40 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             //    _releaseTime = 0;
             //}
 
-
-
             //var throttle = Parent.Components.SpeedComponent.Throttle;
 
             //Pressure -= 3.1f * throttle * Game.LastFrameTime;
 
-            //// GTA.UI.Screen.ShowSubtitle($"Boiler Pressure: {Pressure.ToString("0.00")}");
+            float gain = GetSteamGain();
+            float consumption = GetSteamConsumption();
+
+            PressurePSI += gain;
+            PressurePSI -= consumption;
+
+            // Make sure pressure doesn't go outside bounds
+            PressurePSI = MathExtensions.Clamp(PressurePSI, 0f, maxPsiPressure);
+
+            //GTA.UI.Screen.ShowSubtitle($"Boiler Pressure: {PressurePSI:0.00}");
         }
 
         /// <summary>
-        /// Calculates steam gain from burning coal.
+        /// Calculates pressure gain from burning coal.
         /// </summary>
-        private void CalculateSteamGain()
+        private float GetSteamGain()
         {
-
+            return 1f * Game.LastFrameTime;
         }
 
         /// <summary>
-        /// Calculates steam consumption by safety valves, drain cocks, dynamo generator and other components this frame.
+        /// Calculates pressure consumption by safety valves, drain cocks,
+        /// dynamo generator and other components this frame.
         /// </summary>
-        private void CalculateSteamConsumption()
+        private float GetSteamConsumption()
         {
+            float throttle = controls.Throttle * 2 * Game.LastFrameTime;
+            float safValve = safetyValve.Valve * 8 * Game.LastFrameTime; 
 
+            return throttle + safValve;
         }
     }
 }

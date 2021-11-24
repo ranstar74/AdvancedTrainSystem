@@ -1,4 +1,5 @@
 ﻿using AdvancedTrainSystem.Core;
+using AdvancedTrainSystem.Railroad.Components.AnimComponents;
 using AdvancedTrainSystem.Railroad.Components.SteamComponents;
 using AdvancedTrainSystem.Railroad.SharedComponents;
 
@@ -12,6 +13,16 @@ namespace AdvancedTrainSystem.Railroad.Components
         public BoilerComponent Boiler;
         public DynamoComponent Generator;
         public LightComponent Light;
+        public AirbrakeComponent Airbrake;
+        public ControlsComponent Controls;
+        public SteamEngineComponent SteamEngine;
+        public SteamSoundsComponent SteamSounds;
+        public SafetyValveComponent SafetyValve;
+
+        // To remove later...
+        public SierraDrivetrainAnimComponent SierraDrivetrainAnimComponent;
+        public SierraWheelAnimComponent SierraWheelAnimComponent;
+        public SierraBrakeAnimComponent SierraBrakeAnimComponent;
 
         /// <summary>
         /// Creates a new instance of <see cref="SteamTrainComponentCollection"/>.
@@ -22,6 +33,15 @@ namespace AdvancedTrainSystem.Railroad.Components
             Boiler = Create<BoilerComponent>();
             Generator = Create<DynamoComponent>();
             Light = Create<LightComponent>();
+            Airbrake = Create<AirbrakeComponent>();
+            Controls = Create<ControlsComponent>();
+            SteamEngine = Create<SteamEngineComponent>();
+            SteamSounds = Create<SteamSoundsComponent>();
+            SafetyValve = Create<SafetyValveComponent>();
+
+            SierraDrivetrainAnimComponent = Create<SierraDrivetrainAnimComponent>();
+            SierraWheelAnimComponent = Create<SierraWheelAnimComponent>();
+            SierraBrakeAnimComponent = Create<SierraBrakeAnimComponent>();
 
             OnStart();
         }

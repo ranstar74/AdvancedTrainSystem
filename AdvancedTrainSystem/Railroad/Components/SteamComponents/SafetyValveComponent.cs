@@ -18,12 +18,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// <summary>
         /// How much time (ms) safety valve will be opened after reaching trigger point.
         /// </summary>
-        private const float safetyValveTime = 1000;
+        private const float safetyValveTime = 3500;
 
         /// <summary>
         /// Boiler pressure at which safety valve triggers.
         /// </summary>
-        private const float safetyValveTrigger = 260;
+        private const float safetyValveTrigger = 280;
 
         private float releaseTime = 0;
 

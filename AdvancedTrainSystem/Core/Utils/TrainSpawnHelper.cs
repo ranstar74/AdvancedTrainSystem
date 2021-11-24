@@ -85,7 +85,6 @@ namespace AdvancedTrainSystem.Core.Utils
             // Separate locomotive from carriages
             TrainCarriage locomotiveCarriage = carriages[0];
             TrainLocomotive locomotive = new TrainLocomotive(locomotiveCarriage);
-            carriages.Remove(locomotiveCarriage);
 
             // Create train from created locomotive and carriages
             var trainSpawnData = new TrainSpawnData(trainInfo, locomotive, carriages, direction);
