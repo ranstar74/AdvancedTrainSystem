@@ -20,6 +20,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private DynamoComponent _dynamo;
         private BoilerComponent _boiler;
         private SafetyValveComponent _safetyValve;
+        private ChimneyComponent _chimney;
 
         public SteamParticleComponent(ComponentCollection components) : base(components)
         {
@@ -32,6 +33,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _boiler = Components.GetComponent<BoilerComponent>();
             _dynamo = Components.GetComponent<DynamoComponent>();
             _safetyValve = Components.GetComponent<SafetyValveComponent>();
+            _chimney = Components.GetComponent<ChimneyComponent>();
 
             // Cylinder smoke and drips
             BoneUtils.ProcessSideBones(
@@ -116,7 +118,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             base.Update();
 
-            // TODO: Improve cylinder & funnel smoke simulation
+            // TODO: Improve cylinder
 
             _dynamoSteam.Size = _dynamo.Output;
             _cylinderSteam.SetState(_boiler.Pressure > 0.3f);
@@ -131,7 +133,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _drainCockSteam.Interval = 250;
             _drainCockSteam.Size = drainCockSize;
 
-            //_funnelSmoke.Color = System.Drawing.Color.FromArgb(45, 45, 45);
+            int funnelColor = (int) _chimney.AirInBoiler.Remap(0f, 1f, 65, 255);
+            // More air in boiler - lighter smoke
+            _funnelSmoke.Color = System.Drawing.Color.FromArgb(funnelColor, funnelColor, funnelColor);
+
+            // More air in boiler - less fuel burning, so we make less smoke appear
+            _funnelSmoke.Interval = (int)_chimney.AirInBoiler.Remap(0f, 1f, 55, 500);
         }
 
         public override void Dispose()

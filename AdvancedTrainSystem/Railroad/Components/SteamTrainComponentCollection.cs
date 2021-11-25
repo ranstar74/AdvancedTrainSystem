@@ -19,6 +19,7 @@ namespace AdvancedTrainSystem.Railroad.Components
         public SteamSoundsComponent SteamSounds;
         public SafetyValveComponent SafetyValve;
         public SteamParticleComponent SteamParticle;
+        public ChimneyComponent Chimney;
 
         // To remove later...
         public SierraDrivetrainAnimComponent SierraDrivetrainAnimComponent;
@@ -40,6 +41,7 @@ namespace AdvancedTrainSystem.Railroad.Components
             SteamSounds = Create<SteamSoundsComponent>();
             SafetyValve = Create<SafetyValveComponent>();
             SteamParticle = Create<SteamParticleComponent>();
+            Chimney = Create<ChimneyComponent>();
 
             SierraDrivetrainAnimComponent = Create<SierraDrivetrainAnimComponent>();
             SierraWheelAnimComponent = Create<SierraWheelAnimComponent>();

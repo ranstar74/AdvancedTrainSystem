@@ -74,7 +74,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 float burnTimeLeft = (float) burnUntilTime - Game.GameTime;
                 float powerMultiplier = burnTimeLeft.Remap(0f, BurnTime, 0f, 1f);
 
-                return (float)_rand.NextDouble(0.9f, 1.2f) * Power * powerMultiplier * Game.LastFrameTime;
+                return (float)_rand.NextDouble(0.05f, 0.1f) * Power * powerMultiplier * Game.LastFrameTime;
             }
             Burned = true;
 
@@ -90,10 +90,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// <summary>
         /// Creates a new instance of <see cref="Coal"/>.
         /// <para>
-        /// Coal burn with power of 1 for 45 seconds.
+        /// Coal burn with power of 1 for 10 minutes.
         /// </para>
         /// </summary>
-        public Coal() : base(1f, 45000)
+        public Coal() : base(1f, 10 * 60 * 1000)
         {
 
         }
@@ -142,18 +142,25 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </remarks>
         public float WaterInjector { get; private set; }
 
+        /// <summary>
+        /// Amount of heat gained this frame from burning fuel.
+        /// </summary>
+        public float HeatGainThisFrame => _heatGain;
+
         private readonly List<TrainFuel> Fuel = new List<TrainFuel>();
 
         /// <summary>
         /// Maximum pressure of the boiler in PSI.
         /// </summary>
         private const float _maxPsiPressure = 300;
-        private const int _maxCoal = 35;
+        private const int _maxCoal = 25;
+        private float _heatGain = 0;
 
         private readonly Train train;
 
         private ControlsComponent _controls;
         private SafetyValveComponent _safetyValve;
+
         /// <summary>
         /// Creates a new instance of <see cref="BoilerComponent"/>.
         /// </summary>
@@ -184,7 +191,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             // Make sure pressure doesn't go outside bounds
             //PressurePSI = MathExtensions.Clamp(PressurePSI, 0f, _maxPsiPressure);
 
-            //GTA.UI.Screen.ShowSubtitle($"Coal: {Fuel.Count()} Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
+            GTA.UI.Screen.ShowSubtitle($"Coal: {Fuel.Count()} Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
 
             if (Game.IsControlJustPressed(Control.ThrowGrenade) && train.Driver == GPlayer)
             {
@@ -212,7 +219,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </remarks>
         public void AddCoal()
         {
-            if (Fuel.Count > _maxCoal)
+            if (Fuel.Count >= _maxCoal)
                 return;
 
             Fuel.Add(new Coal());
@@ -223,11 +230,9 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         private float GetSteamGain()
         {
-            float steamGain = Fuel.Sum(coal => coal.GetHeat());
+            _heatGain = Fuel.Sum(coal => coal.GetHeat());
 
-            float burnedCoal = steamGain;
-
-            return burnedCoal;
+            return _heatGain;
         }
 
         /// <summary>
