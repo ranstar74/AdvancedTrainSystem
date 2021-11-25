@@ -1,5 +1,6 @@
 ﻿using FusionLibrary.Extensions;
 using GTA;
+using GTA.Math;
 using RageComponent;
 using RageComponent.Core;
 using System;
@@ -161,7 +162,15 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public void ApplyForce(float force)
         {
-            _newForces += force;
+            if(!derail.IsDerailed)
+            {
+                _newForces += force;
+            }
+            else
+            {
+                // TODO: Fix train doesn't have physics...
+                ((Vehicle)train).ApplyForce(train.ForwardVector * force * 100, Vector3.Zero, ForceType.MinForce2);
+            }
         }
 
         /// <summary>

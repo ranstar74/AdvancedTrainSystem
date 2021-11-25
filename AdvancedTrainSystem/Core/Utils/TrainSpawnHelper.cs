@@ -28,7 +28,6 @@ namespace AdvancedTrainSystem.Core.Utils
             // Spawn vehicles slightly below player to prevent automatic despawn
             Vector3 spawnPos = Game.Player.Character.Position - Vector3.WorldUp * 10;
 
-            Vehicle previousVehicle = null;
             for (int i = 0; i < carriageData.Count; i++)
             {
                 TrainModelInfo data = carriageData[i];
@@ -58,17 +57,8 @@ namespace AdvancedTrainSystem.Core.Utils
                 hiddenVehicle.IsVisible = false;
                 vehicle.AttachTo(hiddenVehicle);
 
-                // TODO: Check if this works before detach at all...
-                // Attach this carriage to previous one for better looking derail
-                if (previousVehicle != null)
-                {
-                    Function.Call(Hash.ATTACH_VEHICLE_TO_TRAILER, vehicle, previousVehicle, 180);
-                }
-
                 // Create carriage from configured vehicles
                 trainCarriages.Add(new TrainCarriage(hiddenVehicle, vehicle));
-
-                previousVehicle = vehicle;
             }
 
             return trainCarriages;

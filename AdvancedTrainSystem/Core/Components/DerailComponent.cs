@@ -1,5 +1,6 @@
 ﻿using AdvancedTrainSystem.Railroad;
 using FusionLibrary;
+using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
 using GTA.Native;
@@ -56,6 +57,24 @@ namespace AdvancedTrainSystem.Core.Components
         public override void Update()
         {
             ProcessSpeedDerail();
+
+            if(IsDerailed)
+            {
+                // Process all carriages from locomotive to last one
+                Vehicle previousCarriage = null;
+                for (int i = 0; i < train.Carriages.Count; i++)
+                {
+                    Vehicle carriage = train.Carriages[i].Vehicle;
+
+                    // Attach carriage as trailer to next carriage if theres one
+                    if (previousCarriage != null)
+                    {
+                        previousCarriage.AttachToTrailer(carriage, 180);
+                    }
+
+                    previousCarriage = carriage;
+                }
+            }
         }
 
         /// <summary>
@@ -79,15 +98,8 @@ namespace AdvancedTrainSystem.Core.Components
             // Process all carriages from locomotive to last one
             for (int i = 0; i < train.Carriages.Count; i++)
             {
-                Vehicle carriage = train.Carriages[i];
+                Vehicle carriage = train.Carriages[i].Vehicle;
                 Vehicle hiddenVehicle = train.Carriages[i].HiddenVehicle;
-
-                // TODO: Fix trailer attach, its also being assigned while creating
-                //// Attach carriage as trailer to next carriage if theres one
-                //if (carriage.Next != null)
-                //{
-                //    carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 130);
-                //}
 
                 // Detach visible vehicle from invisible one and re-apply velocity
                 carriage.Detach();
@@ -95,7 +107,6 @@ namespace AdvancedTrainSystem.Core.Components
 
                 // Delete invisible model as its not longer needed
                 hiddenVehicle.IsCollisionEnabled = false;
-                //carriage.InvisibleVehicle.Delete();
             }
 
             Vehicle locomotive = train;
