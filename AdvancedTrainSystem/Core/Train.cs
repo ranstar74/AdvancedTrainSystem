@@ -290,9 +290,6 @@ namespace AdvancedTrainSystem.Core
                 carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
                 carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
             }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
         }
 
         /// <summary>
