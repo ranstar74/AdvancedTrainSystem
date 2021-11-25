@@ -16,6 +16,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private ParticlePlayer _funnelSmoke;
         private ParticlePlayer _dynamoSteam;
         private ParticlePlayer _safetyValveSteam;
+        private ParticlePlayer _fireboxFire;
 
         private DynamoComponent _dynamo;
         private BoilerComponent _boiler;
@@ -110,6 +111,16 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                         rotation: new Vector3(0, -90, 0) + rot);
                 });
 
+            // Fire
+            _fireboxFire = new ParticlePlayer(
+                assetName: "core",
+                effectName: "ent_amb_barrel_fire",
+                particleType: ParticleType.Looped,
+                entity: train,
+                boneName: "firebox_fire",
+                offset: new Vector3(0, 0.5f, -0.25f),
+                rotation: new Vector3(65, 0, 0));
+
             _dynamoSteam.Play();
             _funnelSmoke.Play();
         }
@@ -139,6 +150,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             // More air in boiler - less fuel burning, so we make less smoke appear
             _funnelSmoke.Interval = (int)_chimney.AirInBoiler.Remap(0f, 1f, 55, 500);
+
+            // Enable and set size of firebox fire depending on how many coal there is
+            _fireboxFire.SetState(_chimney.AirInBoiler > 0.05f);
+            _fireboxFire.Size = 1 - _chimney.AirInBoiler;
         }
 
         public override void Dispose()
@@ -150,6 +165,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _funnelSmoke.Dispose();
             _safetyValveSteam.Dispose();
             _drainCockSteam.Dispose();
+            _fireboxFire.Dispose();
         }
     }
 }
