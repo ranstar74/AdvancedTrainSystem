@@ -152,7 +152,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _funnelSmoke.Interval = (int)_chimney.AirInBoiler.Remap(0f, 1f, 55, 500);
 
             // Enable and set size of firebox fire depending on how many coal there is
-            _fireboxFire.SetState(_chimney.AirInBoiler > 0.05f);
+            _fireboxFire.SetState(_chimney.AirInBoiler < 0.8f);
             _fireboxFire.Size = 1 - _chimney.AirInBoiler;
         }
 
