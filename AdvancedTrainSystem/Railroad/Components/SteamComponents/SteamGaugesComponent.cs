@@ -44,6 +44,9 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             float pressure = _boiler.Pressure;
             float pressureAngle = pressure.Remap(0f, 1f, 0f, 288f);
+
+            // Amplitude of "wiggle" animation that starts on about 0.9 and
+            // increases with pressure
             float amplitude = Math.Max(pressure - 0.9f, 0) * 50;
 
             // Make "crazy" animation if pressure gone too far
@@ -53,6 +56,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             // Wiggle speed
             float add = Game.LastFrameTime * 20;
+
+            // Cycle increment / decrement
             if (_wiggleCycle)
                 _wiggle -= add;
             else
