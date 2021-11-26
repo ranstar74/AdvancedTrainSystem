@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
+using System.Web.Script.Serialization;
 
 namespace AdvancedTrainSystem.Core.Info
 {
@@ -14,107 +14,68 @@ namespace AdvancedTrainSystem.Core.Info
     /// after reload script should re-read this config to fully
     /// recover the train structure.
     /// </remarks>
-    [Serializable]
-    public struct TrainInfo
+    public class TrainInfo
     {
         /// <summary>
         /// Display name of train.
         /// </summary>
-        public string Name;
+        public string Name { get; set; }
 
         /// <summary>
         /// Type of this train.
         /// </summary>
-        public TrainType TrainType;
+        public TrainType TrainType { get; set; }
 
         /// <summary>
         /// Names of the FMOD sound bank used by train.
         /// </summary>
-        public List<string> SoundBanks;
+        public List<string> SoundBanks { get; set; }
 
         /// <summary>
         /// GTA Train mission infromation of this train.
         /// </summary>
-        public TrainMissionInfo TrainMissionInfo;
-
-        public List<TrainControlBehaviourInfo> ControlBehaviourInfos;
+        public TrainMissionInfo TrainMissionInfo { get; set; }
 
         /// <summary>
-        /// Gets name of file this config was readed from.
+        /// Train controls.
         /// </summary>
-        [XmlIgnore]
-        public string ConfigFileName => configFileName;
+        public List<TrainControlBehaviourInfo> ControlBehaviourInfos { get; set; }
 
-        [NonSerialized]
-        private string configFileName;
-
-        private const string configPathTemplate = configDirectory + "{0}.xml";
         private const string configDirectory = "scripts/ATS/Configs/";
 
         /// <summary>
-        /// Saves config in .XML file.
+        /// Reads a <see cref="TrainInfo"/> by config name.
         /// </summary>
-        /// <remarks>
-        /// Previous config will be overwritten.
-        /// </remarks>
-        /// <param name="configName">Name of the file config will be saved in.</param>
-        public void Save(string configName)
-        {
-            Directory.CreateDirectory(configDirectory);
-
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(TrainInfo));
-
-            string path = string.Format(configPathTemplate, configName);
-
-            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
-            {
-                xmlSerializer.Serialize(fs, this);
-            }
-        }
-
-        /// <summary>
-        /// Reads train config from .XML file from given name.
-        /// </summary>
-        /// <param name="configName">Config name to read.</param>
-        /// <returns>A new <see cref="TrainInfo"/> instance .</returns>
-        public static TrainInfo Load(string configName)
-        {
-            string path = string.Format(configPathTemplate, configName);
-
-            return LoadFromFile(path);
-        }
-
-        /// <summary>
-        /// Reads train config from .XML file on given path.
-        /// </summary>
-        /// <param name="fileName">Path where config is located.</param>
+        /// <param name="name">Name of the config to read.</param>
         /// <returns>A new <see cref="TrainInfo"/> instance.</returns>
-        private static TrainInfo LoadFromFile(string fileName)
+        public static TrainInfo Load(string name)
         {
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(TrainInfo));
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
 
-            TrainInfo result;
-            using (FileStream fs = new FileStream(fileName, FileMode.Open))
-            {
-                result = (TrainInfo)xmlSerializer.Deserialize(fs);
+            // In case if name already contains .json in it
+            string path = name.Contains(".json") ? name : name + ".json";
+            path = configDirectory + path;
 
-                result.configFileName = Path.GetFileName(fs.Name);
-            }
+            if (!File.Exists(path))
+                throw new Exception($"Config with name: {name} cannot be found.");
 
-            return result;
+            string json = File.ReadAllText(path);
+
+            return serializer.Deserialize<TrainInfo>(json);
         }
 
+        /// <summary>
+        /// Reads train config by mission id.
+        /// </summary>
+        /// <param name="missionId">Id of the train mission.</param>
+        /// <returns>A new <see cref="TrainInfo"/> instance.</returns>
         public static TrainInfo Load(int missionId)
         {
-            // Not sure if this is the best way
-            // We're basically looking through all config
-            // and checking if id matches
-
             string[] files = Directory.GetFiles(configDirectory);
 
-            foreach(string file in files)
+            foreach(string fileName in files)
             {
-                TrainInfo trainInfo = LoadFromFile(file);
+                TrainInfo trainInfo = Load(fileName);
 
                 if (trainInfo.TrainMissionInfo.Id == missionId)
                     return trainInfo;

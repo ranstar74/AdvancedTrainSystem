@@ -9,28 +9,16 @@ namespace AdvancedTrainSystem.Core.Info
     /// It contains Id of config item, list of used models and display name.
     /// </para>
     /// </summary>
-    [Serializable]
-    public struct TrainMissionInfo
+    public class TrainMissionInfo
     {
         /// <summary>
         /// Id of the train config.
         /// </summary>
-        public int Id;
+        public int Id { get; set; }
 
         /// <summary>
         /// Models of the train config. All models must be loaded before spawning train.
         /// </summary>
-        public List<TrainModelInfo> Models;
-
-        /// <summary>
-        /// Creates a new instance of <see cref="TrainMissionInfo"/>.
-        /// </summary>
-        /// <param name="id">Id of the train config.</param>
-        /// <param name="models">List of models.</param>
-        public TrainMissionInfo(int id, List<TrainModelInfo> models)
-        {
-            Id = id;
-            Models = models;
-        }
+        public List<TrainModelInfo> Models { get; set; }
     }
 }
