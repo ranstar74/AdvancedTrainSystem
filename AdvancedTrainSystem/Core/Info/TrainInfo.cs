@@ -75,7 +75,7 @@ namespace AdvancedTrainSystem.Core.Info
 
             foreach(string fileName in files)
             {
-                TrainInfo trainInfo = Load(fileName);
+                TrainInfo trainInfo = Load(Path.GetFileNameWithoutExtension(fileName));
 
                 if (trainInfo.TrainMissionInfo.Id == missionId)
                     return trainInfo;
