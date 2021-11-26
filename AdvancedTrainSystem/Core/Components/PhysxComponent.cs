@@ -56,7 +56,7 @@ namespace AdvancedTrainSystem.Core.Components
         /// <see cref="DriveWheelSpeed"/> uses <see cref="VisualSpeed "/> internally.
         /// </para>
         /// </summary>
-        public float VisualSpeed => speed > 0.15f ? speed : 0;
+        public float VisualSpeed => AbsoluteSpeed > 0.15f ? speed : 0;
 
         /// <summary>
         /// Track speed is not depends on train direction. 
@@ -131,9 +131,9 @@ namespace AdvancedTrainSystem.Core.Components
 
             float acceleration = (Speed - _prevSpeed) * Game.LastFrameTime;
 
-            float dragForce = (float) (0.02f * Math.Pow(AbsoluteSpeed, 2)) / 8;
+            float dragForce = (float) (0.02f * Math.Pow(Speed, 2)) / 8;
             float inerciaForce = acceleration * 5;
-            float frictionForce = 0.2f * AbsoluteSpeed / 2;
+            float frictionForce = 0.2f * Speed / 2;
             float slipForce = WheelSlip * _newForces * 200;
 
             float totalForce = dragForce + inerciaForce + frictionForce + slipForce;
@@ -149,7 +149,8 @@ namespace AdvancedTrainSystem.Core.Components
 
         private void UpdateWheelSpeed()
         {
-            float wheelSpeedTo = DoWheelSlip ? 22f : VisualSpeed;
+            float slipSpeed = _newForces >= 0 ? 22f : -22f;
+            float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
 
             // Can't really think of a way calculating these in one
             // And since wheel slip is faked im not sure there point to

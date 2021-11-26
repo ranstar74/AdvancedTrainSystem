@@ -81,8 +81,8 @@ namespace AdvancedTrainSystem.Railroad.Components.AnimComponents
 
         public override void Update()
         {
-            if (derail.IsDerailed)
-                return;
+            //if (derail.IsDerailed)
+            //    return;
             Vehicle trainVehicle = train;
 
             float angleRad = sierraWheel.DrivingWheelAngle.ToRad();

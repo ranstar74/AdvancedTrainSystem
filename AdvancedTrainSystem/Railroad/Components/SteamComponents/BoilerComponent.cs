@@ -191,7 +191,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             // Make sure pressure doesn't go outside bounds
             //PressurePSI = MathExtensions.Clamp(PressurePSI, 0f, _maxPsiPressure);
 
-            GTA.UI.Screen.ShowSubtitle($"Coal: {Fuel.Count()} Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
+            //GTA.UI.Screen.ShowSubtitle($"Coal: {Fuel.Count()} Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
 
             if (Game.IsControlJustPressed(Control.ThrowGrenade) && train.Driver == GPlayer)
             {
@@ -242,10 +242,11 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private float GetSteamConsumption()
         {
             float throttle = _controls.Throttle * 2 * Game.LastFrameTime;
+            float gear = Math.Abs(_controls.Gear.Remap(0f, 1f, -1f, 1f));
             float safValve = _safetyValve.Valve * 8 * Game.LastFrameTime;
             float cocks = _controls.DrainCocks * 4 * Game.LastFrameTime;
 
-            return throttle + safValve + cocks;
+            return (throttle * gear) + safValve + cocks;
         }
     }
 }

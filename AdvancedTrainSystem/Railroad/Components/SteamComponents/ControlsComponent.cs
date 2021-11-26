@@ -21,6 +21,11 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         public float DrainCocks { get; set; }
 
+        /// <summary>
+        /// Gets or sets a normalized value indicating gear lever position.
+        /// </summary>
+        public float Gear { get; set; }
+
         private readonly Dictionary<string, Action<ControlsComponent, float>> _behaviours = new Dictionary<string, Action<ControlsComponent, float>>()
         {
             ["Throttle"] = (context, value) =>
@@ -30,6 +35,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             ["Cocks"] = (context, value) =>
             {
                 context.DrainCocks = value;
+            },
+            ["Gear"] = (context, value) =>
+            {
+                context.Gear = value;
             }
         };
         private readonly InteractiveController _interactableProps = new InteractiveController();
@@ -45,6 +54,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 var model = new CustomModel(info.ModelName);
                 model.Request();
 
+                // Create interactive prop
                 InteractiveProp interactiveProp =  _interactableProps.Add(
                     model: model,
                     entity: train,
@@ -58,9 +68,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                     startValue: info.StartValue,
                     sensitivityMultiplier: info.Sensetivity);
 
-                if(info.HandleInfo != null)
+                // Create handle, if theres config for that
+                if(info.AttachmentInfo != null)
                 {
-                    var handleInfo = info.HandleInfo;
+                    var handleInfo = info.AttachmentInfo;
 
                     var handle = new CustomModel(handleInfo.ModelName);
                     handle.Request();
@@ -75,7 +86,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                         min: handleInfo.MinAngle,
                         max: handleInfo.MaxAngle,
                         startValue: 0f,
-                        step: 20f,
+                        step: (float) handleInfo.Step,
                         stepRatio: 1f,
                         isIncreasing: handleInfo.MaxAngle < handleInfo.MinAngle,
                         smoothEnd: true);
@@ -83,6 +94,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                     interactiveProp.OnInteractionEnded += (_, __) => handleProp.Stop();
                 }
 
+                // Setup alternative controls
                 if (info.AltControl != null)
                 {
                     interactiveProp.SetupAltControl(
@@ -90,10 +102,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                         invert: (bool)info.InvertAlt);
                 }
 
+                // Show label on hover
                 interactiveProp.OnHover += DisplayTextPreview;
                 interactiveProp.OnInteraction += DisplayTextPreview;
                 interactiveProp.OnInteraction += UpdateBehaviour;
 
+                // Save info in tag in order to access it later
                 interactiveProp.Tag = info;
             });
 
