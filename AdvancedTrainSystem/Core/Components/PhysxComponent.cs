@@ -1,4 +1,5 @@
-﻿using FusionLibrary.Extensions;
+﻿using AdvancedTrainSystem.Railroad.Components;
+using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
 using RageComponent;
@@ -118,6 +119,13 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
+            //if (Game.IsControlJustPressed(Control.ThrowGrenade))
+            //{
+            //    derail.Derail();
+            //    ((SteamTrainComponentCollection)train.Components).Controls.Throttle = 1;
+            //    ((SteamTrainComponentCollection)train.Components).Controls.Gear = 1;
+            //}
+
             UpdateWheelSpeed();
             
             // Since hidden vehicle isn't used after derail we just set speed on zero
@@ -127,16 +135,21 @@ namespace AdvancedTrainSystem.Core.Components
                 return;
             }
 
-            // TODO: Take uphill/downhill into account
-
             float acceleration = (Speed - _prevSpeed) * Game.LastFrameTime;
 
+            // Train don't really go uphill
+            float slopeForce = train.Rotation.X / 4;
+            
+            // These are not fully physical based but i found these values
+            // to work good enough
             float dragForce = (float) (0.02f * Math.Pow(Speed, 2)) / 8;
             float inerciaForce = acceleration * 5;
             float frictionForce = 0.2f * Speed / 2;
+
+            // Make train don't accelerate if wheel slips
             float slipForce = WheelSlip * _newForces * 200;
 
-            float totalForce = dragForce + inerciaForce + frictionForce + slipForce;
+            float totalForce = slopeForce + dragForce + inerciaForce + frictionForce + slipForce;
 
             ApplyForce(-totalForce * _forceMultiplier * Game.LastFrameTime);
 
@@ -147,12 +160,18 @@ namespace AdvancedTrainSystem.Core.Components
             _newForces = 0f;
         }
 
+        /// <summary>
+        /// Calculates drive wheel speed.
+        /// It is different from actual speed if wheel slipping or locked by brake.
+        /// </summary>
         private void UpdateWheelSpeed()
         {
-            float slipSpeed = _newForces >= 0 ? 22f : -22f;
+            // Im not really sure what is the best way to get slip
+            // speed, so we're faking it with new forces applied to train (which is mostly engine force)
+            float slipSpeed = _newForces * 45 / Game.LastFrameTime;
             float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
 
-            // Can't really think of a way calculating these in one
+            // Can't really think of a way calculating these in one line
             // And since wheel slip is faked im not sure there point to
             WheelSlip = MathExtensions.Lerp(WheelSlip, DoWheelSlip ? 1f : 0f, Game.LastFrameTime * 2);
             DriveWheelSpeed = MathExtensions.Lerp(DriveWheelSpeed, wheelSpeedTo, Game.LastFrameTime * 2);
@@ -163,14 +182,23 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public void ApplyForce(float force)
         {
+            // If train is not derailed, apply new forces to train speed,
+            // otherwise, we apply forces to entity, making it move
+            // Not sure it works like that irl but that looks fun
             if(!derail.IsDerailed)
             {
                 _newForces += force;
             }
             else
             {
-                // TODO: Fix train doesn't have physics...
-                ((Vehicle)train).ApplyForce(train.ForwardVector * force * 100, Vector3.Zero, ForceType.MinForce2);
+                Vehicle vehicle = train;
+
+                // Not sure if this bool works right on trains...
+                if(vehicle.IsOnAllWheels)
+                    vehicle.ApplyForce(
+                        direction: train.ForwardVector * force * 35, 
+                        rotation: Vector3.Zero, 
+                        forceType: ForceType.MaxForceRot);
             }
         }
 
