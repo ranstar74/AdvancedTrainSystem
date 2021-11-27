@@ -1,4 +1,5 @@
-﻿using AdvancedTrainSystem.Core.Components.Abstract;
+﻿using AdvancedTrainSystem.Core.Components;
+using AdvancedTrainSystem.Core.Components.Abstract;
 using AdvancedTrainSystem.Core.Utils;
 using FusionLibrary;
 using FusionLibrary.Extensions;
@@ -22,6 +23,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private BoilerComponent _boiler;
         private SafetyValveComponent _safetyValve;
         private ChimneyComponent _chimney;
+        private DerailComponent _derail;
 
         private Prop _fireboxDummyProp;
 
@@ -37,6 +39,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _dynamo = Components.GetComponent<DynamoComponent>();
             _safetyValve = Components.GetComponent<SafetyValveComponent>();
             _chimney = Components.GetComponent<ChimneyComponent>();
+            _derail = Components.GetComponent<DerailComponent>();
 
             CustomModel dummyModel = new CustomModel("prop_oil_valve_01");
             dummyModel.Request();
@@ -48,6 +51,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _fireboxDummyProp.IsPersistent = true;
             _fireboxDummyProp.IsVisible = false;
             _fireboxDummyProp.IsPositionFrozen = true;
+            _fireboxDummyProp.IsCollisionEnabled = true;
+
+            _derail.OnDerail += () =>
+            {
+                _fireboxDummyProp.Delete();
+            };
 
             // Cylinder smoke and drips
             BoneUtils.ProcessSideBones(
@@ -166,12 +175,16 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             // More air in boiler - less fuel burning, so we make less smoke appear
             _funnelSmoke.Interval = (int)_chimney.AirInBoiler.Remap(0f, 1f, 55, 500);
 
-            // Enable and set size of firebox fire depending on how many coal there is
-            _fireboxDummyProp.Position = train.Bones["firebox_fire"].Position;
-            _fireboxDummyProp.Rotation = train.Rotation;
+            // For some reason otherwise it makes train fly on derail...
+            if(!_derail.IsDerailed)
+            {
+                // Enable and set size of firebox fire depending on how many coal there is
+                _fireboxDummyProp.Position = train.Bones["firebox_fire"].Position;
+                _fireboxDummyProp.Rotation = train.Rotation;
 
-            _fireboxFire.SetState(true);//(_chimney.AirInBoiler < 0.8f);
-            _fireboxFire.Size = 1;//= 1 - _chimney.AirInBoiler;
+                _fireboxFire.SetState(_chimney.AirInBoiler < 0.8f);
+                _fireboxFire.Size = 1 - _chimney.AirInBoiler;
+            }
         }
 
         public override void Dispose()
