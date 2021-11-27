@@ -23,6 +23,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private SafetyValveComponent _safetyValve;
         private ChimneyComponent _chimney;
 
+        private Prop _fireboxDummyProp;
+
         public SteamParticleComponent(ComponentCollection components) : base(components)
         {
 
@@ -35,6 +37,17 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _dynamo = Components.GetComponent<DynamoComponent>();
             _safetyValve = Components.GetComponent<SafetyValveComponent>();
             _chimney = Components.GetComponent<ChimneyComponent>();
+
+            CustomModel dummyModel = new CustomModel("prop_oil_valve_01");
+            dummyModel.Request();
+
+            // Dummy prop we attach some particles to in order to remove
+            // physics, for example smoke or fire needs to be static
+            // no matter train moves or not
+            _fireboxDummyProp = World.CreateProp(dummyModel, train.Position, false, false);
+            _fireboxDummyProp.IsPersistent = true;
+            _fireboxDummyProp.IsVisible = false;
+            _fireboxDummyProp.IsPositionFrozen = true;
 
             // Cylinder smoke and drips
             BoneUtils.ProcessSideBones(
@@ -112,14 +125,16 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 });
 
             // Fire
+            // There's something really fucked up
+            // about rotation and position
+            // please don't change it
             _fireboxFire = new ParticlePlayer(
                 assetName: "core",
                 effectName: "ent_amb_barrel_fire",
                 particleType: ParticleType.Looped,
-                entity: train,
-                boneName: "firebox_fire",
-                offset: new Vector3(0, 0.5f, -0.25f),
-                rotation: new Vector3(65, 0, 0));
+                entity: _fireboxDummyProp,
+                offset: new Vector3(-0.25f, -0.15f, -0.15f),
+                rotation: new Vector3(90, 0, 120));
 
             _dynamoSteam.Play();
             _funnelSmoke.Play();
@@ -152,6 +167,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _funnelSmoke.Interval = (int)_chimney.AirInBoiler.Remap(0f, 1f, 55, 500);
 
             // Enable and set size of firebox fire depending on how many coal there is
+            _fireboxDummyProp.Position = train.Bones["firebox_fire"].Position;
             _fireboxFire.SetState(_chimney.AirInBoiler < 0.8f);
             _fireboxFire.Size = 1 - _chimney.AirInBoiler;
         }
@@ -166,6 +182,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             _safetyValveSteam.Dispose();
             _drainCockSteam.Dispose();
             _fireboxFire.Dispose();
+
+            _fireboxDummyProp.Delete();
         }
     }
 }
