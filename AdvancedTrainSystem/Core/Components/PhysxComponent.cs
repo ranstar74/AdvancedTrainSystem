@@ -119,13 +119,6 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
-            if (Game.IsControlJustPressed(Control.ThrowGrenade))
-            {
-                //_derail.Derail();
-                //((SteamTrainComponentCollection)train.Components).Controls.Throttle = 1;
-                //((SteamTrainComponentCollection)train.Components).Controls.Gear = 1;
-                Speed = 20f;
-            }
             UpdateWheelSpeed();
 
             // Since hidden vehicle isn't used after derail we just set speed on zero
