@@ -48,7 +48,8 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
             _wheelSparks.SetState(_physx.DoWheelSlip);
 
             // Spark will be flipped if train is either braking in reverse or wheel slip in reverse
-            bool sparksFlipped = _physx.Speed < 0 || _physx.DriveWheelSpeed < 0;
+            // TODO: When steam brake will be added, spark direction would be wrong
+            bool sparksFlipped = _physx.DriveWheelSpeed < 0;
             Vector3 sparkRotation = sparksFlipped ? new Vector3(190, 0, 0) : Vector3.Zero;
 
             for (int i = 0; i < _wheelSparks.ParticlePlayers.Count; i++)
