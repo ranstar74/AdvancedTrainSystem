@@ -4,6 +4,7 @@ using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
 using GTA.Native;
+using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
 using System;
@@ -28,13 +29,14 @@ namespace AdvancedTrainSystem.Core.Components
         /// <summary>
         /// Minimum speed of derailnment in m/s.
         /// </summary>
-        private const float derailMinSpeed = 13;
+        private const float derailMinSpeed = 10;
 
         /// <summary>
         /// Minimum angle difference between current and previous frames to derail.
         /// </summary>
-        private const float derailAngle = 0.5f;
+        private const float derailAngle = 0.01f;
 
+        private int _derailTime = -1;
         private readonly Train train;
         private Vector3 prevForwardAngle = Vector3.Zero;
         private PhysxComponent physx;
@@ -52,13 +54,30 @@ namespace AdvancedTrainSystem.Core.Components
         {
             Components.GetComponent<CollisionComponent>().OnCollision += Derail;
             physx = Components.GetComponent<PhysxComponent>();
+
+            // Don't change this value as it may cause issues
+            // with derail angle.
+            UpdateTime = 20;
         }
 
         public override void Update()
         {
-            ProcessSpeedDerail();
+            // TODO: Fix train still enterable after derail
 
-            if(IsDerailed)
+            ProcessSpeedDerail();
+            ProcessAttachTrailer();
+        }
+
+        /// <summary>
+        /// Attaches carriages to each other
+        /// so after derail they won't separate and
+        /// fly in different directions
+        /// </summary>
+        private void ProcessAttachTrailer()
+        {
+            // Keep attaching trailer some time after derail
+            // to make sure it attached
+            if (IsDerailed && Game.GameTime - _derailTime < 250)
             {
                 // Process all carriages from locomotive to last one
                 Vehicle previousCarriage = null;
@@ -69,7 +88,7 @@ namespace AdvancedTrainSystem.Core.Components
                     // Attach carriage as trailer to next carriage if theres one
                     if (previousCarriage != null)
                     {
-                        previousCarriage.AttachToTrailer(carriage, 180);
+                        previousCarriage.AttachToTrailer(carriage, 360);
                     }
 
                     previousCarriage = carriage;
@@ -87,14 +106,6 @@ namespace AdvancedTrainSystem.Core.Components
 
             OnDerail?.Invoke();
 
-            // TODO: Make player fly like out of cars in gta 4
-            // Throw player out of train
-            if (train.Driver == Game.Player.Character)
-            {
-                Game.Player.Character.Task.LeaveVehicle(LeaveVehicleFlags.BailOut);
-                Game.Player.Character.Ragdoll(10, RagdollType.Balance);
-            }
-
             // Process all carriages from locomotive to last one
             for (int i = 0; i < train.Carriages.Count; i++)
             {
@@ -109,37 +120,38 @@ namespace AdvancedTrainSystem.Core.Components
                 hiddenVehicle.IsCollisionEnabled = false;
             }
 
-            Vehicle locomotive = train;
+            //Vehicle locomotive = train;
 
             // Apply different forces to make crash look better
 
-            var direction = Vector3.WorldUp;
-            var rotation = new Vector3(0, 65, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 3,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
+            //var direction = Vector3.WorldUp;
+            //var rotation = new Vector3(0, 65, 0) * (physx.Speed / 50);
+            //Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+            //    locomotive, 3,
+            //    direction.X, direction.Y, direction.Z,
+            //    rotation.X, rotation.Y, rotation.Z,
+            //    locomotive.Bones["fwheel_1"].Index,
+            //    false, true, true, false, true);
 
-            direction = locomotive.RightVector;
-            rotation = new Vector3(0, 100, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 5,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
-            direction = locomotive.UpVector;
-            rotation = new Vector3(0, 0, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 5,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
+            //direction = locomotive.RightVector;
+            //rotation = new Vector3(0, 100, 0);
+            //Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+            //    locomotive, 5,
+            //    direction.X, direction.Y, direction.Z,
+            //    rotation.X, rotation.Y, rotation.Z,
+            //    locomotive.Bones["fwheel_1"].Index,
+            //    false, true, true, false, true);
+            //direction = locomotive.UpVector;
+            //rotation = new Vector3(0, 0, 0);
+            //Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
+            //    locomotive, 5,
+            //    direction.X, direction.Y, direction.Z,
+            //    rotation.X, rotation.Y, rotation.Z,
+            //    locomotive.Bones["fwheel_1"].Index,
+            //    false, true, true, false, true);
 
             IsDerailed = true;
+            _derailTime = Game.GameTime;
         }
 
         /// <summary>
@@ -148,13 +160,14 @@ namespace AdvancedTrainSystem.Core.Components
         private void ProcessSpeedDerail()
         {
             // We're basically comparing forward vector of previous frame and current frame
-            // and if difference is too high and speed is higher than derailing minumum then train derails.
-            var forwardVector = train.ForwardVector;
+            // and if difference is too high and speed is higher than
+            // derailing minumum then train derails.
+            Vector3 forwardVector = train.ForwardVector;
 
             if (physx.AbsoluteSpeed >= derailMinSpeed)
             {
-                float angle = Vector3.Angle(forwardVector, prevForwardAngle);
-
+                float angle = Vector3.Angle(forwardVector, prevForwardAngle) * Game.LastFrameTime;
+                
                 if (angle >= derailAngle)
                 {
                     if (FusionUtils.Random.NextDouble() >= 0.3f)

@@ -19,7 +19,7 @@ namespace AdvancedTrainSystem.Core
     public abstract class Train : IComponentObject
     {
         /// <summary>
-        /// Speed of the <see cref="Train"/> in m/s.
+        /// Speed of this train. in m/s.
         /// </summary>
         public float Speed => Components.PhysxComponent.Speed;
 
@@ -29,7 +29,7 @@ namespace AdvancedTrainSystem.Core
         public float TrackSpeed => Components.PhysxComponent.TrackSpeed;
 
         /// <summary>
-        /// Velocity of the <see cref="Train"/>.
+        /// Velocity of this train.
         /// </summary>
         /// <remarks>
         /// Can be set only if train is derailed.
@@ -51,39 +51,44 @@ namespace AdvancedTrainSystem.Core
         }
 
         /// <summary>
-        /// Position of the <see cref="Train"/>.
+        /// Position of this train.
         /// </summary>
         public Vector3 Position => GetActiveLocomotiveVehicle().Position;
 
         /// <summary>
-        /// Rotation of the <see cref="Train"/>.
+        /// Rotation of this train.
         /// </summary>
         public Vector3 Rotation => GetActiveLocomotiveVehicle().Rotation;
 
         /// <summary>
-        /// Quaternion of the <see cref="Train"/>.
+        /// Quaternion of this train.
         /// </summary>
         public Quaternion Quaternion => GetActiveLocomotiveVehicle().Quaternion;
 
         /// <summary>
-        /// Gets the vector that points in front of the <see cref="Train"/>.
+        /// Gets the vector that points in front of this train.
         /// </summary>
         public Vector3 ForwardVector => GetActiveLocomotiveVehicle().ForwardVector;
 
         /// <summary>
-        /// Gets the vector that points above the <see cref="Train"/>.
+        /// Gets the vector that points above the this train.
         /// </summary>
         public Vector3 UpVector => GetActiveLocomotiveVehicle().UpVector;
 
         /// <summary>
-        /// Gets the vector that points to the right of the <see cref="Train"/>.
+        /// Gets the vector that points to the right of this train.
         /// </summary>
         public Vector3 RightVector => GetActiveLocomotiveVehicle().RightVector;
 
         /// <summary>
-        /// Gets a position directly in front of the <see cref="Train"/>.
+        /// Gets a position directly in front of this train.
         /// </summary>
         public Vector3 FrontPosition => GetActiveLocomotiveVehicle().FrontPosition;
+
+        /// <summary>
+        /// Gets a collection of <see cref="EntityBone"/> of this train.
+        /// </summary>
+        public EntityBoneCollection Bones => TrainLocomotive.Vehicle.Bones;
 
         /// <summary>
         /// Driver of the <see cref="TrainLocomotive"/>.

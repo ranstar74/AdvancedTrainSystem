@@ -103,7 +103,7 @@ namespace AdvancedTrainSystem.Core.Components
         private float _newForces = 0f;
 
         private readonly Train train;
-        private DerailComponent derail;
+        private DerailComponent _derail;
         private CollisionComponent collision;
 
         public PhysxComponent(ComponentCollection components) : base(components)
@@ -113,23 +113,23 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Start()
         {
-            derail = Components.GetComponent<DerailComponent>();
+            _derail = Components.GetComponent<DerailComponent>();
             collision = Components.GetComponent<CollisionComponent>();
         }
 
         public override void Update()
         {
-            //if (Game.IsControlJustPressed(Control.ThrowGrenade))
-            //{
-            //    derail.Derail();
-            //    ((SteamTrainComponentCollection)train.Components).Controls.Throttle = 1;
-            //    ((SteamTrainComponentCollection)train.Components).Controls.Gear = 1;
-            //}
-
+            if (Game.IsControlJustPressed(Control.ThrowGrenade))
+            {
+                //_derail.Derail();
+                //((SteamTrainComponentCollection)train.Components).Controls.Throttle = 1;
+                //((SteamTrainComponentCollection)train.Components).Controls.Gear = 1;
+                Speed = 20f;
+            }
             UpdateWheelSpeed();
-            
+
             // Since hidden vehicle isn't used after derail we just set speed on zero
-            if (derail.IsDerailed)
+            if (_derail.IsDerailed)
             {
                 Speed = 0;
                 return;
@@ -168,7 +168,17 @@ namespace AdvancedTrainSystem.Core.Components
         {
             // Im not really sure what is the best way to get slip
             // speed, so we're faking it with new forces applied to train (which is mostly engine force)
-            float slipSpeed = _newForces * 45 / Game.LastFrameTime;
+
+            // No idea why but when train derailed wheel slip speed gets to some fucking high values
+            // so here's hack to lower it
+            float slipMultiplier = _derail.IsDerailed ? 2 : 60;
+            float slipSpeed = _newForces * slipMultiplier / Game.LastFrameTime;
+
+            // Im too tired of this fucking high speed, i have no fucking clue why it doesnt work
+            // and debugging it is fucking hell SO EAT UR ASS U DUMB FUCK IM CLIPPING U
+            if(_derail.IsDerailed)
+                slipSpeed = Math.Min(slipSpeed, 25);
+
             float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
 
             // Can't really think of a way calculating these in one line
@@ -182,21 +192,23 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public void ApplyForce(float force)
         {
-            // If train is not derailed, apply new forces to train speed,
-            // otherwise, we apply forces to entity, making it move
+            _newForces += force;
+
+            // We apply forces to entity, making it move
             // Not sure it works like that irl but that looks fun
-            if(!derail.IsDerailed)
-            {
-                _newForces += force;
-            }
-            else
+            if (_derail.IsDerailed)
             {
                 Vehicle vehicle = train;
 
-                // Not sure if this bool works right on trains...
-                if(vehicle.IsOnAllWheels)
+                RaycastResult ray = World.Raycast(
+                    source: train.Position,
+                    direction: Vector3.WorldDown,
+                    maxDistance: 0.5f,
+                    options: IntersectFlags.Map);
+
+                if(ray.DidHit)
                     vehicle.ApplyForce(
-                        direction: train.ForwardVector * force * 35, 
+                        direction: train.ForwardVector * force * 40, 
                         rotation: Vector3.Zero, 
                         forceType: ForceType.MaxForceRot);
             }
