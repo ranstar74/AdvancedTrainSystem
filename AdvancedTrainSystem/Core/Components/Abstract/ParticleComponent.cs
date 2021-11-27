@@ -45,7 +45,8 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
 
         public override void Update()
         {
-            _wheelSparks.SetState(_physx.DoWheelSlip);
+            // TODO: || _physx.WheelLocked
+            _wheelSparks.SetState(_physx.DoWheelSlip && _physx.DriveWheelSpeed > 5f);
 
             // Spark will be flipped if train is either braking in reverse or wheel slip in reverse
             // TODO: When steam brake will be added, spark direction would be wrong
