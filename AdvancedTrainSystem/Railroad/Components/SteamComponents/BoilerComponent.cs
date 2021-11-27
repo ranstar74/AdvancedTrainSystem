@@ -14,13 +14,23 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
     /// </summary>
     public abstract class TrainFuel
     {
-        private readonly float _power;
-        private readonly int _burnTime;
+        /// <summary>
+        /// Gets a value indicating how much heat fuel produces while burning.
+        /// </summary>
+        public abstract float Power { get; }
 
-        private static readonly Random _rand = new Random();
+        /// <summary>
+        /// Gets a value indicating how much time fuel will burn.
+        /// </summary>
+        public abstract int BurnTime { get; }
 
-        private int burnStartTime = -1;
-        private int burnUntilTime = -1;
+        /// <summary>
+        /// Gets a value indicating abstract size of fuel. 
+        /// <para>
+        /// Used to calculate how many of fuel can be in firebox.
+        /// </para>
+        /// </summary>
+        public abstract int Size { get; }
 
         /// <summary>
         /// Gets a value indicating if fuel is done.
@@ -28,25 +38,28 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         public bool Burned { get; private set; } = false;
 
         /// <summary>
-        /// Gets a value indicating how much heat fuel produces.
+        /// Gets a value indicating how much size left from original size after burning.
         /// </summary>
-        public float Power => _power;
+        public float CurrentSize => Size * Health;
 
         /// <summary>
-        /// Gets a value indicating how much time fuel will burn.
+        /// Gets a normalized value indicating health of fuel.
+        /// More time fuel burns, less health fuel have.
         /// </summary>
-        public int BurnTime => _burnTime;
+        public float Health => _health;
+
+        private float _health;
+
+        private static readonly Random _rand = new Random();
+
+        private int burnStartTime = -1;
+        private int burnUntilTime = -1;
 
         /// <summary>
         /// Creates a new instance of <see cref="TrainFuel"/> with defined power.
         /// </summary>
-        /// <param name="power">A multiplier, which defines how many heat it makes while burning.</param>
-        /// <param name="burnTime">Defines how much time fuel will burn.</param>
-        public TrainFuel(float power, int burnTime)
+        public TrainFuel()
         {
-            _power = power;
-            _burnTime = burnTime;
-
             Ignite();
         }
 
@@ -67,14 +80,15 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         public float GetHeat()
         {
-            if(Game.GameTime < burnUntilTime)
+            if (Game.GameTime < burnUntilTime)
             {
                 // When fuel burns it's most efficient on beginning
                 // and least efficient when it's almost burned
-                float burnTimeLeft = (float) burnUntilTime - Game.GameTime;
-                float powerMultiplier = burnTimeLeft.Remap(0f, BurnTime, 0f, 1f);
+                float burnTimeLeft = (float)burnUntilTime - Game.GameTime;
 
-                return (float)_rand.NextDouble(0.05f, 0.1f) * Power * powerMultiplier * Game.LastFrameTime;
+                _health = burnTimeLeft.Remap(0f, BurnTime, 0f, 1f);
+
+                return (float)_rand.NextDouble(0.05f, 0.1f) * Power * _health * Game.LastFrameTime;
             }
             Burned = true;
 
@@ -88,20 +102,27 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
     public class Coal : TrainFuel
     {
         /// <summary>
-        /// Creates a new instance of <see cref="Coal"/>.
+        /// Gets a value indicating how much heat coal produces while burning.
+        /// </summary>
+        public override float Power => 1f;
+
+        /// <summary>
+        /// Gets a value indicating how much time coal will burn.
+        /// </summary>
+        public override int BurnTime => 10 * 60 * 1000;
+
+        /// <summary>
+        /// Gets a value indicating abstract size of coal.
+        /// </summary>
+        public override int Size => 1;
+
+        /// <summary>
+        /// Creates a new instance of <see cref="Coal"/> with size of 1.
         /// <para>
         /// Coal burn with power of 1 for 10 minutes.
         /// </para>
         /// </summary>
-        public Coal() : base(1f, 10 * 60 * 1000)
-        {
-
-        }
-    }
-
-    public class PrestoLog : TrainFuel
-    {
-        public PrestoLog() : base(100f, 15000)
+        public Coal()
         {
 
         }
@@ -147,16 +168,22 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         public float HeatGainThisFrame => _heatGain;
 
-        private readonly List<TrainFuel> Fuel = new List<TrainFuel>();
+        /// <summary>
+        /// Gets a value indicating fuel capacity of firebox.
+        /// </summary>
+        public int FireboxCapacity => _maxCapacity;
 
         /// <summary>
         /// Maximum pressure of the boiler in PSI.
         /// </summary>
         private const float _maxPsiPressure = 300;
-        private const int _maxCoal = 25;
+
+        private readonly List<TrainFuel> _fuel = new List<TrainFuel>();
+
+        private const int _maxCapacity = 25;
         private float _heatGain = 0;
 
-        private readonly Train train;
+        private readonly Train _train;
 
         private ControlsComponent _controls;
         private SafetyValveComponent _safetyValve;
@@ -167,7 +194,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// <param name="components"></param>
         public BoilerComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
+            _train = GetParent<Train>();
         }
 
         public override void Start()
@@ -188,15 +215,30 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             PressurePSI += gain;
             PressurePSI -= consumption;
 
-            // Make sure pressure doesn't go outside bounds
-            //PressurePSI = MathExtensions.Clamp(PressurePSI, 0f, _maxPsiPressure);
+            PressurePSI = Math.Max(PressurePSI, 0);
 
-            //GTA.UI.Screen.ShowSubtitle($"Coal: {Fuel.Count()} Boiler Pressure: {PressurePSI:0.00} {Pressure:0.00}");
+            if(_train.Driver == GPlayer)
+            {            
+                GTA.UI.Screen.ShowHelpText(
+                    $"Capacity Left: {FuelCapacityLeft():0.0}\n" + 
+                    $"Boiler Pressure: {PressurePSI:0}", 1, false, false);
+            }
 
-            if (Game.IsControlJustPressed(Control.ThrowGrenade) && train.Driver == GPlayer)
+            if (Game.IsControlJustPressed(Control.ThrowGrenade) && _train.Driver == GPlayer)
             {
-                AddCoal();
-                GTA.UI.Screen.ShowHelpText($"Added coal. Total coal: {Fuel.Count}", 1500);
+                string message;
+                if (AddFuel<Coal>())
+                {
+                    float leftPercent = 100 - (_fuel.Sum(x => x.CurrentSize) * 100 / FireboxCapacity);
+
+                    message =
+                        "Added coal.\n" +
+                        $"Capacity Left: {leftPercent / 100:P1}";
+                }
+                else
+                    message = $"Not enough free space in firebox to add more fuel.";
+
+                GTA.UI.Screen.ShowHelpText(message, 1500);
             }
         }
 
@@ -205,24 +247,37 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         private void CleanupFirebox()
         {
-            Fuel.RemoveAll(coal => coal.Burned);
+            _fuel.RemoveAll(coal => coal.Burned);
         }
 
         /// <summary>
-        /// Adds a coal in firebox.
+        /// Adds a fuel in firebox.
         /// </summary>
         /// <remarks>
-        /// Burning coal heats the water to produce steam. 
+        /// Burning fuel heats the water to produce steam. 
         /// <para>
-        /// Adding more coal increases boiler pressure.
+        /// Adding more fuel increases boiler pressure.
         /// </para>
         /// </remarks>
-        public void AddCoal()
+        /// <returns>True if fuel was added, otherwise False.</returns>
+        public bool AddFuel<T>() where T : TrainFuel
         {
-            if (Fuel.Count >= _maxCoal)
-                return;
+            T newFuel = Activator.CreateInstance<T>();
 
-            Fuel.Add(new Coal());
+            if (FuelCapacityLeft() > newFuel.Size)
+            {
+                _fuel.Add(newFuel);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Calculates how much there's size left in firebox.
+        /// </summary>
+        public float FuelCapacityLeft()
+        {
+            return Math.Max(_maxCapacity - _fuel.Sum(x => x.CurrentSize), 0);
         }
 
         /// <summary>
@@ -230,7 +285,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// </summary>
         private float GetSteamGain()
         {
-            _heatGain = Fuel.Sum(coal => coal.GetHeat());
+            _heatGain = _fuel.Sum(coal => coal.GetHeat());
 
             return _heatGain;
         }
