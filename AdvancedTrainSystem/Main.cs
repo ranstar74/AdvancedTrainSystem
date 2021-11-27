@@ -51,7 +51,6 @@ namespace AdvancedTrainSystem
             // Dispose only train components and invalidate handles
             // but keep vehicles, it will help to "hook" train after reloading
             ATSPool.Trains.DisposeComponents();
-            CameraComponent.sCabCamera.Delete();
         }
 
         /// <summary>
