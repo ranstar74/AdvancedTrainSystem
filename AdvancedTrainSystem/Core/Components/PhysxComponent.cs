@@ -136,7 +136,7 @@ namespace AdvancedTrainSystem.Core.Components
             // These are not fully physical based but i found these values
             // to work good enough
             float dragForce = (float) (0.02f * Math.Pow(Speed, 2)) / 8;
-            float inerciaForce = acceleration * 5;
+            float inerciaForce = -_newForces / 10;
             float frictionForce = 0.2f * Speed / 2;
 
             // Make train don't accelerate if wheel slips
