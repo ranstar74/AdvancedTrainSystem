@@ -13,8 +13,7 @@ namespace AdvancedTrainSystem.Core.Components
     /// </summary>
     public class CameraComponent : Component
     {
-        public static readonly Camera sCabCamera;
-        private static Train attachedTo;
+        public Camera sCabCamera;
 
         /// <summary>
         /// Current Y angle of the <see cref="sCabCamera"/>.
@@ -26,11 +25,6 @@ namespace AdvancedTrainSystem.Core.Components
 
         private float prevTrainAngle = 0f;
 
-        static CameraComponent()
-        {
-            sCabCamera = World.CreateCamera(Vector3.Zero, Vector3.Zero, 65);
-        }
-
         public CameraComponent(ComponentCollection components) : base(components)
         {
             train = GetParent<Train>();
@@ -40,21 +34,24 @@ namespace AdvancedTrainSystem.Core.Components
         {
             driving = Components.GetComponent<DrivingComponent>();
 
+            sCabCamera = World.CreateCamera(Vector3.Zero, Vector3.Zero, 65);
+
+            Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
+                .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
+            sCabCamera.AttachTo(train, cameraPos);
+
             driving.OnEnter += () =>
             {
                 // Restore camera rotation too, cuz otherwise
                 // prevAngle will be 0 and script will think
                 // that train rotate and camera will offset
                 prevTrainAngle = train.Rotation.Z;
-
-                // Setup camera for new train
-                SetCabCamera(train);
             };
         }
 
         public override void Update()
         {
-            if (FusionUtils.IsCameraInFirstPerson() && driving.IsControlledByPlayer)
+            if (FusionUtils.IsCameraInFirstPerson() && train.Driver == GPlayer)
             {
                 // Make player transparent cuz cab camera will interference with player model
                 GPlayer.IsVisible = false;
@@ -94,13 +91,10 @@ namespace AdvancedTrainSystem.Core.Components
 
                 prevTrainAngle = trainAngle;
             }
-            else
+            else if(World.RenderingCamera == sCabCamera)
             {
-                if (World.RenderingCamera == sCabCamera && train.Driver == GPlayer)
-                {
-                    GPlayer.IsVisible = true;
-                    World.RenderingCamera = null;
-                }
+                GPlayer.IsVisible = true;
+                World.RenderingCamera = null;
             }
         }
 
@@ -109,20 +103,8 @@ namespace AdvancedTrainSystem.Core.Components
             if (World.RenderingCamera == sCabCamera)
                 World.RenderingCamera = null;
 
+            sCabCamera.Delete();
             GPlayer.IsVisible = true;
-        }
-
-        private static void SetCabCamera(Train train)
-        {
-            // Don't process if train haven't changed
-            if (train == attachedTo)
-                return;
-
-            Vector3 cameraPos = ((Vehicle)train).Bones["seat_dside_f"]
-                .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
-            sCabCamera.AttachTo(train, cameraPos);
-
-            attachedTo = train;
         }
     }
 }
