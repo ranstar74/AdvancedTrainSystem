@@ -133,8 +133,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 effectName: "ent_amb_barrel_fire",
                 particleType: ParticleType.Looped,
                 entity: _fireboxDummyProp,
-                offset: new Vector3(-0.25f, -0.15f, -0.15f),
-                rotation: new Vector3(90, 0, 120));
+                offset: new Vector3(0f, 0.3f, -0.3f),
+                rotation: new Vector3(60, 0, 0));
 
             _dynamoSteam.Play();
             _funnelSmoke.Play();
@@ -168,8 +168,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             // Enable and set size of firebox fire depending on how many coal there is
             _fireboxDummyProp.Position = train.Bones["firebox_fire"].Position;
-            _fireboxFire.SetState(_chimney.AirInBoiler < 0.8f);
-            _fireboxFire.Size = 1 - _chimney.AirInBoiler;
+            _fireboxDummyProp.Rotation = train.Rotation;
+
+            _fireboxFire.SetState(true);//(_chimney.AirInBoiler < 0.8f);
+            _fireboxFire.Size = 1;//= 1 - _chimney.AirInBoiler;
         }
 
         public override void Dispose()
