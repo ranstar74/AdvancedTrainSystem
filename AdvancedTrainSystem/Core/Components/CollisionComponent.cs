@@ -147,13 +147,15 @@ namespace AdvancedTrainSystem.Core.Components
                         isClosestVehicleCustomTrain ? closestCustomTrain.TrackSpeed: closestVehicle.Speed;
                     if (CalculateKineticEnergy(othersVehicleSpeed, closestVehicle) > 150000)
                     {
-                        OnCollision?.Invoke(); //new CollisionInfo(carriage, closestVehicle)
+                        OnCollision?.Invoke();
                     }
                     else
                     {
                         if (isClosestVehicleCustomTrain)
                         {
-                            IsTrainCoupled = ((Vehicle)train).IsGoingTorwards(closestCustomTrain);
+                            Vehicle vehicle = train.TrainLocomotive.HiddenVehicle;
+
+                            IsTrainCoupled = vehicle.IsGoingTorwards(closestCustomTrain);
 
                             if (IsTrainCoupled)
                             {
