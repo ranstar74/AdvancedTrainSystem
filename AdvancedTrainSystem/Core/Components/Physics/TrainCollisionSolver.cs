@@ -44,7 +44,6 @@ namespace AdvancedTrainSystem.Core.Components.Physics
         /// </summary>
         public static void Update()
         {
-            //GTA.UI.Screen.ShowSubtitle(CollidingTrains.Count.ToString());
             for(int i = 0; i < CollidingTrains.Count; i++)
             {
                 (Train train1, Train train2) = CollidingTrains[i];
@@ -52,8 +51,8 @@ namespace AdvancedTrainSystem.Core.Components.Physics
                 var impulse1 = SolveElasticCollision(train1, train2);
                 var impulse2 = SolveElasticCollision(train2, train1);
 
-                train1.Components.PhysxComponent.ApplyTrackForce(impulse1);
-                train2.Components.PhysxComponent.ApplyTrackForce(impulse2);
+                train1.Components.Physx.ApplyTrackForce(impulse1);
+                train2.Components.Physx.ApplyTrackForce(impulse2);
 
                 //GTA.UI.Screen.ShowSubtitle(
                 //    $"S1: {train1.SpeedComponent.TrackSpeed} S2: {train2.SpeedComponent.TrackSpeed} I1: {train1.TrainHead.Speed} I2: {train2.TrainHead.Speed}");
@@ -73,8 +72,8 @@ namespace AdvancedTrainSystem.Core.Components.Physics
             // TODO: Take mass of all entities into account
             // For now we'd assume that mass of train is 1
 
-            float speed1 = train1.Components.PhysxComponent.TrackSpeed;
-            float speed2 = train2.Components.PhysxComponent.TrackSpeed;
+            float speed1 = train1.Components.Physx.TrackSpeed;
+            float speed2 = train2.Components.Physx.TrackSpeed;
 
             float impulse = -(speed1 - ((speed1 + speed2) / 2));
 

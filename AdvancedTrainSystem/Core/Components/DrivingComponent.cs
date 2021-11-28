@@ -103,6 +103,14 @@ namespace AdvancedTrainSystem.Core.Components
             // plus because of that if we put player in visible model
             // game will move camera just under train.
             // Maybe custom camera is solution? Someday...
+            
+            while(train.TrainLocomotive.HiddenVehicle.Handle == 0)
+            {
+                GTA.UI.Screen.ShowSubtitle("Handle is invalid.", 1);
+
+                Script.Yield();
+            }
+
             GPlayer.Task.WarpIntoVehicle(train.TrainLocomotive.HiddenVehicle, VehicleSeat.Driver);
 
             EnterEvents();

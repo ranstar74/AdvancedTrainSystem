@@ -51,6 +51,9 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
+            if (_cabCamera == null)
+                return;
+
             if (FusionUtils.IsCameraInFirstPerson() && train.Driver == GPlayer)
             {
                 // Make player transparent cuz cab camera will interference with player model
