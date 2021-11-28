@@ -21,12 +21,12 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// Speed of this train. in m/s.
         /// </summary>
-        public float Speed => Components.PhysxComponent.Speed;
+        public float Speed => Components.Physx.Speed;
 
         /// <summary>
         /// Speed along train path. Same for all speeds moving in the same direction.
         /// </summary>
-        public float TrackSpeed => Components.PhysxComponent.TrackSpeed;
+        public float TrackSpeed => Components.Physx.TrackSpeed;
 
         /// <summary>
         /// Velocity of this train.
@@ -38,14 +38,14 @@ namespace AdvancedTrainSystem.Core
         {
             get
             {
-                if (Components.DerailComponent.IsDerailed)
+                if (Components.Derail.IsDerailed)
                     return trainLocomotive.Vehicle.Velocity;
                 else
                     return trainLocomotive.HiddenVehicle.Velocity;
             }
             set
             {
-                if (Components.DerailComponent.IsDerailed)
+                if (Components.Derail.IsDerailed)
                     trainLocomotive.Vehicle.Velocity = value;
             }
         }
@@ -103,7 +103,7 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// Gets value indicating whether train is derailed or not.
         /// </summary>
-        public bool IsDerailed => Components.DerailComponent.IsDerailed;
+        public bool IsDerailed => Components.Derail.IsDerailed;
 
         /// <summary>
         /// <see cref="Decorator"/> of the <see cref="Train"/>.
@@ -369,10 +369,10 @@ namespace AdvancedTrainSystem.Core
         private Vehicle GetActiveLocomotiveVehicle()
         {
             // In case if its called before components got initialize
-            if (Components?.DerailComponent == null)
+            if (Components?.Derail == null)
                 return TrainLocomotive.HiddenVehicle;
 
-            return Components.DerailComponent.IsDerailed ? 
+            return Components.Derail.IsDerailed ? 
                 TrainLocomotive.Vehicle : TrainLocomotive.HiddenVehicle;
         }
 

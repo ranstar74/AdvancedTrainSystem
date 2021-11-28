@@ -116,7 +116,7 @@ namespace AdvancedTrainSystem.Core.Components
                         closestCustomTrain = closestVehicle.GetAtsByCarriage();
 
                         // Calcualte distance from other train head to this train head
-                        Vector3 closestHeadPosition = closestCustomTrain.Components.CollisionComponent.HeadPositionNextFrame;
+                        Vector3 closestHeadPosition = closestCustomTrain.Components.Collision.HeadPositionNextFrame;
                         float distanceBetweenTrains = closestHeadPosition.DistanceToSquared(HeadPositionNextFrame);
 
                         // With higher speed there's higher chance that train will "get inside" another train
