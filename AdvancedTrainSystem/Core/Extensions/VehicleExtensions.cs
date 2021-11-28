@@ -1,6 +1,5 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Core.Abstract;
-using AdvancedTrainSystem.Core.Info;
 using AdvancedTrainSystem.Railroad.Enums;
 using FusionLibrary.Extensions;
 using GTA;
@@ -56,6 +55,16 @@ namespace AdvancedTrainSystem.Extensions
         public static int GetAtsHeadVehicleHandle(this Vehicle vehicle)
         {
             return vehicle.Decorator().GetInt(Constants.TrainHeadHandle);
+        }
+
+        public static bool IsAtsDerailed(this Vehicle vehicle)
+        {
+            return vehicle.Decorator().GetBool(Constants.IsDerailed);
+        }
+
+        public static bool IsAtsDerailed(this Train train)
+        {
+            return IsAtsDerailed(train);
         }
 
         /// <summary>

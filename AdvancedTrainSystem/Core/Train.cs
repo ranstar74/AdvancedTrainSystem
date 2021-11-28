@@ -149,10 +149,8 @@ namespace AdvancedTrainSystem.Core
 
             spawnData = trainSpawnData;
 
-            for (int i = 0; i < Carriages.Count; i++)
+            foreach(TrainCarriage carriage in Carriages)
             {
-                var carriage = Carriages[i];
-
                 carriage.SetTrain(this);
 
                 SetDecorators(carriage.HiddenVehicle);
@@ -189,6 +187,19 @@ namespace AdvancedTrainSystem.Core
 
             // Train head
             decorator.SetInt(Constants.TrainHeadHandle, TrainLocomotive.HiddenVehicle.Handle);
+        }
+
+        /// <summary>
+        /// Invokes action for both hidden / visible vehicles of train carriages.
+        /// </summary>
+        /// <param name="action">Action to invoke.</param>
+        internal void ForEachCarriage(Action<Vehicle> action)
+        {
+            foreach(TrainCarriage carriage in Carriages)
+            {
+                action.Invoke(carriage.HiddenVehicle);
+                action.Invoke(carriage.Vehicle);
+            }
         }
 
         /// <summary>
@@ -288,13 +299,10 @@ namespace AdvancedTrainSystem.Core
         {
             this.componentHandle = componentHandle;
 
-            for (int i = 0; i < Carriages.Count; i++)
+            ForEachCarriage(x =>
             {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            }
+                x.Decorator().SetInt(Constants.TrainHandle, componentHandle);
+            });
         }
 
         /// <summary>
@@ -302,16 +310,10 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void InvalidateHandle()
         {
-            for (int i = 0; i < Carriages.Count; i++)
+            ForEachCarriage(x =>
             {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
+                x.Decorator().SetInt(Constants.TrainHandle, -1);
+            });
         }
 
         /// <summary>
@@ -366,7 +368,7 @@ namespace AdvancedTrainSystem.Core
         /// visible vehicle gets off track.
         /// </summary>
         /// <returns></returns>
-        private Vehicle GetActiveLocomotiveVehicle()
+        internal Vehicle GetActiveLocomotiveVehicle()
         {
             // In case if its called before components got initialize
             if (Components?.Derail == null)

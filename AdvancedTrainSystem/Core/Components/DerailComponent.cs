@@ -1,10 +1,8 @@
-﻿using AdvancedTrainSystem.Railroad;
+﻿using AdvancedTrainSystem.Extensions;
 using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
-using GTA.Native;
-using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
 using System;
@@ -36,10 +34,13 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         private const float derailAngle = 0.01f;
 
-        private int _derailTime = -1;
         private readonly Train train;
+
         private Vector3 prevForwardAngle = Vector3.Zero;
-        private PhysxComponent physx;
+        private int _derailTime = -1;
+
+        private PhysxComponent _physx;
+        private CollisionComponent _collision;
 
         /// <summary>
         /// Creates a new instance of <see cref="DerailComponent"/>.
@@ -52,8 +53,13 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Start()
         {
-            Components.GetComponent<CollisionComponent>().OnCollision += Derail;
-            physx = Components.GetComponent<PhysxComponent>();
+            _collision = Components.GetComponent<CollisionComponent>();
+            _physx = Components.GetComponent<PhysxComponent>();
+
+            _collision.OnCollision += Derail;
+
+            if (train.IsAtsDerailed())
+                Derail();
 
             // Don't change this value as it may cause issues
             // with derail angle.
@@ -151,7 +157,15 @@ namespace AdvancedTrainSystem.Core.Components
             //    false, true, true, false, true);
 
             IsDerailed = true;
+
             _derailTime = Game.GameTime;
+
+            MarkAsDerailed();
+        }
+
+        private void MarkAsDerailed()
+        {
+            train.ForEachCarriage(x => x.Decorator().SetBool(Constants.IsDerailed, true));
         }
 
         /// <summary>
@@ -164,7 +178,7 @@ namespace AdvancedTrainSystem.Core.Components
             // derailing minumum then train derails.
             Vector3 forwardVector = train.ForwardVector;
 
-            if (physx.AbsoluteSpeed >= derailMinSpeed)
+            if (_physx.AbsoluteSpeed >= derailMinSpeed)
             {
                 float angle = Vector3.Angle(forwardVector, prevForwardAngle) * Game.LastFrameTime;
                 

@@ -48,6 +48,8 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         internal const string TrainMissionId = "TrainMissionId";
 
+        internal const string IsDerailed = "TrainIsDerailed";
+
         /// <summary>
         /// Registers all decorators. Call it in first frame.
         /// </summary>
@@ -61,6 +63,7 @@ namespace AdvancedTrainSystem.Core
             Decorator.Register(TrainDirection, FusionEnums.DecorType.Bool);
             Decorator.Register(TrainLightState, FusionEnums.DecorType.Int);
             Decorator.Register(TrainMissionId, FusionEnums.DecorType.Int);
+            Decorator.Register(IsDerailed, FusionEnums.DecorType.Bool);
 
             Decorator.Lock();
         }
