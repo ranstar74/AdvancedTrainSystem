@@ -19,7 +19,7 @@ namespace AdvancedTrainSystem.Core
     public abstract class Train : IComponentObject
     {
         /// <summary>
-        /// Speed of this train. in m/s.
+        /// Speed of this train in m/s.
         /// </summary>
         public float Speed => Components.Physx.Speed;
 
@@ -93,7 +93,7 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// Driver of the <see cref="TrainLocomotive"/>.
         /// </summary>
-        public Ped Driver => trainLocomotive.Driver;
+        public Ped Driver => GetActiveLocomotiveVehicle().Driver;
 
         /// <summary>
         /// Direction of the <see cref="Train"/> on the rail tracks.
@@ -158,6 +158,12 @@ namespace AdvancedTrainSystem.Core
                 SetDecorators(carriage.HiddenVehicle);
                 SetDecorators(carriage.Vehicle);
             }
+
+            // Add blip
+            Blip blip = TrainLocomotive.Vehicle.AddBlip();
+            blip.Sprite = BlipSprite.Train;
+            blip.Color = BlipColor.Yellow4;
+            blip.Name = spawnData.TrainInfo.Name;
         }
 
         /// <summary>
@@ -205,12 +211,6 @@ namespace AdvancedTrainSystem.Core
 
             // Spawn vanila train
             Vehicle hiddenLocomotive = FusionUtils.CreateMissionTrain(trainMission.Id, position, direction);
-
-            // Add blip
-            Blip blip = hiddenLocomotive.AddBlip();
-            blip.Sprite = BlipSprite.Train;
-            blip.Color = BlipColor.Yellow4;
-            blip.Name = trainInfo.Name;
 
             // Spawn and configure all train carriages
             List<TrainCarriage> trainCarriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
