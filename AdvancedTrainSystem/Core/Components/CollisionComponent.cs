@@ -177,8 +177,10 @@ namespace AdvancedTrainSystem.Core.Components
         /// <param name="otherVehicle">Vehicle this train colliding with.</param>
         private float CalculateKineticEnergy(float otherVehicleSpeed, Vehicle otherVehicle)
         {
-            float speedDifference = Math.Abs(otherVehicleSpeed - physx.TrackSpeed);
+            float speedDifference = Math.Abs(otherVehicleSpeed - physx.AverageSpeed);
+
             float mass = HandlingData.GetByVehicleModel(otherVehicle.Model).Mass;
+            
             return mass * speedDifference;
         }
 

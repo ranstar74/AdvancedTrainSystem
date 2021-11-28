@@ -5,6 +5,8 @@ using GTA.Math;
 using RageComponent;
 using RageComponent.Core;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Core.Components
 {
@@ -98,9 +100,16 @@ namespace AdvancedTrainSystem.Core.Components
         /// </remarks>
         public bool DoWheelSlip { get; internal set; }
 
+        /// <summary>
+        /// Average speed within last 1 second.
+        /// </summary>
+        public float AverageSpeed { get; internal set; }
+
+        private readonly Dictionary<int, float> _speeds = new Dictionary<int, float>();
         private const float _forceMultiplier = 0.2f;
         private float _prevSpeed;
         private float _newForces = 0f;
+        private int _averageUpdateTime = 0;
 
         private readonly Train train;
         private DerailComponent _derail;
@@ -120,6 +129,7 @@ namespace AdvancedTrainSystem.Core.Components
         public override void Update()
         {
             UpdateWheelSpeed();
+            UpdateAverageSpeed();
 
             // Since hidden vehicle isn't used after derail we just set speed on zero
             if (_derail.IsDerailed)
@@ -151,6 +161,32 @@ namespace AdvancedTrainSystem.Core.Components
             // Apply forces of this frame to speed
             Speed += _newForces;
             _newForces = 0f;
+        }
+
+        /// <summary>
+        /// Calculates averega speed within last second.
+        /// </summary>
+        private void UpdateAverageSpeed()
+        {
+            // May happen if game is in slow motion
+            if(!_speeds.Keys.Contains(Game.GameTime))
+                _speeds.Add(Game.GameTime, Speed);
+
+            List<int> gameTimeToRemove = _speeds
+                .Where(x => Game.GameTime - x.Key > 1000)
+                .Select(x => x.Key)
+                .ToList();
+
+            foreach(int time in gameTimeToRemove)
+            {
+                _speeds.Remove(time);
+            }
+
+            if(_averageUpdateTime < Game.GameTime)
+            {
+                AverageSpeed = _speeds.Sum(x => x.Value) / _speeds.Count;
+                _averageUpdateTime = Game.GameTime + 1000;
+            }
         }
 
         /// <summary>
