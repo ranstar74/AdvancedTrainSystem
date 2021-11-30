@@ -116,7 +116,7 @@ namespace AdvancedTrainSystem.Core.Components
                         closestCustomTrain = closestVehicle.GetAtsByCarriage();
 
                         // Calcualte distance from other train head to this train head
-                        Vector3 closestHeadPosition = closestCustomTrain.Components.CollisionComponent.HeadPositionNextFrame;
+                        Vector3 closestHeadPosition = closestCustomTrain.Components.Collision.HeadPositionNextFrame;
                         float distanceBetweenTrains = closestHeadPosition.DistanceToSquared(HeadPositionNextFrame);
 
                         // With higher speed there's higher chance that train will "get inside" another train
@@ -147,13 +147,15 @@ namespace AdvancedTrainSystem.Core.Components
                         isClosestVehicleCustomTrain ? closestCustomTrain.TrackSpeed: closestVehicle.Speed;
                     if (CalculateKineticEnergy(othersVehicleSpeed, closestVehicle) > 150000)
                     {
-                        OnCollision?.Invoke(); //new CollisionInfo(carriage, closestVehicle)
+                        OnCollision?.Invoke();
                     }
                     else
                     {
                         if (isClosestVehicleCustomTrain)
                         {
-                            IsTrainCoupled = ((Vehicle)train).IsGoingTorwards(closestCustomTrain);
+                            Vehicle vehicle = train.TrainLocomotive.HiddenVehicle;
+
+                            IsTrainCoupled = vehicle.IsGoingTorwards(closestCustomTrain);
 
                             if (IsTrainCoupled)
                             {
@@ -175,8 +177,10 @@ namespace AdvancedTrainSystem.Core.Components
         /// <param name="otherVehicle">Vehicle this train colliding with.</param>
         private float CalculateKineticEnergy(float otherVehicleSpeed, Vehicle otherVehicle)
         {
-            float speedDifference = Math.Abs(otherVehicleSpeed - physx.TrackSpeed);
+            float speedDifference = Math.Abs(otherVehicleSpeed - physx.AverageSpeed);
+
             float mass = HandlingData.GetByVehicleModel(otherVehicle.Model).Mass;
+            
             return mass * speedDifference;
         }
 

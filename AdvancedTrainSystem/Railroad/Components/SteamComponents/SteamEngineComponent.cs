@@ -12,11 +12,11 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
     /// </summary>
     public class SteamEngineComponent : EngineComponent
     {
-        private const float _accelerationMultiplier = 0.5f;
+        private const float _accelerationMultiplier = 0.55f;
 
-        private ControlsComponent controls;
-        private BoilerComponent boiler;
-        private PhysxComponent physx;
+        private ControlsComponent _controls;
+        private BoilerComponent _boiler;
+        private PhysxComponent _physx;
 
         public SteamEngineComponent(ComponentCollection components) : base(components)
         {
@@ -27,27 +27,29 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             base.Start();
 
-            controls = Components.GetComponent<ControlsComponent>();
-            boiler = Components.GetComponent<BoilerComponent>();
-            physx = Components.GetComponent<PhysxComponent>();
+            _controls = Components.GetComponent<ControlsComponent>();
+            _boiler = Components.GetComponent<BoilerComponent>();
+            _physx = Components.GetComponent<PhysxComponent>();
         }
 
         public override void Update()
         {
-            float throttle = controls.Throttle;
-            float gear = 1f;
+            float throttle = _controls.Throttle;
+            float gear = _controls.Gear.Remap(0f, 1f, -1f, 1f);
 
-            float steamForce = throttle * gear * boiler.Pressure;
+            float steamForce = throttle * _boiler.Pressure;
 
             // Get steam force direction
-            float forceFactor = throttle <= 0.1f || Math.Abs(gear) <= 0.1f ? physx.Speed : gear;
+            float forceFactor = throttle <= 0.1f || Math.Abs(gear) <= 0.1f ? _physx.Speed : gear;
             if (forceFactor < 0)
                 steamForce *= -1;
 
-            float appliedForce = GetAppliedForceEffecienty(physx.Speed, steamForce);
+            steamForce *= _controls.Gear;
 
-            physx.DoWheelSlip = appliedForce < 0.4f;
-            physx.ApplyForce(steamForce * _accelerationMultiplier * Game.LastFrameTime);
+            float appliedForce = GetAppliedForceEffecienty(_physx.AbsoluteSpeed, Math.Abs(steamForce));
+
+            _physx.DoWheelSlip = appliedForce < 0.4f;
+            _physx.ApplyForce(steamForce * _accelerationMultiplier * Game.LastFrameTime);
         }
 
         /// <summary>

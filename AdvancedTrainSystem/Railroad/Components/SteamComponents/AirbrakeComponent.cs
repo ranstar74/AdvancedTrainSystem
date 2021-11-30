@@ -1,4 +1,5 @@
 ﻿using AdvancedTrainSystem.Core.Components.Abstract;
+using GTA;
 using RageComponent.Core;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 {
     public class AirbrakeComponent : BrakeComponent
     {
-        public override float Intensity => intensity;
-
-        private float intensity;
+        public override float Intensity => 1f;
 
         public AirbrakeComponent(ComponentCollection components) : base(components)
         {
@@ -26,7 +25,11 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
         public override void Update()
         {
+            // Re-arrange 0 - 1 to 1 - 0
+            float brakeForce = 1 - Force;
+            brakeForce = physx.AbsoluteSpeed * brakeForce;
 
+            //physx.ApplyForce(-brakeForce * Game.LastFrameTime);
         }
     }
 }

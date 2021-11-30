@@ -46,7 +46,7 @@ namespace AdvancedTrainSystem.Railroad.Components.AnimComponents
             _tenderLength = (float)(ModelHandler.SierraTenderWheel.Model.GetSize().height * Math.PI);
 
             // First carriage is tender...
-            var tender = train.Carriages.First();
+            var tender = train.Carriages[1];
 
             AddWheel(train, ModelHandler.SierraFrontWheel, "fwheel_", 2, FrontWheels);
             AddWheel(train, ModelHandler.SierraDrivingWheel, "dwheel_", 3, DriveWheels);
@@ -82,12 +82,12 @@ namespace AdvancedTrainSystem.Railroad.Components.AnimComponents
             DriveWheels.SetRotation(FusionEnums.Coordinate.X, frameAngle);
 
             // Front wheels
-            frameAngle = physx.Speed.AngularSpeed(_frontLength, FrontWheels[0].SecondRotation.X);
+            frameAngle = physx.VisualSpeed.AngularSpeed(_frontLength, FrontWheels[0].SecondRotation.X);
 
             FrontWheels.SetRotation(FusionEnums.Coordinate.X, frameAngle);
 
             // Tender wheels
-            frameAngle = physx.Speed.AngularSpeed(_tenderLength, TenderWheels[0].SecondRotation.X);
+            frameAngle = physx.VisualSpeed.AngularSpeed(_tenderLength, TenderWheels[0].SecondRotation.X);
 
             TenderWheels.SetRotation(FusionEnums.Coordinate.X, frameAngle);
         }

@@ -27,6 +27,8 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public bool IsControlledByPlayer => isPlayerDriving;
 
+        private DerailComponent _derail;
+
         private readonly Train train;
         private readonly NativeInput enterInput = new NativeInput(Control.Enter);
         private bool isPlayerDriving = false;
@@ -44,11 +46,20 @@ namespace AdvancedTrainSystem.Core.Components
             // Restore enter after reload
             if (GPlayer.CurrentVehicle == train.TrainLocomotive.HiddenVehicle)
                 EnterEvents();
+
+            _derail = Components.GetComponent<DerailComponent>();
+
+            _derail.OnDerail += () =>
+            {
+                if(train.Driver == GPlayer)
+                {
+                    GPlayer.Task.WarpIntoVehicle(train, VehicleSeat.Driver);
+                }
+            };
         }
 
         public override void Update()
         {
-
             // In case if player exits train some other way
             if (isPlayerDriving && GPlayer.CurrentVehicle != train.TrainLocomotive.HiddenVehicle)
             {
@@ -92,6 +103,14 @@ namespace AdvancedTrainSystem.Core.Components
             // plus because of that if we put player in visible model
             // game will move camera just under train.
             // Maybe custom camera is solution? Someday...
+            
+            while(train.TrainLocomotive.HiddenVehicle.Handle == 0)
+            {
+                GTA.UI.Screen.ShowSubtitle("Handle is invalid.", 1);
+
+                Script.Yield();
+            }
+
             GPlayer.Task.WarpIntoVehicle(train.TrainLocomotive.HiddenVehicle, VehicleSeat.Driver);
 
             EnterEvents();

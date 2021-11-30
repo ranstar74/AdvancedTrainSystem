@@ -18,7 +18,7 @@ namespace AdvancedTrainSystem.Core.Utils
                 // Generate bone name
                 var bone = baseBone;
 
-                if (l < 3)
+                if (l < totalBoneNumber / 2)
                     bone += $"left_{l++ + 1}";
                 else
                     bone += $"right_{r++ + 1}";

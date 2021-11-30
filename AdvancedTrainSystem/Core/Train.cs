@@ -19,17 +19,17 @@ namespace AdvancedTrainSystem.Core
     public abstract class Train : IComponentObject
     {
         /// <summary>
-        /// Speed of the <see cref="Train"/> in m/s.
+        /// Speed of this train in m/s.
         /// </summary>
-        public float Speed => Components.PhysxComponent.Speed;
+        public float Speed => Components.Physx.Speed;
 
         /// <summary>
         /// Speed along train path. Same for all speeds moving in the same direction.
         /// </summary>
-        public float TrackSpeed => Components.PhysxComponent.TrackSpeed;
+        public float TrackSpeed => Components.Physx.TrackSpeed;
 
         /// <summary>
-        /// Velocity of the <see cref="Train"/>.
+        /// Velocity of this train.
         /// </summary>
         /// <remarks>
         /// Can be set only if train is derailed.
@@ -38,57 +38,62 @@ namespace AdvancedTrainSystem.Core
         {
             get
             {
-                if (Components.DerailComponent.IsDerailed)
+                if (Components.Derail.IsDerailed)
                     return trainLocomotive.Vehicle.Velocity;
                 else
                     return trainLocomotive.HiddenVehicle.Velocity;
             }
             set
             {
-                if (Components.DerailComponent.IsDerailed)
+                if (Components.Derail.IsDerailed)
                     trainLocomotive.Vehicle.Velocity = value;
             }
         }
 
         /// <summary>
-        /// Position of the <see cref="Train"/>.
+        /// Position of this train.
         /// </summary>
         public Vector3 Position => GetActiveLocomotiveVehicle().Position;
 
         /// <summary>
-        /// Rotation of the <see cref="Train"/>.
+        /// Rotation of this train.
         /// </summary>
         public Vector3 Rotation => GetActiveLocomotiveVehicle().Rotation;
 
         /// <summary>
-        /// Quaternion of the <see cref="Train"/>.
+        /// Quaternion of this train.
         /// </summary>
         public Quaternion Quaternion => GetActiveLocomotiveVehicle().Quaternion;
 
         /// <summary>
-        /// Gets the vector that points in front of the <see cref="Train"/>.
+        /// Gets the vector that points in front of this train.
         /// </summary>
         public Vector3 ForwardVector => GetActiveLocomotiveVehicle().ForwardVector;
 
         /// <summary>
-        /// Gets the vector that points above the <see cref="Train"/>.
+        /// Gets the vector that points above the this train.
         /// </summary>
         public Vector3 UpVector => GetActiveLocomotiveVehicle().UpVector;
 
         /// <summary>
-        /// Gets the vector that points to the right of the <see cref="Train"/>.
+        /// Gets the vector that points to the right of this train.
         /// </summary>
         public Vector3 RightVector => GetActiveLocomotiveVehicle().RightVector;
 
         /// <summary>
-        /// Gets a position directly in front of the <see cref="Train"/>.
+        /// Gets a position directly in front of this train.
         /// </summary>
         public Vector3 FrontPosition => GetActiveLocomotiveVehicle().FrontPosition;
 
         /// <summary>
+        /// Gets a collection of <see cref="EntityBone"/> of this train.
+        /// </summary>
+        public EntityBoneCollection Bones => TrainLocomotive.Vehicle.Bones;
+
+        /// <summary>
         /// Driver of the <see cref="TrainLocomotive"/>.
         /// </summary>
-        public Ped Driver => trainLocomotive.Driver;
+        public Ped Driver => GetActiveLocomotiveVehicle().Driver;
 
         /// <summary>
         /// Direction of the <see cref="Train"/> on the rail tracks.
@@ -98,7 +103,7 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// Gets value indicating whether train is derailed or not.
         /// </summary>
-        public bool IsDerailed => Components.DerailComponent.IsDerailed;
+        public bool IsDerailed => Components.Derail.IsDerailed;
 
         /// <summary>
         /// <see cref="Decorator"/> of the <see cref="Train"/>.
@@ -144,15 +149,19 @@ namespace AdvancedTrainSystem.Core
 
             spawnData = trainSpawnData;
 
-            for (int i = 0; i < Carriages.Count; i++)
+            foreach(TrainCarriage carriage in Carriages)
             {
-                var carriage = Carriages[i];
-
                 carriage.SetTrain(this);
 
                 SetDecorators(carriage.HiddenVehicle);
                 SetDecorators(carriage.Vehicle);
             }
+
+            // Add blip
+            Blip blip = TrainLocomotive.Vehicle.AddBlip();
+            blip.Sprite = BlipSprite.Train;
+            blip.Color = BlipColor.Yellow4;
+            blip.Name = spawnData.TrainInfo.Name;
         }
 
         /// <summary>
@@ -181,6 +190,19 @@ namespace AdvancedTrainSystem.Core
         }
 
         /// <summary>
+        /// Invokes action for both hidden / visible vehicles of train carriages.
+        /// </summary>
+        /// <param name="action">Action to invoke.</param>
+        internal void ForEachCarriage(Action<Vehicle> action)
+        {
+            foreach(TrainCarriage carriage in Carriages)
+            {
+                action.Invoke(carriage.HiddenVehicle);
+                action.Invoke(carriage.Vehicle);
+            }
+        }
+
+        /// <summary>
         /// Creates a new <see cref="Train"/> instance.
         /// </summary>
         /// <returns></returns>
@@ -200,12 +222,6 @@ namespace AdvancedTrainSystem.Core
 
             // Spawn vanila train
             Vehicle hiddenLocomotive = FusionUtils.CreateMissionTrain(trainMission.Id, position, direction);
-
-            // Add blip
-            Blip blip = hiddenLocomotive.AddBlip();
-            blip.Sprite = BlipSprite.Train;
-            blip.Color = BlipColor.Yellow4;
-            blip.Name = trainInfo.Name;
 
             // Spawn and configure all train carriages
             List<TrainCarriage> trainCarriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
@@ -283,16 +299,10 @@ namespace AdvancedTrainSystem.Core
         {
             this.componentHandle = componentHandle;
 
-            for (int i = 0; i < Carriages.Count; i++)
+            ForEachCarriage(x =>
             {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
+                x.Decorator().SetInt(Constants.TrainHandle, componentHandle);
+            });
         }
 
         /// <summary>
@@ -300,16 +310,10 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void InvalidateHandle()
         {
-            for (int i = 0; i < Carriages.Count; i++)
+            ForEachCarriage(x =>
             {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
+                x.Decorator().SetInt(Constants.TrainHandle, -1);
+            });
         }
 
         /// <summary>
@@ -364,13 +368,13 @@ namespace AdvancedTrainSystem.Core
         /// visible vehicle gets off track.
         /// </summary>
         /// <returns></returns>
-        private Vehicle GetActiveLocomotiveVehicle()
+        internal Vehicle GetActiveLocomotiveVehicle()
         {
             // In case if its called before components got initialize
-            if (Components?.DerailComponent == null)
+            if (Components?.Derail == null)
                 return TrainLocomotive.HiddenVehicle;
 
-            return Components.DerailComponent.IsDerailed ? 
+            return Components.Derail.IsDerailed ? 
                 TrainLocomotive.Vehicle : TrainLocomotive.HiddenVehicle;
         }
 

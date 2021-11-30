@@ -11,13 +11,34 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 {
     public class ControlsComponent : Component
     {
-        public float Throttle;
+        /// <summary>
+        /// Gets or sets a normalized value indicating how much throttle is opened.
+        /// </summary>
+        public float Throttle { get; set; }
+
+        /// <summary>
+        /// Gets or sets a normalized value indicating how much drain cocks are opened.
+        /// </summary>
+        public float DrainCocks { get; set; }
+
+        /// <summary>
+        /// Gets or sets a normalized value indicating gear lever position.
+        /// </summary>
+        public float Gear { get; set; }
 
         private readonly Dictionary<string, Action<ControlsComponent, float>> _behaviours = new Dictionary<string, Action<ControlsComponent, float>>()
         {
             ["Throttle"] = (context, value) =>
             {
                 context.Throttle = value;
+            },
+            ["Cocks"] = (context, value) =>
+            {
+                context.DrainCocks = value;
+            },
+            ["Gear"] = (context, value) =>
+            {
+                context.Gear = value;
             }
         };
         private readonly InteractiveController _interactableProps = new InteractiveController();
@@ -33,6 +54,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 var model = new CustomModel(info.ModelName);
                 model.Request();
 
+                // Create interactive prop
                 InteractiveProp interactiveProp =  _interactableProps.Add(
                     model: model,
                     entity: train,
@@ -46,17 +68,46 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                     startValue: info.StartValue,
                     sensitivityMultiplier: info.Sensetivity);
 
-                if(info.AltControl != null)
+                // Create handle, if theres config for that
+                if(info.AttachmentInfo != null)
+                {
+                    var handleInfo = info.AttachmentInfo;
+
+                    var handle = new CustomModel(handleInfo.ModelName);
+                    handle.Request();
+
+                    var handleProp = _interactableProps.Add(
+                        model: handle,
+                        entity: interactiveProp,
+                        boneName: handleInfo.BoneName,
+                        movementType: handleInfo.MovementType,
+                        coordinateInteraction: handleInfo.Coordinate,
+                        toggle: false,
+                        min: handleInfo.MinAngle,
+                        max: handleInfo.MaxAngle,
+                        startValue: 0f,
+                        step: (float) handleInfo.Step,
+                        stepRatio: 1f,
+                        isIncreasing: handleInfo.MaxAngle < handleInfo.MinAngle,
+                        smoothEnd: true);
+                    interactiveProp.OnInteractionStarted += (_, __) => handleProp.Play();
+                    interactiveProp.OnInteractionEnded += (_, __) => handleProp.Stop();
+                }
+
+                // Setup alternative controls
+                if (info.AltControl != null)
                 {
                     interactiveProp.SetupAltControl(
                         control: (GTA.Control)info.AltControl, 
                         invert: (bool)info.InvertAlt);
                 }
 
+                // Show label on hover
                 interactiveProp.OnHover += DisplayTextPreview;
                 interactiveProp.OnInteraction += DisplayTextPreview;
                 interactiveProp.OnInteraction += UpdateBehaviour;
 
+                // Save info in tag in order to access it later
                 interactiveProp.Tag = info;
             });
 

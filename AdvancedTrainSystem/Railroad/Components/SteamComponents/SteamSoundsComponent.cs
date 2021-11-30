@@ -91,7 +91,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             float wheelRotationsPerSecond = Math.Abs(physx.DriveWheelSpeed) / 6f; //TODO: Use actual drive wheel length
             //Parent.WheelComponent.DriveWheelLength;
 
-            float chugDelay = 500 / wheelRotationsPerSecond;
+            float chugDelay = Math.Max(500 / wheelRotationsPerSecond, 100);
 
             // Get speed value and update event parameter
             float speed = delayToSpeed.GetInterpolatedValue(chugDelay);
