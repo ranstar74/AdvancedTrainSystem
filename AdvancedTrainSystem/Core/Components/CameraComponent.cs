@@ -56,15 +56,7 @@ namespace AdvancedTrainSystem.Core.Components
             };
             driving.OnLeave += () =>
             {
-                if(_cabCamera != null)
-                {
-                    _cabCamera.Detach();
-                    _cameraPool.Free(_cabCamera);
-                    _cabCamera = null;
-
-                    World.RenderingCamera = null;
-                }
-
+                FreeCamera();
                 GPlayer.IsVisible = true;
             };
         }
@@ -135,13 +127,28 @@ namespace AdvancedTrainSystem.Core.Components
             Script.Yield();
         }
 
+        private void FreeCamera()
+        {
+            if (_cabCamera != null)
+            {
+                _cabCamera.Detach();
+                _cameraPool.Free(_cabCamera);
+                _cabCamera = null;
+
+                World.RenderingCamera = null;
+            }
+        }
+
         public override void Dispose()
         {
             GPlayer.IsVisible = true;
 
-            _cameraPool.Dispose();
+            FreeCamera();
+        }
 
-            World.DestroyAllCameras();
+        public override void Reload()
+        {
+            _cameraPool.Dispose();
         }
     }
 }
