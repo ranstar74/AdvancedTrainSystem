@@ -1,4 +1,5 @@
 ﻿using GTA;
+using GTA.Math;
 using static FusionLibrary.FusionEnums;
 
 namespace AdvancedTrainSystem.Core.Info
@@ -100,6 +101,11 @@ namespace AdvancedTrainSystem.Core.Info
         /// Defines how fast control moves.
         /// </summary>
         public float Sensetivity { get; set; }
+
+        /// <summary>
+        /// Offset of label with information about control.
+        /// </summary>
+        public Vector3 LabelOffset { get; set; }
 
         /// <summary>
         /// Additional animation that will be played when interaction starts / ends.
