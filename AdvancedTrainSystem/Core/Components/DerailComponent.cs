@@ -189,10 +189,13 @@ namespace AdvancedTrainSystem.Core.Components
 
             // Same as above on frameAngle, higher speed = more noise
             float noiseAmplitude = _physx.AbsoluteSpeed / 15;
+            noiseAmplitude = noiseAmplitude.Clamp(0f, 1.25f);
+            
             noise *= noiseAmplitude;
 
             // Make noise more "shaky" when speed raises
             float noiseSpeed = _physx.AbsoluteSpeed / 5;
+            noiseSpeed = noiseSpeed.Clamp(0f, 3f);
 
             _noise = Vector3.Lerp(_noise, noise, Game.LastFrameTime * noiseSpeed);
 
