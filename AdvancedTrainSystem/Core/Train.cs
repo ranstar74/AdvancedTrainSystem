@@ -96,6 +96,13 @@ namespace AdvancedTrainSystem.Core
         public Ped Driver => GetActiveLocomotiveVehicle().Driver;
 
         /// <summary>
+        /// Gets a value indicating whether player drives this train.
+        /// </summary>
+        public bool IsPlayerDriving => 
+            trainLocomotive.HiddenVehicle.Driver?.Equals(Game.Player.Character) == true ||
+            trainLocomotive.Vehicle.Driver?.Equals(Game.Player.Character) == true;
+
+        /// <summary>
         /// Direction of the <see cref="Train"/> on the rail tracks.
         /// </summary>
         public bool Direction => trainDirection;
@@ -141,6 +148,8 @@ namespace AdvancedTrainSystem.Core
         private readonly TrainSpawnData spawnData;
         private int componentHandle;
 
+        private Blip _blip;
+
         internal Train(TrainSpawnData trainSpawnData)
         {
             trainLocomotive = trainSpawnData.Locomotive;
@@ -158,10 +167,10 @@ namespace AdvancedTrainSystem.Core
             }
 
             // Add blip
-            Blip blip = TrainLocomotive.Vehicle.AddBlip();
-            blip.Sprite = BlipSprite.Train;
-            blip.Color = BlipColor.Yellow4;
-            blip.Name = spawnData.TrainInfo.Name;
+            _blip = TrainLocomotive.Vehicle.AddBlip();
+            _blip.Sprite = BlipSprite.Train;
+            _blip.Color = BlipColor.Yellow4;
+            _blip.Name = spawnData.TrainInfo.Name;
         }
 
         /// <summary>
@@ -379,12 +388,23 @@ namespace AdvancedTrainSystem.Core
         }
 
         /// <summary>
+        /// Marks train as disposed but doesn't remove vehicles.
+        /// <para>
+        /// Used for respawn.
+        /// </para>
+        /// </summary>
+        public void MarkAsNonScripted()
+        {
+            Components?.OnDispose();
+            _blip?.Delete();
+        }
+
+        /// <summary>
         /// Disposes the <see cref="Train"/>.
         /// </summary>
         public void Dispose()
         {
-            // Could be null if disposed before InitializeComponent
-            Components?.OnDispose();
+            MarkAsNonScripted();
 
             for(int i = 0; i < Carriages.Count; i++)
             {
