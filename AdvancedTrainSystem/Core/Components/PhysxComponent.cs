@@ -134,7 +134,7 @@ namespace AdvancedTrainSystem.Core.Components
             // Since hidden vehicle isn't used after derail we just set speed on zero
             if (_derail.IsDerailed)
             {
-                Speed = 0;
+                //Speed = 0;
                 return;
             }
 
