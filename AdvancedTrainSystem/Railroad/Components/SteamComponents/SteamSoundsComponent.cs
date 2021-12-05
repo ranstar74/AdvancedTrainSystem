@@ -82,13 +82,13 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private void ProcessMoveEvent()
         {
             // Added 0.01f cuz otherwise it refuses to play...
-            moveEvent.SetParameter(speedParam, physx.AbsoluteSpeed.Remap(0, 20, 0, 1) + 0.01f);
+            moveEvent.SetParameter(speedParam, _physx.AbsoluteSpeed.Remap(0, 20, 0, 1) + 0.01f);
         }
 
         private void ProcessChugsEvent()
         {
             // Calculate timer delay so chug sound plays 2 times per wheel rotation
-            float wheelRotationsPerSecond = Math.Abs(physx.DriveWheelSpeed) / 6f; //TODO: Use actual drive wheel length
+            float wheelRotationsPerSecond = Math.Abs(_physx.DriveWheelSpeed) / 6f; //TODO: Use actual drive wheel length
             //Parent.WheelComponent.DriveWheelLength;
 
             float chugDelay = Math.Max(500 / wheelRotationsPerSecond, 100);
@@ -113,10 +113,8 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
         private void ProcessWheelSlip()
         {
-            float speed = physx.AbsoluteSpeed.Remap(0, 15, 0, 1);
-            float slip = physx.WheelSlip;
+            float slip = _physx.WheelSlip + _derail.Angle * 2;
 
-            //wheelSlipEvent.SetParameter(speedParam, speed);
             wheelSlipEvent.SetParameter(slipParam, slip);
         }
 
