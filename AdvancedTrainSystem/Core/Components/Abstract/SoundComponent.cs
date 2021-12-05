@@ -22,27 +22,29 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
         /// </summary>
         protected AudioSource mainAudioSource;
 
-        protected readonly Train train;
-        protected PhysxComponent physx;
+        protected readonly Train _train;
+        protected PhysxComponent _physx;
+        protected DerailComponent _derail;
 
         public SoundComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
+            _train = GetParent<Train>();
         }
 
         public override void Start()
         {
-            physx = Components.GetComponent<PhysxComponent>();
+            _physx = Components.GetComponent<PhysxComponent>();
+            _derail = Components.GetComponent<DerailComponent>();
 
             // Intialize audio player and load banks
             audioPlayer = new AudioPlayer();
-            train.TrainInfo.SoundBanks.ForEach(bank =>
+            _train.TrainInfo.SoundBanks.ForEach(bank =>
             {
                 audioPlayer.LoadBank("scripts/ATS/Audio/" + bank);
             });
 
             // Create audio source from train and audio events
-            mainAudioSource = audioPlayer.CreateAudioSource(train);
+            mainAudioSource = audioPlayer.CreateAudioSource(_train);
         }
 
         public override void Dispose()

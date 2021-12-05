@@ -1,6 +1,7 @@
 ﻿using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
+using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
 using System;
@@ -23,8 +24,12 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public bool IsDerailed { get; private set; }
 
-        private readonly Train train;
+        /// <summary>
+        /// Gets locomotive angle on Y axis.
+        /// </summary>
+        public float Angle => _carriagePrevVecs[0].Rotation.Y;
 
+        private readonly Train train;
 
         private PhysxComponent _physx;
         private CollisionComponent _collision;
@@ -189,10 +194,13 @@ namespace AdvancedTrainSystem.Core.Components
 
             // Same as above on frameAngle, higher speed = more noise
             float noiseAmplitude = _physx.AbsoluteSpeed / 15;
+            noiseAmplitude = noiseAmplitude.Clamp(0f, 1.25f);
+            
             noise *= noiseAmplitude;
 
             // Make noise more "shaky" when speed raises
             float noiseSpeed = _physx.AbsoluteSpeed / 5;
+            noiseSpeed = noiseSpeed.Clamp(0f, 3f);
 
             _noise = Vector3.Lerp(_noise, noise, Game.LastFrameTime * noiseSpeed);
 
@@ -214,6 +222,10 @@ namespace AdvancedTrainSystem.Core.Components
                 //      lower value to get higher angle on lower speeds
                 frameAngle *= speedFactor;
 
+                // Make angle non linear
+                frameAngle *= frameAngle;
+                frameAngle /= 2;
+
                 ApplyAngleOnCarriage(carriage, frameAngle, rotInfo);
 
                 _carriagePrevVecs[i].PrevForwardVector = forwardVector;
@@ -227,9 +239,9 @@ namespace AdvancedTrainSystem.Core.Components
 
             Vector3 rotation = new Vector3(0, angle, 0);
 
-            rotInfo.Rotation = Vector3.Lerp(rotInfo.Rotation, rotation, Game.LastFrameTime / 4);
-
-            if (Math.Abs(angle) > 37.5f)
+            rotInfo.Rotation = Vector3.Lerp(rotInfo.Rotation, rotation, Game.LastFrameTime);
+            
+            if (Math.Abs(angle) > 30f)
             {
                 Derail();
                 return;

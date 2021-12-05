@@ -130,7 +130,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             float value = info.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
 
             // Draw interactable text
-            var textPosition = Screen.WorldToScreen(e.AnimateProp.WorldPosition);
+            var textPosition = Screen.WorldToScreen(e.AnimateProp.WorldPosition + info.LabelOffset);
             var text = $"{info.ActionName}: {value * 100:0}%";
 
             var textElement = new TextElement(

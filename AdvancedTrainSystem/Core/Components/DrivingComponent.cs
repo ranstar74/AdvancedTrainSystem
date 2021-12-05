@@ -61,7 +61,7 @@ namespace AdvancedTrainSystem.Core.Components
         public override void Update()
         {
             // In case if player exits train some other way
-            if (isPlayerDriving && GPlayer.CurrentVehicle != train.TrainLocomotive.HiddenVehicle)
+            if (!train.IsPlayerDriving)
             {
                 // To prevent fake alarm
                 if(enterDelay < Game.GameTime)
@@ -83,7 +83,7 @@ namespace AdvancedTrainSystem.Core.Components
             }
 
             // Check if player is close enough to seat
-            Vector3 seatPos = ((Vehicle)train).Bones["seat_dside_f"].Position;
+            Vector3 seatPos = train.Bones["seat_dside_f"].Position;
 
             float distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
             if (distanceToSeat > 2f)
@@ -104,6 +104,7 @@ namespace AdvancedTrainSystem.Core.Components
             // game will move camera just under train.
             // Maybe custom camera is solution? Someday...
             
+            // A temporary code for "zero coordinates" bug
             while(train.TrainLocomotive.HiddenVehicle.Handle == 0)
             {
                 GTA.UI.Screen.ShowSubtitle("Handle is invalid.", 1);
@@ -111,7 +112,7 @@ namespace AdvancedTrainSystem.Core.Components
                 Script.Yield();
             }
 
-            GPlayer.Task.WarpIntoVehicle(train.TrainLocomotive.HiddenVehicle, VehicleSeat.Driver);
+            GPlayer.Task.WarpIntoVehicle(train.GetActiveLocomotiveVehicle(), VehicleSeat.Driver);
 
             EnterEvents();
         }
@@ -122,9 +123,6 @@ namespace AdvancedTrainSystem.Core.Components
         public void Leave()
         {
             GPlayer.Task.LeaveVehicle();
-
-            // TODO: Get relative position before entering train instead of hardcoded position
-            GPlayer.PositionNoOffset = ((Vehicle)train).GetOffsetPosition(new Vector3(-0.016f, -4.831f, 2.243f));
 
             LeaveEvents();
         }

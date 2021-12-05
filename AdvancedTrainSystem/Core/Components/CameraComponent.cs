@@ -2,8 +2,11 @@
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
+using GTA.Native;
+using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
+using System.Drawing;
 
 namespace AdvancedTrainSystem.Core.Components
 {
@@ -19,6 +22,8 @@ namespace AdvancedTrainSystem.Core.Components
         private static Pool<Camera> _cameraPool;
         private readonly Train train;
         private DrivingComponent driving;
+        private static readonly TextElement _crosshair = new TextElement(".", default, 1f, Color.White, GTA.UI.Font.HouseScript);
+        private static readonly PointF _centerScreen = new PointF(Screen.Width / 2, Screen.Height / 2 - 30);
 
         public CameraComponent(ComponentCollection components) : base(components)
         {
@@ -82,6 +87,10 @@ namespace AdvancedTrainSystem.Core.Components
                 SetupCamera();
             }
             GPlayer.IsVisible = false;
+
+            // Show crosshair for easier interaction with controls
+            _crosshair.Position = _centerScreen;
+            _crosshair.Draw();
 
             // Zoom - Middle Mouse Btn
             Game.DisableControlThisFrame(Control.Phone);
