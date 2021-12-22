@@ -86,7 +86,7 @@ namespace AdvancedTrainSystem.Core.Components
             Vector3 seatPos = train.Bones["seat_dside_f"].Position;
 
             float distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
-            if (distanceToSeat > 2f)
+            if (distanceToSeat > 2.5f)
                 return;
 
             Enter();

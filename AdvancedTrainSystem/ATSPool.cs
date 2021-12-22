@@ -11,8 +11,6 @@ namespace AdvancedTrainSystem
         /// <summary>
         /// <see cref="Train"/> pool.
         /// </summary>
-        public static ComponentObjectPool Trains => _trains;
-
-        private static readonly ComponentObjectPool _trains = new ComponentObjectPool();
+        public static ComponentObjectCollection<Train> Trains { get; } = new ComponentObjectCollection<Train>();
     }
 }

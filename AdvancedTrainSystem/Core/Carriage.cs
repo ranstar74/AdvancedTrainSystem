@@ -1,7 +1,8 @@
 ﻿using GTA;
+using Newtonsoft.Json;
 using System;
 
-namespace AdvancedTrainSystem.Core.Abstract
+namespace AdvancedTrainSystem.Core
 {
     /// <summary>
     /// Defines an carriage that consists of a invisible train and visible vehicle.
@@ -16,46 +17,59 @@ namespace AdvancedTrainSystem.Core.Abstract
     ///     </item>
     /// </list>
     /// </summary>
-    public abstract class Carriage : IDisposable
+    public class Carriage : IDisposable
     {
         /// <summary>
         /// Invisible vehicle of the <see cref="Carriage"/>.
         /// </summary>
-        internal Vehicle HiddenVehicle { get; }
+        internal Vehicle HiddenVehicle => _hiddenVehicle;
 
         /// <summary>
         /// Visible vehicle of the <see cref="Carriage"/>.
         /// </summary>
-        internal Vehicle Vehicle { get; }
+        internal Vehicle Vehicle => _vehicle;
 
-        /// <summary>
-        /// <see cref="Train"/> the <see cref="Carriage"/> attached to.
-        /// </summary>
-        public Train Train => train;
+#pragma warning disable IDE0052 // Remove unread private members
+        [JsonProperty("HiddenVehicleHandle")]
+        private int HiddenVehicleHandle
+        {
+            get => _hiddenVehicle.Handle;
+            set
+            {
+                _hiddenVehicle = (Vehicle) Entity.FromHandle(value);
+            }
+        }
 
-        /// <summary>
-        /// Gets passengers of the <see cref="TrainLocomotive"/>.
-        /// </summary>
-        public Ped[] Passengers => HiddenVehicle.Passengers;
+        [JsonProperty("VehicleHandle")]
+        private int VehicleHandle
+        {
+            get => _vehicle.Handle;
+            set
+            {
+                _vehicle = (Vehicle)Entity.FromHandle(value);
+            }
+        }
+#pragma warning restore IDE0052 // Remove unread private members
 
-        private Train train;
+        private Vehicle _hiddenVehicle;
+        private Vehicle _vehicle;
 
         /// <summary>
         /// Creates a new instance of <see cref="Carriage"/> with given vehicles.
         /// </summary>
         internal Carriage(Vehicle hiddenVehicle, Vehicle vehicle)
         {
-            HiddenVehicle = hiddenVehicle;
-            Vehicle = vehicle;
+            _hiddenVehicle = hiddenVehicle;
+            _vehicle = vehicle;
+
+            HiddenVehicleHandle = hiddenVehicle.Handle;
+            VehicleHandle = vehicle.Handle;
         }
 
-        /// <summary>
-        /// Sets <see cref="Train"/> of the <see cref="TrainCarriage"/>.
-        /// </summary>
-        /// <param name="train"></param>
-        internal void SetTrain(Train train)
+        // JSON Constructor
+        private Carriage()
         {
-            this.train = train;
+
         }
 
         /// <summary>

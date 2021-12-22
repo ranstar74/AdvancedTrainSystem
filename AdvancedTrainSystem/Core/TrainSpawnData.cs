@@ -12,14 +12,14 @@ namespace AdvancedTrainSystem.Core
 
         public TrainLocomotive Locomotive { get; }
 
-        public List<TrainCarriage> Carriages { get; }
+        public List<Carriage> Carriages { get; }
 
         public bool Direction { get; }
 
         public TrainSpawnData(
             TrainInfo trainInfo, 
             TrainLocomotive locomotive, 
-            List<TrainCarriage> carriages, 
+            List<Carriage> carriages, 
             bool direction)
         {
             TrainInfo = trainInfo;

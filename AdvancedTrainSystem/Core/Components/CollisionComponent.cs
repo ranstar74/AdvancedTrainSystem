@@ -106,6 +106,7 @@ namespace AdvancedTrainSystem.Core.Components
                     // Check for collision with other custom train
                     var isClosestVehicleCustomTrain = closestVehicle.IsAts();
                     Train closestCustomTrain = null;
+
                     if (isClosestVehicleCustomTrain)
                     {
                         // Since trains in gta doesn't collide with other trains, we have
@@ -204,7 +205,7 @@ namespace AdvancedTrainSystem.Core.Components
                 {
                     var vehicle = closestVehicles[i];
 
-                    if (vehicle.GetAtsHandle() != train.ComponentHandle)
+                    if (vehicle.GetAtsHandle() != train.Handle)
                     {
                         this.closestVehicles.Add(vehicle);
                     }

@@ -1,5 +1,4 @@
 ﻿using AdvancedTrainSystem.Core;
-using AdvancedTrainSystem.Core.Abstract;
 using AdvancedTrainSystem.Railroad.Enums;
 using FusionLibrary.Extensions;
 using GTA;
@@ -39,7 +38,7 @@ namespace AdvancedTrainSystem.Extensions
 
         public static int GetAtsCarriagesCount(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetInt(Constants.TrainCarriagesNumber);
+            return vehicle.Decorator().GetInt(Constants.CarriagesNumber);
         }
 
         public static bool GetAtsDirection(this Vehicle vehicle)
@@ -83,15 +82,15 @@ namespace AdvancedTrainSystem.Extensions
         }
 
         /// <summary>
-        /// Finds a <see cref="Train"/> by <see cref="Vehicle"/> of a <see cref="TrainCarriage"/>.
+        /// Finds a <see cref="Train"/> by <see cref="Vehicle"/> of a <see cref="Carriage"/>.
         /// </summary>
-        /// <param name="carriage"><see cref="TrainCarriage"/> of a <see cref="Train"/>.</param>
-        /// <returns><see cref="Train"/>, <see cref="TrainCarriage"/> attached to.</returns>
+        /// <param name="carriage"><see cref="Carriage"/> of a <see cref="Train"/>.</param>
+        /// <returns><see cref="Train"/>, <see cref="Carriage"/> attached to.</returns>
         public static Train GetAtsByCarriage(this Vehicle carriage)
         {
             int handle = carriage.GetAtsHandle();
 
-            return ATSPool.Trains.GetByHandle<Train>(handle);
+            return ATSPool.Trains.GetByHandle(handle);
         }
     }
 }

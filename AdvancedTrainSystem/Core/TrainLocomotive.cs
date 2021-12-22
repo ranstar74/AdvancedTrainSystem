@@ -1,5 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Abstract;
-using GTA;
+﻿using GTA;
 
 namespace AdvancedTrainSystem.Core
 {
@@ -29,10 +28,10 @@ namespace AdvancedTrainSystem.Core
         }
 
         /// <summary>
-        /// Creates a new instance of <see cref="TrainLocomotive"/> from <see cref="TrainCarriage"/>.
+        /// Creates a new instance of <see cref="TrainLocomotive"/> from <see cref="Carriage"/>.
         /// </summary>
-        /// <param name="carriage"><see cref="TrainCarriage"/> instance to get vehicles from.</param>
-        internal TrainLocomotive(TrainCarriage carriage) : base(carriage.HiddenVehicle, carriage.Vehicle)
+        /// <param name="carriage"><see cref="Carriage"/> instance to get vehicles from.</param>
+        internal TrainLocomotive(Carriage carriage) : base(carriage.HiddenVehicle, carriage.Vehicle)
         {
 
         }
