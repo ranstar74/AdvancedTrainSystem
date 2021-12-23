@@ -18,10 +18,10 @@ namespace AdvancedTrainSystem.Core.Components
         private float _cabCameraYAxis;
         private float _prevTrainAngle = 0f;
 
+        private DrivingComponent driving;
         private Camera _cabCamera;
         private static Pool<Camera> _cameraPool;
         private readonly Train train;
-        private DrivingComponent driving;
         private static readonly TextElement _crosshair = new TextElement(".", default, 1f, Color.White, GTA.UI.Font.HouseScript);
         private static readonly PointF _centerScreen = new PointF(Screen.Width / 2, Screen.Height / 2 - 30);
 
@@ -34,6 +34,8 @@ namespace AdvancedTrainSystem.Core.Components
         {
             driving = Components.GetComponent<DrivingComponent>();
 
+            // We do that in start because it's unsafe 
+            // to access gta stuff in constructors
             if(_cameraPool == null)
             {
                 _cameraPool = new Pool<Camera>(
@@ -53,6 +55,12 @@ namespace AdvancedTrainSystem.Core.Components
 
                 Vector3 cameraPos = train.Bones["seat_dside_f"]
                     .GetRelativeOffsetPosition(new Vector3(0, -0.1f, 0.75f));
+
+                // For some reason this method being invoked twice or something?
+                // and it causes no free objects in pool exception
+                // So as "temporary" hack...
+                if (_cabCamera != null)
+                    return;
 
                 _cabCamera = _cameraPool.Get();
                 _cabCamera.AttachTo(train, cameraPos);
