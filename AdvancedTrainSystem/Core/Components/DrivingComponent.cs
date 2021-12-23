@@ -133,6 +133,8 @@ namespace AdvancedTrainSystem.Core.Components
 
             isPlayerDriving = true;
             OnEnter?.Invoke();
+
+            train.Blip.Alpha = 0;
         }
 
         private void LeaveEvents()
@@ -141,6 +143,8 @@ namespace AdvancedTrainSystem.Core.Components
 
             isPlayerDriving = false;
             OnLeave?.Invoke();
+
+            train.Blip.Alpha = 255;
         }
 
         private void SetDelay()
