@@ -1,4 +1,5 @@
 ﻿using AdvancedTrainSystem.Core;
+using AdvancedTrainSystem.Core.Components;
 using AdvancedTrainSystem.Core.Info;
 using FusionLibrary;
 using GTA.UI;
@@ -6,9 +7,13 @@ using RageComponent;
 using RageComponent.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 {
+    /// <summary>
+    /// Defines interactive controls inside train.
+    /// </summary>
     public class ControlsComponent : Component
     {
         /// <summary>
@@ -42,90 +47,155 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             }
         };
         private readonly InteractiveController _interactableProps = new InteractiveController();
-
-        private readonly Train train;
+        private readonly List<AnimateProp> _animatedProps = new List<AnimateProp>();
+        private readonly Train _train;
+        private CameraComponent _camera;
 
         public ControlsComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
+            _train = GetParent<Train>();
 
-            train.TrainInfo.ControlBehaviourInfos.ForEach(info =>
+            _train.TrainInfo.ControlBehaviourInfos.ForEach(bh =>
             {
-                var model = new CustomModel(info.ModelName);
-                model.Request();
+                InteractiveProp interactiveProp = null;
 
-                // Create interactive prop
-                InteractiveProp interactiveProp =  _interactableProps.Add(
-                    model: model,
-                    entity: train,
-                    boneName: info.BoneName,
-                    movementType: info.MovementType,
-                    coordinateInteraction: info.Coordinate,
-                    control: info.Control,
-                    invert: info.Invert,
-                    min: info.MinAngle,
-                    max: info.MaxAngle,
-                    startValue: info.StartValue,
-                    sensitivityMultiplier: info.Sensetivity);
-
-                // Create handle, if theres config for that
-                if(info.AttachmentInfo != null)
+                int index = 0;
+                bh.AnimationProps.ForEach(prop =>
                 {
-                    var handleInfo = info.AttachmentInfo;
+                    CustomModel propModel = new CustomModel(prop.ModelName);
+                    propModel.Request();
 
-                    var handle = new CustomModel(handleInfo.ModelName);
-                    handle.Request();
+                    AnimateProp currentProp;
+                    // The first prop is interactive one
+                    if(index == 0)
+                    {
+                        // As mentioned below, first animation is used
+                        // for interaciton
+                        AnimationInfo anim = prop.Animations[0];
 
-                    var handleProp = _interactableProps.Add(
-                        model: handle,
-                        entity: interactiveProp,
-                        boneName: handleInfo.BoneName,
-                        movementType: handleInfo.MovementType,
-                        coordinateInteraction: handleInfo.Coordinate,
-                        toggle: false,
-                        min: handleInfo.MinAngle,
-                        max: handleInfo.MaxAngle,
-                        startValue: 0f,
-                        step: (float) handleInfo.Step,
-                        stepRatio: 1f,
-                        isIncreasing: handleInfo.MaxAngle < handleInfo.MinAngle,
-                        smoothEnd: true);
-                    interactiveProp.OnInteractionStarted += (_, __) => handleProp.Play();
-                    interactiveProp.OnInteractionEnded += (_, __) => handleProp.Stop();
-                }
+                        if(bh.Toggle)
+                        {
+                            interactiveProp = _interactableProps.Add(
+                                model: propModel,
+                                entity: _train,
+                                boneName: prop.BoneName,
+                                movementType: anim.AnimationType,
+                                coordinateInteraction: anim.Coordinate,
+                                min: anim.Minimum,
+                                max: anim.Maximum,
+                                startValue: bh.StartValue,
+                                step: anim.Step,
+                                isIncreasing: anim.IsIncreasing,
+                                stepRatio: 1f,
+                                toggle: true,
+                                smoothEnd: true);
+                        }
+                        else
+                        {
+                            interactiveProp = _interactableProps.Add(
+                                model: propModel,
+                                entity: _train,
+                                boneName: prop.BoneName,
+                                movementType: anim.AnimationType,
+                                coordinateInteraction: anim.Coordinate,
+                                control: bh.ControlPrimary.Control,
+                                invert: bh.InvertValue,
+                                min: anim.Minimum,
+                                max: anim.Maximum,
+                                startValue: bh.StartValue,
+                                sensitivityMultiplier: bh.Sensitivity);
+                        }
+                        interactiveProp.AnimateProp.PlayReverse = prop.PlayReverse;
+                        interactiveProp.AnimateProp.PlayNextSteps = true;
 
-                // Setup alternative controls
-                if (info.AltControl != null)
-                {
-                    interactiveProp.SetupAltControl(
-                        control: (GTA.Control)info.AltControl, 
-                        invert: (bool)info.InvertAlt);
-                }
+                        if (bh.ControlSecondary != null)
+                        {
+                            interactiveProp.SetupAltControl(
+                                control: bh.ControlSecondary.Control,
+                                invert: bh.ControlSecondary.Invert);
+                        }
 
-                // Show label on hover
-                interactiveProp.OnHover += DisplayTextPreview;
-                interactiveProp.OnInteraction += DisplayTextPreview;
-                interactiveProp.OnInteraction += UpdateBehaviour;
+                        // Show label on hover
+                        interactiveProp.OnHover += DisplayTextPreview;
+                        interactiveProp.OnInteraction += DisplayTextPreview;
+                        interactiveProp.OnInteraction += UpdateBehaviour;
 
-                // Save info in tag in order to access it later
-                interactiveProp.Tag = info;
+                        // Save info in tag in order to access it later
+                        interactiveProp.Tag = bh;
+
+                        interactiveProp.OnHover += (_, __) => CameraComponent.BlinkCrosshairThisFrame = true;
+
+                        currentProp = interactiveProp;
+                    }
+                    // Every other prop is only visual
+                    else
+                    {
+                        currentProp = new AnimateProp(
+                            model: propModel,
+                            entity: interactiveProp,
+                            boneName: prop.BoneName,
+                            keepCollision: false)
+                        {
+                            PlayReverse = prop.PlayReverse,
+                            PlayNextSteps = true
+                        };
+                        currentProp.SpawnProp();
+
+                        interactiveProp.OnInteractionStarted += (_, __) => currentProp.Play();
+                        interactiveProp.OnInteractionEnded += (_, __) => currentProp.Play();
+
+                        _animatedProps.Add(currentProp);
+                    }
+
+                    // For the first prop (which is interactive one) we skip
+                    // the first animation because it's already was used in interactive prop constructor
+                    List<AnimationInfo> anims = index == 0 ? prop.Animations.Skip(1).ToList() : prop.Animations;
+
+                    anims.ForEach(anim =>
+                    {
+                        CoordinateSetting animSet = currentProp[anim.AnimationType][anim.AnimationStep][anim.Coordinate];
+
+                        animSet.Setup(
+                            stop: !anim.Loop,
+                            isIncreasing: anim.IsIncreasing,
+                            minimum: anim.Minimum,
+                            maximum: anim.Maximum,
+                            step: anim.Step,
+                            maxMinRatio: 1f,
+                            stepRatio: 1f,
+                            smoothEnd: true);
+                    });
+                    index++;
+                });
             });
-
             _interactableProps.Play();
+        }
+
+        public override void Start()
+        {
+            _camera = Components.GetComponent<CameraComponent>();
         }
 
         private void UpdateBehaviour(object sender, InteractiveProp e)
         {
-            var info = (TrainControlBehaviourInfo)e.Tag;
+            var behaviour = (TrainControlBehaviourInfo) e.Tag;
 
-            float value = info.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
+            float value = behaviour.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
 
-            _behaviours[info.ActionName]?.Invoke(this, value);
+            // No action required
+            if (string.IsNullOrEmpty(behaviour.ActionName))
+                return;
+
+            _behaviours[behaviour.ActionName]?.Invoke(this, value);
         }
 
         private void DisplayTextPreview(object sender, InteractiveProp e)
         {
             var info = (TrainControlBehaviourInfo) e.Tag;
+
+            // TODO: Add display name and translations
+            if (string.IsNullOrEmpty(info.ActionName))
+                return;
 
             float value = info.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
 
@@ -145,19 +215,10 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             textElement.Draw();
         }
 
-        public override void Start()
-        {
-            
-        }
-
-        public override void Update()
-        {
-
-        }
-
         public override void Dispose()
         {
             _interactableProps.Dispose();
+            _animatedProps.ForEach(x => x.Dispose());
         }
     }
 }

@@ -138,6 +138,11 @@ namespace AdvancedTrainSystem.Core
         public TrainInfo TrainInfo => _spawnData.TrainInfo;
 
         /// <summary>
+        /// Map blip of this train.
+        /// </summary>
+        public Blip Blip => _blip;
+
+        /// <summary>
         /// Handle of this train.
         /// </summary>
         public int Handle => _trainLocomotive.HiddenVehicle.Handle;

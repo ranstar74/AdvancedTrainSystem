@@ -59,7 +59,7 @@ namespace AdvancedTrainSystem.Core.Components
         /// <see cref="DriveWheelSpeed"/> uses <see cref="VisualSpeed "/> internally.
         /// </para>
         /// </summary>
-        public float VisualSpeed => AbsoluteSpeed > 0.125f ? speed : 0;
+        public float VisualSpeed => AbsoluteSpeed > 0.135f ? speed : 0;
 
         /// <summary>
         /// Track speed is not depends on train direction. 
