@@ -19,17 +19,17 @@ namespace AdvancedTrainSystem.Core
     public abstract class Train : IComponentObject
     {
         /// <summary>
-        /// Speed of the <see cref="Train"/> in m/s.
+        /// Speed of this train in m/s.
         /// </summary>
-        public float Speed => Components.PhysxComponent.Speed;
+        public float Speed => Components.Physx.Speed;
 
         /// <summary>
         /// Speed along train path. Same for all speeds moving in the same direction.
         /// </summary>
-        public float TrackSpeed => Components.PhysxComponent.TrackSpeed;
+        public float TrackSpeed => Components.Physx.TrackSpeed;
 
         /// <summary>
-        /// Velocity of the <see cref="Train"/>.
+        /// Velocity of this train.
         /// </summary>
         /// <remarks>
         /// Can be set only if train is derailed.
@@ -38,87 +38,94 @@ namespace AdvancedTrainSystem.Core
         {
             get
             {
-                if (Components.DerailComponent.IsDerailed)
-                    return trainLocomotive.Vehicle.Velocity;
+                if (Components.Derail.IsDerailed)
+                    return _trainLocomotive.Vehicle.Velocity;
                 else
-                    return trainLocomotive.HiddenVehicle.Velocity;
+                    return _trainLocomotive.HiddenVehicle.Velocity;
             }
             set
             {
-                if (Components.DerailComponent.IsDerailed)
-                    trainLocomotive.Vehicle.Velocity = value;
+                if (Components.Derail.IsDerailed)
+                    _trainLocomotive.Vehicle.Velocity = value;
             }
         }
 
         /// <summary>
-        /// Position of the <see cref="Train"/>.
+        /// Position of this train.
         /// </summary>
         public Vector3 Position => GetActiveLocomotiveVehicle().Position;
 
         /// <summary>
-        /// Rotation of the <see cref="Train"/>.
+        /// Rotation of this train.
         /// </summary>
         public Vector3 Rotation => GetActiveLocomotiveVehicle().Rotation;
 
         /// <summary>
-        /// Quaternion of the <see cref="Train"/>.
+        /// Quaternion of this train.
         /// </summary>
         public Quaternion Quaternion => GetActiveLocomotiveVehicle().Quaternion;
 
         /// <summary>
-        /// Gets the vector that points in front of the <see cref="Train"/>.
+        /// Gets the vector that points in front of this train.
         /// </summary>
         public Vector3 ForwardVector => GetActiveLocomotiveVehicle().ForwardVector;
 
         /// <summary>
-        /// Gets the vector that points above the <see cref="Train"/>.
+        /// Gets the vector that points above the this train.
         /// </summary>
         public Vector3 UpVector => GetActiveLocomotiveVehicle().UpVector;
 
         /// <summary>
-        /// Gets the vector that points to the right of the <see cref="Train"/>.
+        /// Gets the vector that points to the right of this train.
         /// </summary>
         public Vector3 RightVector => GetActiveLocomotiveVehicle().RightVector;
 
         /// <summary>
-        /// Gets a position directly in front of the <see cref="Train"/>.
+        /// Gets a position directly in front of this train.
         /// </summary>
         public Vector3 FrontPosition => GetActiveLocomotiveVehicle().FrontPosition;
 
         /// <summary>
+        /// Gets a collection of <see cref="EntityBone"/> of this train.
+        /// </summary>
+        public EntityBoneCollection Bones => TrainLocomotive.Vehicle.Bones;
+
+        /// <summary>
         /// Driver of the <see cref="TrainLocomotive"/>.
         /// </summary>
-        public Ped Driver => trainLocomotive.Driver;
+        public Ped Driver => GetActiveLocomotiveVehicle().Driver;
+
+        /// <summary>
+        /// Gets a value indicating whether player drives this train.
+        /// </summary>
+        public bool IsPlayerDriving => 
+            _trainLocomotive.HiddenVehicle.Driver?.Equals(Game.Player.Character) == true ||
+            _trainLocomotive.Vehicle.Driver?.Equals(Game.Player.Character) == true;
 
         /// <summary>
         /// Direction of the <see cref="Train"/> on the rail tracks.
         /// </summary>
-        public bool Direction => trainDirection;
+        public bool Direction => _trainDirection;
 
         /// <summary>
         /// Gets value indicating whether train is derailed or not.
         /// </summary>
-        public bool IsDerailed => Components.DerailComponent.IsDerailed;
+        public bool IsDerailed => Components.Derail.IsDerailed;
 
         /// <summary>
         /// <see cref="Decorator"/> of the <see cref="Train"/>.
         /// </summary>
-        public Decorator Decorator => trainLocomotive.HiddenVehicle.Decorator();
+        public Decorator Decorator => _trainLocomotive.HiddenVehicle.Decorator();
 
         /// <summary>
         /// <see cref="TrainLocomotive"/> of the <see cref="Train"/>.
         /// </summary>
-        public TrainLocomotive TrainLocomotive => trainLocomotive;
+        public TrainLocomotive TrainLocomotive => _trainLocomotive;
 
         /// <summary>
         /// All carriages of the <see cref="Train"/>.
         /// </summary>
-        public List<TrainCarriage> Carriages => trainCarriages;
-
-        /// <summary>
-        /// Handle of the <see cref="Train"/>.
-        /// </summary>
-        public int ComponentHandle => componentHandle;
+        public List<Carriage> Carriages => _carriages;
 
         /// <summary>
         /// Gets components of the <see cref="Train"/>.
@@ -128,64 +135,85 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// <see cref="TrainInfo"/> this train was created from.
         /// </summary>
-        public TrainInfo TrainInfo => spawnData.TrainInfo;
+        public TrainInfo TrainInfo => _spawnData.TrainInfo;
 
-        private readonly TrainLocomotive trainLocomotive;
-        private readonly List<TrainCarriage> trainCarriages;
-        private readonly bool trainDirection;
-        private readonly TrainSpawnData spawnData;
-        private int componentHandle;
+        /// <summary>
+        /// Map blip of this train.
+        /// </summary>
+        public Blip Blip => _blip;
+
+        /// <summary>
+        /// Handle of this train.
+        /// </summary>
+        public int Handle => _trainLocomotive.HiddenVehicle.Handle;
+
+        private readonly TrainLocomotive _trainLocomotive;
+        private readonly List<Carriage> _carriages;
+        private readonly TrainSpawnData _spawnData;
+        private readonly bool _trainDirection;
+
+        private readonly Blip _blip;
 
         internal Train(TrainSpawnData trainSpawnData)
         {
-            trainLocomotive = trainSpawnData.Locomotive;
-            trainCarriages = trainSpawnData.Carriages;
-            trainDirection = trainSpawnData.Direction;
+            _trainLocomotive = trainSpawnData.Locomotive;
+            _carriages = trainSpawnData.Carriages;
+            _trainDirection = trainSpawnData.Direction;
+            _spawnData = trainSpawnData;
 
-            spawnData = trainSpawnData;
+            SetDecorators();
 
-            for (int i = 0; i < Carriages.Count; i++)
-            {
-                var carriage = Carriages[i];
-
-                carriage.SetTrain(this);
-
-                SetDecorators(carriage.HiddenVehicle);
-                SetDecorators(carriage.Vehicle);
-            }
-            SetDecorators(trainLocomotive.HiddenVehicle);
-            SetDecorators(trainLocomotive.Vehicle);
+            // Add blip
+            _blip = TrainLocomotive.Vehicle.AddBlip();
+            _blip.Sprite = BlipSprite.Train;
+            _blip.Color = BlipColor.Yellow4;
+            _blip.Name = _spawnData.TrainInfo.Name;
         }
 
         /// <summary>
-        /// Sets various decorators on train vehicle.
+        /// Sets various decorators on train vehicles.
         /// </summary>
-        internal void SetDecorators(Vehicle vehicle)
+        internal void SetDecorators()
         {
-            var decorator = vehicle.Decorator();
+            ForEachCarriage(vehicle =>
+            {
+                var decorator = vehicle.Decorator();
 
-            // Direction
-            decorator.SetBool(Constants.TrainDirection, Direction);
+                // Direction
+                decorator.SetBool(Constants.TrainDirection, Direction);
 
-            // Type
-            int trainType = (int)spawnData.TrainInfo.TrainType;
-            decorator.SetInt(Constants.TrainType, trainType);
+                // Type
+                int trainType = (int)_spawnData.TrainInfo.TrainType;
+                decorator.SetInt(Constants.TrainType, trainType);
 
-            // Set number of carriages as decorator so we can recover them after reload
-            int carriageCount = spawnData.TrainInfo.TrainMissionInfo.Models.Count;
-            decorator.SetInt(Constants.TrainCarriagesNumber, carriageCount);
+                // Set number of carriages as decorator so we can recover them after reload
+                int carriageCount = _spawnData.TrainInfo.TrainMissionInfo.Models.Count;
+                decorator.SetInt(Constants.CarriagesNumber, carriageCount);
 
-            // Mission id
-            decorator.SetInt(Constants.TrainMissionId, spawnData.TrainInfo.TrainMissionInfo.Id);
+                // Mission id
+                decorator.SetInt(Constants.TrainMissionId, _spawnData.TrainInfo.TrainMissionInfo.Id);
 
-            // Train head
-            decorator.SetInt(Constants.TrainHeadHandle, TrainLocomotive.HiddenVehicle.Handle);
+                // Train head
+                decorator.SetInt(Constants.TrainHeadHandle, TrainLocomotive.HiddenVehicle.Handle);
+
+                // Handle
+                decorator.SetInt(Constants.TrainHandle, Handle);
+            });
         }
 
         /// <summary>
-        /// Creates a new <see cref="Train"/> instance.
+        /// Invokes action for both hidden / visible vehicles of train carriages.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="action">Action to invoke.</param>
+        internal void ForEachCarriage(Action<Vehicle> action)
+        {
+            foreach(Carriage carriage in Carriages)
+            {
+                action.Invoke(carriage.HiddenVehicle);
+                action.Invoke(carriage.Vehicle);
+            }
+        }
+
         internal static T Create<T>(TrainInfo trainInfo, Vector3 position, bool direction) where T : Train
         {
             TrainMissionInfo trainMission = trainInfo.TrainMissionInfo;
@@ -203,16 +231,10 @@ namespace AdvancedTrainSystem.Core
             // Spawn vanila train
             Vehicle hiddenLocomotive = FusionUtils.CreateMissionTrain(trainMission.Id, position, direction);
 
-            // Add blip
-            Blip blip = hiddenLocomotive.AddBlip();
-            blip.Sprite = BlipSprite.Train;
-            blip.Color = BlipColor.Yellow4;
-            blip.Name = trainInfo.Name;
-
             // Spawn and configure all train carriages
-            List<TrainCarriage> trainCarriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
+            List<Carriage> carriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
 
-            return TrainSpawnHelper.CreateFromCarriages<T>(trainInfo, trainCarriages, direction);
+            return TrainSpawnHelper.CreateFromCarriages<T>(trainInfo, carriages, direction);
         }
 
         /// <summary>
@@ -221,32 +243,11 @@ namespace AdvancedTrainSystem.Core
         /// Used for restoring train after reloading script.
         /// </para>
         /// </summary>
-        /// <param name="vehicle">Any vehicle of the <see cref="Train"/></param>
         /// <returns>A new instance of <see cref="Train"/></returns>
-        internal static Train Respawn(Vehicle vehicle)
+        internal static Train Respawn(List<Carriage> carriages, bool direction)
         {
-            int carriagesCount = vehicle.GetAtsCarriagesCount();
-            bool direction = vehicle.GetAtsDirection();
-
-            List<TrainCarriage> carriages = new List<TrainCarriage>();
-            for (int i = 0; i < carriagesCount; i++)
-            {
-                Vehicle invisibleVehicle;
-
-                // If model is locomotive / carriage
-                if (i == 0)
-                    invisibleVehicle = vehicle;
-                else
-                    invisibleVehicle = vehicle.GetTrainCarriage(i);
-
-                // Get visible vehicle from handle
-                Vehicle visibleVehicle = invisibleVehicle.GetAtsCarriageVehicle();
-
-                // Create carriage from recovered vehicles
-                carriages.Add(new TrainCarriage(invisibleVehicle, visibleVehicle));
-            }
-
-            TrainInfo trainInfo = TrainInfo.Load(vehicle.GetAdvancedTrainMissionId());
+            Vehicle locomotive = carriages[0].HiddenVehicle;
+            TrainInfo trainInfo = TrainInfo.Load(locomotive.GetAdvancedTrainMissionId());
 
             // Copy-pasted from train factory. Needs to be updated when new train is implemented.
             Train train;
@@ -267,7 +268,6 @@ namespace AdvancedTrainSystem.Core
                     throw new NotSupportedException();
             }
             ATSPool.Trains.Add(train);
-
             return train;
         }
 
@@ -278,48 +278,11 @@ namespace AdvancedTrainSystem.Core
         public abstract ComponentCollection GetComponents();
 
         /// <summary>
-        /// Assigns handle to the <see cref="Train"/>.
-        /// </summary>
-        /// <param name="componentHandle">Handle to assign.</param>
-        public void SetComponentHandle(int componentHandle)
-        {
-            this.componentHandle = componentHandle;
-
-            for (int i = 0; i < Carriages.Count; i++)
-            {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, componentHandle);
-        }
-
-        /// <summary>
-        /// Invalidates component handle by setting it to -1.
-        /// </summary>
-        public void InvalidateHandle()
-        {
-            for (int i = 0; i < Carriages.Count; i++)
-            {
-                TrainCarriage carriage = Carriages[i];
-
-                carriage.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-                carriage.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            }
-
-            TrainLocomotive.HiddenVehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-            TrainLocomotive.Vehicle.Decorator().SetInt(Constants.TrainHandle, -1);
-        }
-
-        /// <summary>
         /// Gets train carriage.
         /// </summary>
         /// <param name="index">Index of the carriage.</param>
         /// <returns>Carriage of specified index.</returns>
-        public TrainCarriage GetCarriageAt(int index)
+        public Carriage GetCarriageAt(int index)
         {
             return Carriages[index];
         }
@@ -329,7 +292,7 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         /// <param name="model">Model of hidden or visible vehicle of carriage.</param>
         /// <returns>Array of carriages of specified model.</returns>
-        public TrainCarriage[] GetCarriages(CustomModel model)
+        public Carriage[] GetCarriages(CustomModel model)
         {
             return GetCarriages(model.Model);
         }
@@ -339,11 +302,11 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         /// <param name="model">Model of hidden or visible vehicle of carriage.</param>
         /// <returns>Array of carriages of specified model.</returns>
-        public TrainCarriage[] GetCarriages(Model model)
+        public Carriage[] GetCarriages(Model model)
         {
             var searchModel = model;
 
-            List<TrainCarriage> carriages = new List<TrainCarriage>();
+            List<Carriage> carriages = new List<Carriage>();
             for (int i = 0; i < Carriages.Count; i++)
             {
                 var carriage = Carriages[i];
@@ -366,10 +329,26 @@ namespace AdvancedTrainSystem.Core
         /// visible vehicle gets off track.
         /// </summary>
         /// <returns></returns>
-        private Vehicle GetActiveLocomotiveVehicle()
+        internal Vehicle GetActiveLocomotiveVehicle()
         {
-            return Components.DerailComponent.IsDerailed ? 
+            // In case if its called before components got initialize
+            if (Components?.Derail == null)
+                return TrainLocomotive.HiddenVehicle;
+
+            return Components.Derail.IsDerailed ? 
                 TrainLocomotive.Vehicle : TrainLocomotive.HiddenVehicle;
+        }
+
+        /// <summary>
+        /// Marks train as disposed but doesn't remove vehicles.
+        /// <para>
+        /// Used for respawn.
+        /// </para>
+        /// </summary>
+        public void MarkAsNonScripted()
+        {
+            Components?.OnDispose();
+            _blip?.Delete();
         }
 
         /// <summary>
@@ -377,9 +356,7 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Dispose()
         {
-            // Could be null if disposed before InitializeComponent
-            Components?.OnDispose();
-            TrainLocomotive.Dispose();
+            MarkAsNonScripted();
 
             for(int i = 0; i < Carriages.Count; i++)
             {
@@ -391,12 +368,12 @@ namespace AdvancedTrainSystem.Core
         /// Implicitely casts the <see cref="Train"/> to a <see cref="Entity"/>.
         /// </summary>
         /// <param name="train">Source object.</param>
-        public static implicit operator Entity(Train train) => train.trainLocomotive.Vehicle;
+        public static implicit operator Entity(Train train) => train._trainLocomotive.Vehicle;
 
         /// <summary>
         /// Implicitely casts the <see cref="Train"/> to a <see cref="Vehicle"/>.
         /// </summary>
         /// <param name="train">Source object.</param>
-        public static implicit operator Vehicle(Train train) => train.trainLocomotive.Vehicle;
+        public static implicit operator Vehicle(Train train) => train._trainLocomotive.Vehicle;
     }
 }

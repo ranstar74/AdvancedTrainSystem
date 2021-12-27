@@ -21,11 +21,6 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         public override float Output => output;
 
         /// <summary>
-        /// Defines a minimum boiler pressure on which dynamo will start working.
-        /// </summary>
-        private const int pressureThreshold = 90;
-
-        /// <summary>
         /// How much pressure is required for dynamo to start working and reach its maximum power.
         /// </summary>
         /// <remarks>
@@ -35,7 +30,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         /// which will equal Power = 1f
         /// </para>
         /// </remarks>
-        private const int maximumPressure = 60;
+        private const float pressureThreshold = 0.3f;
 
         private readonly SteamTrain train;
         private BoilerComponent boiler;
@@ -49,11 +44,14 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         public override void Start()
         {
             boiler = Components.GetComponent<BoilerComponent>();
+        }
 
+        public override void Update()
+        {
             // Cut any pressure below threshold
-            float pressure = Math.Abs(boiler.PressurePSI - pressureThreshold);
+            float pressure = boiler.Pressure - pressureThreshold;
 
-            output = pressure.Remap(0f, maximumPressure, 0f, 1f);
+            output = MathExtensions.Clamp(pressure, 0f, 1f);
         }
     }
 }

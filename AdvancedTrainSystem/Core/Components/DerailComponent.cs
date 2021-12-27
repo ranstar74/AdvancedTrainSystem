@@ -1,11 +1,10 @@
-﻿using AdvancedTrainSystem.Railroad;
-using FusionLibrary;
+﻿using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
-using GTA.Native;
 using RageComponent;
 using RageComponent.Core;
 using System;
+using System.Collections.Generic;
 
 namespace AdvancedTrainSystem.Core.Components
 {
@@ -25,18 +24,38 @@ namespace AdvancedTrainSystem.Core.Components
         public bool IsDerailed { get; private set; }
 
         /// <summary>
-        /// Minimum speed of derailnment in m/s.
+        /// Gets locomotive angle on Y axis.
         /// </summary>
-        private const float derailMinSpeed = 13;
-
-        /// <summary>
-        /// Minimum angle difference between current and previous frames to derail.
-        /// </summary>
-        private const float derailAngle = 0.5f;
+        public float Angle => _carriagePrevVecs[0].Rotation.Y;
 
         private readonly Train train;
-        private Vector3 prevForwardAngle = Vector3.Zero;
-        private PhysxComponent physx;
+
+        private PhysxComponent _physx;
+        private CollisionComponent _collision;
+
+        private int _derailTime = -1;
+
+        private Vector3 _noise = default;
+        private readonly Random rand = new Random();
+
+        /// <summary>
+        /// This class defines information for calculating
+        /// and displaying train angle on turns.
+        /// </summary>
+        private class RotationInfo
+        {
+            public Carriage Carriage { get; set; }
+            public Vector3 PrevForwardVector { get; set; }
+            public Vector3 Rotation { get; set; }
+
+            public RotationInfo(Carriage carriage)
+            {
+                Carriage = carriage;
+                PrevForwardVector = carriage.Vehicle.ForwardVector;
+            }
+        }
+
+        private readonly List<RotationInfo> _carriagePrevVecs  = new List<RotationInfo>();
 
         /// <summary>
         /// Creates a new instance of <see cref="DerailComponent"/>.
@@ -49,13 +68,54 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Start()
         {
-            Components.GetComponent<CollisionComponent>().OnCollision += Derail;
-            physx = Components.GetComponent<PhysxComponent>();
+            _collision = Components.GetComponent<CollisionComponent>();
+            _physx = Components.GetComponent<PhysxComponent>();
+
+            _collision.OnCollision += Derail;
+
+            //if (train.IsAtsDerailed())
+            //    Derail();
+
+            train.Carriages.ForEach(carriage =>
+            {
+                _carriagePrevVecs.Add(new RotationInfo(carriage));
+            });
         }
 
         public override void Update()
         {
             ProcessSpeedDerail();
+            ProcessAttachTrailer();
+        }
+
+        /// <summary>
+        /// Attaches carriages to each other
+        /// so after derail they won't separate and
+        /// fly in different directions
+        /// </summary>
+        private void ProcessAttachTrailer()
+        {
+            // Keep attaching trailer some time after derail
+            // to make sure it attached
+            if (IsDerailed && Game.GameTime - _derailTime < 250)
+            {
+                // Process all carriages from locomotive to last one
+                Vehicle previousCarriage = null;
+                for (int i = 0; i < train.Carriages.Count; i++)
+                {
+                    Vehicle carriage = train.Carriages[i].Vehicle;
+
+                    carriage.Velocity = carriage.ForwardVector * _physx.Speed;
+
+                    // Attach carriage as trailer to next carriage if theres one
+                    if (previousCarriage != null)
+                    {
+                        previousCarriage.AttachToTrailer(carriage, 360);
+                    }
+
+                    previousCarriage = carriage;
+                }
+            }
         }
 
         /// <summary>
@@ -66,68 +126,53 @@ namespace AdvancedTrainSystem.Core.Components
             if (IsDerailed)
                 return;
 
+            _derailTime = Game.GameTime;
+
+            // DO NOT CHANGE ORDER OF COLLISION ENABLED / DISABLED
+            // Explanation: When train derails, we have to switch
+            // driving train from invisible to visible one,
+            // this is done by DrivingComponent on OnDerail event,
+            // but there's problem that game camera will collide
+            // with invisible model collision for one frame
+            // and it will be pretty much noticable.
+            // --- SOLUTION ---
+            // So we first disable hidden vehicle collision,
+            // in this moment theres no vehicle with collision, cuz
+            // attached vehicle doesn't have collision either.
+            // Then we detach vehicle and instantly disable its collision,
+            // player is still in hidden model. After that there's
+            // no collision for for one frame. If we don't skip
+            // one frame game doesn't apply IsCollisionEnabled
+            // and that makes camera flick. After player is moved,
+            // we can enable collision back.
+            // Yes, such a hack.
+            foreach(Carriage carriage in train.Carriages)
+            {
+                Vehicle vehicle = carriage.Vehicle;
+                Vehicle hiddenVehicle = carriage.HiddenVehicle;
+
+                hiddenVehicle.IsCollisionEnabled = false;
+
+                vehicle.Detach();
+                vehicle.IsCollisionEnabled = false;
+            }
             OnDerail?.Invoke();
 
-            // TODO: Make player fly like out of cars in gta 4
-            // Throw player out of train
-            if (train.Driver == Game.Player.Character)
+            Script.Yield();
+            foreach(Carriage carriage in train.Carriages)
             {
-                Game.Player.Character.Task.LeaveVehicle(LeaveVehicleFlags.BailOut);
-                Game.Player.Character.Ragdoll(10, RagdollType.Balance);
+                carriage.Vehicle.IsCollisionEnabled = true;
             }
 
-            // Process all carriages from locomotive to last one
-            for (int i = 0; i < train.Carriages.Count; i++)
+            MarkAsDerailed();
+        }
+
+        private void MarkAsDerailed()
+        {
+            train.ForEachCarriage(x =>
             {
-                Vehicle carriage = train.Carriages[i];
-                Vehicle hiddenVehicle = train.Carriages[i].HiddenVehicle;
-
-                // TODO: Fix trailer attach, its also being assigned while creating
-                //// Attach carriage as trailer to next carriage if theres one
-                //if (carriage.Next != null)
-                //{
-                //    carriage.VisibleVehicle.AttachToTrailer(carriage.Next.VisibleVehicle, 130);
-                //}
-
-                // Detach visible vehicle from invisible one and re-apply velocity
-                carriage.Detach();
-                carriage.Velocity = hiddenVehicle.Velocity;
-
-                // Delete invisible model as its not longer needed
-                hiddenVehicle.IsCollisionEnabled = false;
-                //carriage.InvisibleVehicle.Delete();
-            }
-
-            Vehicle locomotive = train;
-
-            // Apply different forces to make crash look better
-
-            var direction = Vector3.WorldUp;
-            var rotation = new Vector3(0, 65, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 3,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
-
-            direction = locomotive.RightVector;
-            rotation = new Vector3(0, 100, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 5,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
-            direction = locomotive.UpVector;
-            rotation = new Vector3(0, 0, 0);
-            Function.Call(Hash.APPLY_FORCE_TO_ENTITY,
-                locomotive, 5,
-                direction.X, direction.Y, direction.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                locomotive.Bones["fwheel_1"].Index,
-                false, true, true, false, true);
-
+                x.Decorator().SetBool(Constants.IsDerailed, true);
+            });
             IsDerailed = true;
         }
 
@@ -136,23 +181,74 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         private void ProcessSpeedDerail()
         {
-            // We're basically comparing forward vector of previous frame and current frame
-            // and if difference is too high and speed is higher than derailing minumum then train derails.
-            var forwardVector = train.ForwardVector;
+            if (IsDerailed)
+                return;
 
-            if (physx.AbsoluteSpeed >= derailMinSpeed)
+            // Create noise that adds some life to train when it moves...
+            Vector3 noise = new Vector3(
+                (float)rand.NextDouble(),
+                (float)rand.NextDouble(),
+                (float)rand.NextDouble());
+            noise *= 0.5f;
+
+            // Same as above on frameAngle, higher speed = more noise
+            float noiseAmplitude = _physx.AbsoluteSpeed / 15;
+            noiseAmplitude = noiseAmplitude.Clamp(0f, 1.25f);
+            
+            noise *= noiseAmplitude;
+
+            // Make noise more "shaky" when speed raises
+            float noiseSpeed = _physx.AbsoluteSpeed / 5;
+            noiseSpeed = noiseSpeed.Clamp(0f, 3f);
+
+            _noise = Vector3.Lerp(_noise, noise, Game.LastFrameTime * noiseSpeed);
+
+            // Explained below
+            float speedFactor = Game.LastFrameTime * 10000 * _physx.AbsoluteSpeed / 70;
+            for (int i = 0; i < _carriagePrevVecs.Count; i++)
             {
-                float angle = Vector3.Angle(forwardVector, prevForwardAngle);
+                RotationInfo rotInfo = _carriagePrevVecs[i];
+                Carriage carriage = rotInfo.Carriage;
 
-                if (angle >= derailAngle)
-                {
-                    if (FusionUtils.Random.NextDouble() >= 0.3f)
-                    {
-                        Derail();
-                    }
-                }
+                Vector3 forwardVector = carriage.Vehicle.ForwardVector;
+
+                // Find angle by difference of forward vectors of this and previous frame
+                float frameAngle = Vector3.SignedAngle(forwardVector, rotInfo.PrevForwardVector, Vector3.WorldUp);
+
+                // Since frameAngle is too low, we first multiply it on 10000 (just value i found work good)
+                // Then we multiply it one (Speed / 70), so on 70 m/s we will get multiplier 
+                //      Which basically will give higher angle on higher speed,
+                //      lower value to get higher angle on lower speeds
+                frameAngle *= speedFactor;
+
+                // Make angle non linear
+                frameAngle *= frameAngle;
+                frameAngle /= 10;
+
+                ApplyAngleOnCarriage(carriage, frameAngle, rotInfo);
+
+                _carriagePrevVecs[i].PrevForwardVector = forwardVector;
             }
-            prevForwardAngle = forwardVector;
+        }
+
+        private void ApplyAngleOnCarriage(Carriage carriage, float angle, RotationInfo rotInfo)
+        {
+            if (float.IsNaN(angle))
+                angle = 0f;
+
+            Vector3 rotation = new Vector3(0, angle, 0);
+
+            rotInfo.Rotation = Vector3.Lerp(rotInfo.Rotation, rotation, Game.LastFrameTime);
+            
+            if (Math.Abs(angle) > 30f)
+            {
+                Derail();
+                return;
+            }
+
+            carriage.Vehicle.AttachTo(
+                entity: carriage.HiddenVehicle,
+                rotation: rotInfo.Rotation + _noise);
         }
     }
 }

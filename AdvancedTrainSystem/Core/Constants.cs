@@ -11,12 +11,12 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// Number of train carriages.
         /// </summary>
-        internal const string TrainCarriagesNumber = "TrainCarriagesNumber";
+        internal const string CarriagesNumber = "CarriagesNumber";
 
         /// <summary>
         /// Handle of visible carriage of visible/invisible pair.
         /// </summary>
-        internal const string TrainVisibleCarriageHandle = "TrainCarriageEntityHandle";
+        internal const string TrainVisibleCarriageHandle = "CarriageEntityHandle";
 
         /// <summary>
         /// Handle of train head.
@@ -48,12 +48,14 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         internal const string TrainMissionId = "TrainMissionId";
 
+        internal const string IsDerailed = "TrainIsDerailed";
+
         /// <summary>
         /// Registers all decorators. Call it in first frame.
         /// </summary>
         internal static void RegisterDecorators()
         {
-            Decorator.Register(TrainCarriagesNumber, FusionEnums.DecorType.Int);
+            Decorator.Register(CarriagesNumber, FusionEnums.DecorType.Int);
             Decorator.Register(TrainVisibleCarriageHandle, FusionEnums.DecorType.Int);
             Decorator.Register(TrainHeadHandle, FusionEnums.DecorType.Int);
             Decorator.Register(TrainType, FusionEnums.DecorType.Int);
@@ -61,6 +63,7 @@ namespace AdvancedTrainSystem.Core
             Decorator.Register(TrainDirection, FusionEnums.DecorType.Bool);
             Decorator.Register(TrainLightState, FusionEnums.DecorType.Int);
             Decorator.Register(TrainMissionId, FusionEnums.DecorType.Int);
+            Decorator.Register(IsDerailed, FusionEnums.DecorType.Bool);
 
             Decorator.Lock();
         }

@@ -20,10 +20,16 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
         public abstract float Intensity { get; }
 
         private float force;
+        protected PhysxComponent physx;
 
         public BrakeComponent(ComponentCollection components) : base(components)
         {
 
+        }
+
+        public override void Start()
+        {
+            physx = Components.GetComponent<PhysxComponent>();
         }
 
         /// <summary>

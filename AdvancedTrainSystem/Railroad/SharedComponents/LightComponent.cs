@@ -2,6 +2,7 @@
 using AdvancedTrainSystem.Core.Components.Enums;
 using AdvancedTrainSystem.Railroad.SharedComponents.Abstract;
 using AdvancedTrainSystem.Railroad.SharedComponents.Interfaces;
+using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using RageComponent;
@@ -36,11 +37,14 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
         }
 
         private readonly Train train;
+        private NativeInput lightSwitchInput = new NativeInput(Control.VehicleHeadlight);
         private GeneratorComponent generator;
 
         public LightComponent(ComponentCollection components) : base(components)
         {
             train = GetParent<Train>();
+
+            UpdateTime = 100;
         }
 
         public override void Start()
@@ -56,7 +60,7 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
                 train.Carriages[i].Vehicle.SetPlayerLights(true);
             }
 
-            UpdateLight();
+            lightSwitchInput.OnControlJustPressed += SwitchHeadlight;
         }
 
         /// <summary>
@@ -65,6 +69,11 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
         public void SwitchHeadlight()
         {
             LightState = LightState.Next();
+        }
+
+        public override void Update()
+        {
+            UpdateLight();
         }
 
         /// <summary>
@@ -117,6 +126,5 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
                 carriage.SetLightsBrightness(generator.Output);
             }
         }
-
     }
 }

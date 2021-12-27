@@ -1,11 +1,12 @@
-﻿using AdvancedTrainSystem.Core.Components.Physics;
-using FusionLibrary;
+﻿using AdvancedTrainSystem.Railroad.Components;
 using FusionLibrary.Extensions;
 using GTA;
+using GTA.Math;
 using RageComponent;
 using RageComponent.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Core.Components
 {
@@ -51,6 +52,16 @@ namespace AdvancedTrainSystem.Core.Components
         }
 
         /// <summary>
+        /// For some reason TrainSetSpeed function cut any speed below about 0.1~,
+        /// we don't want wheels to spin when train is still so this 
+        /// speed needs to be used for anything graphical such as wheels.
+        /// <para>
+        /// <see cref="DriveWheelSpeed"/> uses <see cref="VisualSpeed "/> internally.
+        /// </para>
+        /// </summary>
+        public float VisualSpeed => AbsoluteSpeed > 0.135f ? speed : 0;
+
+        /// <summary>
         /// Track speed is not depends on train direction. 
         /// Can be used if u want to move two trains with different direction with same direction.
         /// </summary>
@@ -69,53 +80,7 @@ namespace AdvancedTrainSystem.Core.Components
         /// <summary>
         /// Absolute speed of the train.
         /// </summary>
-        public float AbsoluteSpeed {  get; private set; }
-
-        /// <summary>
-        /// Absolute value of speed difference between this frame and last frame.
-        /// </summary>
-        public float AbsoluteLastFrameAcceleration { get; private set; }
-
-        /// <summary>
-        /// Speed difference between this frame and last frame.
-        /// </summary>
-        public float LastFrameAcceleration { get; private set; }
-
-        /// <summary>
-        /// Previous frame <see cref="Speed"/>.
-        /// </summary>
-        public float PreviousSpeed;
-
-        /// <summary>
-        /// How much throttle is opened. 0 is closed, 1 is fully opened.
-        /// </summary>
-        public float Throttle { get; internal set; }
-
-        /// <summary>
-        /// Gear. Also known as Johnson bar. 1 forward, -1 backward
-        /// </summary>
-        public float Gear { get; internal set; }
-
-        /// <summary>
-        /// How fast train accelerates.
-        /// </summary>
-        public float AccelerationMultiplier = 0.2f;
-
-        /// <summary>
-        /// Returns True if drive wheel are sparking, otherwise False.
-        /// </summary>
-        public bool AreWheelSpark { get; private set; }
-
-        private bool _onTrainStartInvoked = false;
-        /// <summary>
-        /// Invokes when train started moving.
-        /// </summary>
-        public Action OnTrainStart { get; set; }
-
-        /// <summary>
-        /// Whether train is accelerating or not.
-        /// </summary>
-        public bool IsTrainAccelerating { get; private set; }
+        public float AbsoluteSpeed => Math.Abs(Speed);
 
         /// <summary>
         /// Drive wheels speed. Could be higher than train speed if train slips.
@@ -123,27 +88,31 @@ namespace AdvancedTrainSystem.Core.Components
         public float DriveWheelSpeed { get; private set; }
 
         /// <summary>
-        /// Last forces that were applied on train.
+        /// Gets a normalized value indicating how much wheels slip.
         /// </summary>
-        public float LastForces { get; private set; }
+        public float WheelSlip { get; private set; }
 
         /// <summary>
-        /// How much wheel slip in range of 0.0 - 1.0
+        /// Whether wheel slip or not.
         /// </summary>
-        public float WheelSlipFactor { get; private set; }
+        /// <remarks>
+        /// Controlled by engine component, if theres any.
+        /// </remarks>
+        public bool DoWheelSlip { get; internal set; }
 
         /// <summary>
-        /// <see cref="LastForces"/> of previous frame.
+        /// Average speed within last 1 second.
         /// </summary>
-        public float PreviousLastForces { get; set; }
+        public float AverageSpeed { get; internal set; }
 
-        /// <summary>
-        /// Pending move actions.
-        /// </summary>
-        private readonly List<(float, int)> moveStack = new List<(float, int)>();
+        private readonly Dictionary<int, float> _speeds = new Dictionary<int, float>();
+        private const float _forceMultiplier = 0.2f;
+        private float _prevSpeed;
+        private float _newForces = 0f;
+        private int _averageUpdateTime = 0;
 
         private readonly Train train;
-        private DerailComponent derail;
+        private DerailComponent _derail;
         private CollisionComponent collision;
 
         public PhysxComponent(ComponentCollection components) : base(components)
@@ -153,175 +122,127 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Start()
         {
-            derail = Components.GetComponent<DerailComponent>();
+            _derail = Components.GetComponent<DerailComponent>();
             collision = Components.GetComponent<CollisionComponent>();
         }
 
         public override void Update()
         {
-            // Since invisible vehicle aren't used after derail we just set speed on zero
-            if (derail.IsDerailed)
+            UpdateWheelSpeed();
+            UpdateAverageSpeed();
+
+            // Since hidden vehicle isn't used after derail we just set speed on zero
+            if (_derail.IsDerailed)
             {
-                Speed = 0;
+                //Speed = 0;
                 return;
             }
 
-            ProcessMove();
+            float acceleration = (Speed - _prevSpeed) * Game.LastFrameTime;
 
-            PreviousSpeed = Speed;
+            // Train don't really go uphill
+            float slopeForce = train.Rotation.X / 4;
+            
+            // These are not fully physical based but i found these values
+            // to work good enough
+            float dragForce = (float) (0.02f * Math.Pow(Speed, 2)) / 8;
+            float inerciaForce = -_newForces / 10;
+            float frictionForce = 0.2f * Speed / 2;
 
-            Speed += CalculateForces();
+            // Make train don't accelerate if wheel slips
+            float slipForce = WheelSlip * _newForces * 200;
 
-            AbsoluteSpeed = Math.Abs(Speed);
-            LastFrameAcceleration = Speed - PreviousSpeed;
-            AbsoluteLastFrameAcceleration = Math.Abs(LastFrameAcceleration);
+            float totalForce = slopeForce + dragForce + inerciaForce + frictionForce + slipForce;
 
-            TrainCollisionSolver.Update();
+            ApplyForce(-totalForce * _forceMultiplier * Game.LastFrameTime);
+
+            _prevSpeed = Speed;
+
+            // Apply forces of this frame to speed
+            Speed += _newForces;
+            _newForces = 0f;
         }
 
         /// <summary>
-        /// Processes all pending move actions of <see cref="Move(float)"/>
+        /// Calculates averega speed within last second.
         /// </summary>
-        private void ProcessMove()
+        private void UpdateAverageSpeed()
         {
-            var movingPoolToRemove = new List<(float, int)>();
-            for (int i = 0; i < moveStack.Count; i++)
+            // May happen if game is in slow motion
+            if(!_speeds.Keys.Contains(Game.GameTime))
+                _speeds.Add(Game.GameTime, Speed);
+
+            List<int> gameTimeToRemove = _speeds
+                .Where(x => Game.GameTime - x.Key > 1000)
+                .Select(x => x.Key)
+                .ToList();
+
+            foreach(int time in gameTimeToRemove)
             {
-                (float distance, int tick) = moveStack[i];
-
-                if (tick == Game.FrameCount)
-                    continue;
-
-                Speed -= distance;
-                movingPoolToRemove.Add((distance, tick));
+                _speeds.Remove(time);
             }
 
-            for (int i = 0; i < movingPoolToRemove.Count; i++)
+            if(_averageUpdateTime < Game.GameTime)
             {
-                moveStack.Remove(movingPoolToRemove[i]);
+                AverageSpeed = _speeds.Sum(x => x.Value) / _speeds.Count;
+                _averageUpdateTime = Game.GameTime + 1000;
             }
         }
 
         /// <summary>
-        /// Calculates all train forces.
+        /// Calculates drive wheel speed.
+        /// It is different from actual speed if wheel slipping or locked by brake.
         /// </summary>
-        /// <returns>All train forces of this frame.</returns>
-        private float CalculateForces()
+        private void UpdateWheelSpeed()
         {
-            // TODO: Take uphill/downhill into account
+            // Im not really sure what is the best way to get slip
+            // speed, so we're faking it with new forces applied to train (which is mostly engine force)
 
-            // Acceleration = (v1 - v2) / t
-            float acceleration = AbsoluteLastFrameAcceleration * Game.LastFrameTime;
+            // No idea why but when train derailed wheel slip speed gets to some fucking high values
+            // so here's hack to lower it
+            float slipMultiplier = _derail.IsDerailed ? 2 : 60;
+            float slipSpeed = _newForces * slipMultiplier / Game.LastFrameTime;
 
-            float velocty = train.Velocity.Length();
-
-            // TODO: FIX UNASSIGNED VALUES
-            float airBrakeInput = 0;//Parent.Components.BrakeComponent.AirbrakeForce;
-            float steamBrakeInput = 0;//1 - Parent.Components.BrakeComponent.FullBrakeForce;
-            float boilerPressure = 0;//Parent.Components.BoilerComponent.Pressure.Remap(0, 300, 0, 1);
-
-            // Calculate forces
-
-            // Wheel traction - too fast acceleration will cause bad traction
-            float wheelTraction = Math.Abs(Speed).Remap(2, 0, 0, 40).Remap(0, 40, 0, 18);
-            wheelTraction *= ((float)Math.Pow(Throttle, 10)).Remap(0, 1, 0, 2);
-            if (Speed > 10 || wheelTraction < 1)
-                wheelTraction = 1;
-
-            // Surface resistance force - wet surface increases resistance
-            float surfaceResistance = RainPuddleEditor.Level + 1;
-
-            float wheelRatio = (AbsoluteSpeed.Remap(0, 40, 40, 0) + 0.01f) / (Math.Abs(DriveWheelSpeed) + 0.01f);
-            wheelRatio = wheelRatio / (150 * surfaceResistance.Remap(1, 2, 1, 1.3f)) + 1;
-
-            // Friction force = 0.2 * speed * difference between wheel and train speed
-            float frictionForce = 0.2f * AbsoluteSpeed / 2 * wheelRatio;
-
-            if (AbsoluteSpeed > 0.25f)
-                WheelSlipFactor = wheelTraction.Remap(0, 18, 0, 1).Clamp(0, 1);
-            else
-                WheelSlipFactor = 0f;
-
-            // Brake force
-            float brakeForce = Speed * airBrakeInput * 2;
-
-            // Air resistance force = 0.02 * velocty^2
-            float dragForce = (float)(0.02f * Math.Pow(velocty, 2)) / 8;
-
-            // Inercia force = acceleration * mass
-            float inerciaForce = acceleration * 5;
-
-            // How much steam going into cylinder
-            float steamForce = Throttle.Remap(0, 1, 0, 4) * Gear * boilerPressure;
-
-            // Direction of force
-            float forceFactor = Throttle <= 0.1f || Math.Abs(Gear) <= 0.1f ? Speed : Gear;
-            int forceDirection = forceFactor >= 0 ? 1 : -1;
-
-            // Brake multiplier
-            float brakeMultiplier = airBrakeInput.Remap(0, 1, 1, 0);
-
-            float totalResistanceForces = dragForce + inerciaForce + frictionForce;
-            if (Speed < 0)
-                totalResistanceForces *= -1;
-            // Combine all forces
-            float totalForce = 
-                (steamForce * brakeMultiplier * steamBrakeInput) - brakeForce - totalResistanceForces;
-            totalForce *= AccelerationMultiplier * Game.LastFrameTime;
-
-            // We making it non directional because wheel and speed direction doesn't always match
-            var driveWheelSpeed = AbsoluteSpeed * wheelTraction * steamBrakeInput * forceDirection;
-
-            // For some reason TrainSetSpeed function cut any speed below about 0.15,
-            // we don't want wheels to spin when train is still
-            // Its probably was implemented as "hack" to stop train
-            if (AbsoluteSpeed < 0.15f)
-                driveWheelSpeed = 0;
-
-            DriveWheelSpeed = driveWheelSpeed;
-
-            //GTA.UI.Screen.ShowSubtitle($"S {Speed} AS {AbsoluteSpeed} WT {wheelTraction} DS {DriveWheelSpeed}");
-
-            // Check if train is accelerating
-            IsTrainAccelerating = Math.Abs(steamForce) > 0;
-
-            // Check if wheel are sparking
-            AreWheelSpark = wheelTraction > 5 && AbsoluteSpeed > 0.1f || (steamBrakeInput == 0 && AbsoluteSpeed > 1.5f);
-
-            // Invoke OnTrainStart
-            if (AbsoluteSpeed > 0.3f && AbsoluteSpeed < 4f && IsTrainAccelerating)
+            // Im too tired of this fucking high speed, i have no fucking clue why it doesnt work
+            // and debugging it is fucking hell SO EAT UR ASS U DUMB FUCK IM CLIPPING U
+            if(_derail.IsDerailed)
             {
-                if (!_onTrainStartInvoked)
-                {
-                    OnTrainStart?.Invoke();
-                    _onTrainStartInvoked = true;
-                }
-            }
-            else
-            {
-                _onTrainStartInvoked = false;
+                slipSpeed = MathExtensions.Clamp(slipSpeed, -25, 25);
             }
 
-            //GTA.UI.Screen.ShowSubtitle(
-            //    $"F: {frictionForce.ToString("0.00")} " +
-            //    $"D:{dragForce.ToString("0.00")} " +
-            //    $"I: {inerciaForce.ToString("0.00")} " +
-            //    $"S: {steamForce.ToString("0.00")} " +
-            //    $"T: {totalForce.ToString("0.00")} " +
-            //    $"FD: {forceDirection}" + 
-            //    $"TR: {totalResistanceForces}");
+            float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
 
-            PreviousLastForces = LastForces;
-            LastForces = totalForce; 
-            return totalForce;
+            // Can't really think of a way calculating these in one line
+            // And since wheel slip is faked im not sure there point to
+            WheelSlip = MathExtensions.Lerp(WheelSlip, DoWheelSlip ? 1f : 0f, Game.LastFrameTime * 2);
+            DriveWheelSpeed = MathExtensions.Lerp(DriveWheelSpeed, wheelSpeedTo, Game.LastFrameTime * 2);
         }
-        
+
         /// <summary>
         /// Applies some external force on train.
         /// </summary>
         public void ApplyForce(float force)
         {
-            Speed += force;
+            _newForces += force;
+
+            // We apply forces to entity, making it move
+            // Not sure it works like that irl but that looks fun
+            if (_derail.IsDerailed)
+            {
+                Vehicle vehicle = train;
+
+                RaycastResult ray = World.Raycast(
+                    source: train.Position,
+                    direction: Vector3.WorldDown,
+                    maxDistance: 0.5f,
+                    options: IntersectFlags.Map);
+
+                if(ray.DidHit)
+                    vehicle.ApplyForce(
+                        direction: train.ForwardVector * force * 40, 
+                        rotation: Vector3.Zero, 
+                        forceType: ForceType.MaxForceRot);
+            }
         }
 
         /// <summary>
@@ -330,21 +251,6 @@ namespace AdvancedTrainSystem.Core.Components
         public void ApplyTrackForce(float force)
         {
             TrackSpeed += force;
-        }
-
-        /// <summary>
-        /// Moves train on specified distance.
-        /// </summary>
-        /// <remarks>
-        /// Please note that this function doesn't have any interpolation, it works as teleport.
-        /// </remarks>
-        /// <param name="distance">Distance in meters.</param>
-        public void Move(float distance)
-        {
-            distance *= Game.FPS;
-
-            Speed += distance;
-            moveStack.Add((distance, Game.FrameCount));
         }
     }
 }
