@@ -6,59 +6,44 @@ using System.Xml.Serialization;
 
 namespace AdvancedTrainSystem.Core.Info
 {
-    /// <summary>
-    /// Contains train configuration that is used for creating one.
-    /// </summary>
-    /// <remarks>
-    /// It is not recommened to manually create this structure, as
+    /// <summary>Contains train configuration that is used for creating one.</summary>
+    /// <remarks>It is not recommened to manually create this structure, as
     /// after reload script should re-read this config to fully
-    /// recover the train structure.
-    /// </remarks>
+    /// recover the train structure.</remarks>
     [Serializable]
     public struct TrainInfo
     {
-        /// <summary>
-        /// Display name of train.
-        /// </summary>
+        /// <summary>Display name of train.</summary>
         public string Name;
 
-        /// <summary>
-        /// Type of this train.
-        /// </summary>
+        /// <summary>Type of this train.</summary>
         public TrainType TrainType;
 
-        /// <summary>
-        /// Names of the FMOD sound bank used by train.
-        /// </summary>
+        /// <summary>Names of the FMOD sound bank used by train.</summary>
         public List<string> SoundBanks;
 
-        /// <summary>
-        /// GTA Train mission infromation of this train.
-        /// </summary>
+        /// <summary>GTA Train mission infromation of this train.</summary>
         public TrainMissionInfo TrainMissionInfo;
 
-        /// <summary>
-        /// Gets name of file this config was readed from.
-        /// </summary>
+        /// <summary>Gets directory, where all train configs are stored.</summary>
+        public string ConfigDirectory => _configDirectory;
+
+        /// <summary>Gets name of file this config was readed from.</summary>
         [XmlIgnore]
         public string ConfigFileName => configFileName;
 
         [NonSerialized]
         private string configFileName;
 
-        private const string configPathTemplate = configDirectory + "{0}.xml";
-        private const string configDirectory = "scripts/ATS/Configs/";
+        private const string configPathTemplate = _configDirectory + "{0}.xml";
+        private const string _configDirectory = "scripts/ATS/Configs/";
 
-        /// <summary>
-        /// Saves config in .XML file.
-        /// </summary>
-        /// <remarks>
-        /// Previous config will be overwritten.
-        /// </remarks>
+        /// <summary>Saves config in .XML file.</summary>
+        /// <remarks>Previous config will be overwritten.</remarks>
         /// <param name="configName">Name of the file config will be saved in.</param>
         public void Save(string configName)
         {
-            Directory.CreateDirectory(configDirectory);
+            Directory.CreateDirectory(_configDirectory);
 
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(TrainInfo));
 
@@ -70,9 +55,7 @@ namespace AdvancedTrainSystem.Core.Info
             }
         }
 
-        /// <summary>
-        /// Reads train config from .XML file from given name.
-        /// </summary>
+        /// <summary>Reads train config from .XML file from given name.</summary>
         /// <param name="configName">Config name to read.</param>
         /// <returns>A new <see cref="TrainInfo"/> instance .</returns>
         public static TrainInfo Load(string configName)
@@ -82,9 +65,7 @@ namespace AdvancedTrainSystem.Core.Info
             return LoadFromFile(path);
         }
 
-        /// <summary>
-        /// Reads train config from .XML file on given path.
-        /// </summary>
+        /// <summary>Reads train config from .XML file on given path.</summary>
         /// <param name="fileName">Path where config is located.</param>
         /// <returns>A new <see cref="TrainInfo"/> instance.</returns>
         private static TrainInfo LoadFromFile(string fileName)
@@ -102,13 +83,13 @@ namespace AdvancedTrainSystem.Core.Info
             return result;
         }
 
+
+        /// <summary>Reads train config from .XML file with given Mission ID.</summary>
+        /// <param name="missionId">GTA Train Mission ID.</param>
+        /// <returns>A new <see cref="TrainInfo"/> instance.</returns>
         public static TrainInfo Load(int missionId)
         {
-            // Not sure if this is the best way
-            // We're basically looking through all config
-            // and checking if id matches
-
-            string[] files = Directory.GetFiles(configDirectory);
+            string[] files = Directory.GetFiles(_configDirectory);
 
             foreach(string file in files)
             {
@@ -118,6 +99,18 @@ namespace AdvancedTrainSystem.Core.Info
                     return trainInfo;
             }
             throw new Exception($"Config with mission id: {missionId} cannot be found.");
+        }
+
+        /// <summary>Gets all train configs from config directory.</summary>
+        /// <returns>A Collection, containing all readed configs.</returns>
+        public static IEnumerable<TrainInfo> GetAllConfigs()
+        {
+            string[] files = Directory.GetFiles(_configDirectory);
+
+            foreach (string file in files)
+            {
+                yield return LoadFromFile(file);
+            }
         }
     }
 }

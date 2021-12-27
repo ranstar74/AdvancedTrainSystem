@@ -115,6 +115,7 @@
     <Compile Include="Core\Info\TrainInfo.cs" />
     <Compile Include="Core\TrainSpawnData.cs" />
     <Compile Include="Core\Utils\TrainSpawnHelper.cs" />
+    <Compile Include="GUI\AtsMenu.cs" />
     <Compile Include="Railroad\Components\SteamComponents\ChimneyComponent.cs" />
     <Compile Include="Railroad\SharedComponents\Abstract\GeneratorComponent.cs" />
     <Compile Include="Railroad\SharedComponents\LightComponent.cs" />
