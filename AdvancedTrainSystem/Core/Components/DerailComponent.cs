@@ -28,6 +28,8 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public float Angle => _carriagePrevVecs[0].Rotation.Y;
 
+        public Vector3 Noise => _noise;
+
         private readonly Train train;
 
         private PhysxComponent _physx;
