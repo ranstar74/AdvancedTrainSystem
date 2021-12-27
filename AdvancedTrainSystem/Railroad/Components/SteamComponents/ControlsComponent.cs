@@ -50,6 +50,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private readonly List<AnimateProp> _animatedProps = new List<AnimateProp>();
         private readonly Train _train;
         private CameraComponent _camera;
+        private DerailComponent _derail;
 
         public ControlsComponent(ComponentCollection components) : base(components)
         {
@@ -174,6 +175,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         public override void Start()
         {
             _camera = Components.GetComponent<CameraComponent>();
+            _derail = Components.GetComponent<DerailComponent>();
         }
 
         private void UpdateBehaviour(object sender, InteractiveProp e)
@@ -213,6 +215,21 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                 shadow: true,
                 outline: true);
             textElement.Draw();
+        }
+
+        public override void Update()
+        {
+            // Apply movement noise on each lever in train
+            foreach(InteractiveProp inProp in _interactableProps.InteractiveProps)
+            {
+                AnimateProp anProp = inProp.AnimateProp;
+                var info = inProp.Tag as TrainControlBehaviourInfo;
+
+                if (info.Toggle == true)
+                    continue;
+
+                anProp.SecondRotation += _derail.Noise * 1.5f;
+            }
         }
 
         public override void Dispose()
