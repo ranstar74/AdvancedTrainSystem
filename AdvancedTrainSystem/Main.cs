@@ -81,7 +81,7 @@ namespace AdvancedTrainSystem
             if (e.KeyCode == Keys.Y)
             {
                 // Debugging code...
-                SpawnMenu.Instance.Visible = !SpawnMenu.Instance.Visible;
+                SpawnMenu.Instance.Visible = true;
                 
                 //SteamTrain train = (SteamTrain) ATSPool.Trains[0];
                 //train.Components.Physx.Speed += 10;

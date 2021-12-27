@@ -20,11 +20,11 @@ namespace AdvancedTrainSystem.Core.Info
         /// <summary>Version this config is made for.</summary>
         public Version Version { get; set; }
 
-        /// <summary>Display name of train that is used in menu.</summary>
+        /// <summary>Name of the train for map blip (Icon).</summary>
         public string Name { get; set; }
 
-        /// <summary>Description of the train that is used in menu.</summary>
-        public string Description { get; set; }
+        /// <summary>Code name of the localization strings that is used in spawn menu.</summary>
+        public string LocalizationCode { get; set; }
 
         /// <summary>Type of this train.</summary>
         public TrainType TrainType { get; set; }

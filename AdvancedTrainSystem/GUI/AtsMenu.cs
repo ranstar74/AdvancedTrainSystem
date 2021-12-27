@@ -6,7 +6,6 @@ using LemonUI.Menus;
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Linq;
 
 namespace AdvancedTrainSystem.GUI
 {
@@ -29,10 +28,16 @@ namespace AdvancedTrainSystem.GUI
 
         private SpawnMenu() : base("Spawn")
         {
-            Banner = new ScaledTexture(new PointF(0, 0), new SizeF(100, 200), "ats_textures", "ats_menu_banner");
+            // SizeF - first param does nothing, second one sets height in pixels i guess
+            Banner = new ScaledTexture(new PointF(0, 0), new SizeF(0, 220), "ats_textures", "ats_menu_banner");
 
-            _deleteAllItem = new NativeItem("Delete All", "");
-            _deleteOtherItem = new NativeItem("Delete Other", "");
+            foreach (TrainInfo trainInfo in TrainInfo.GetAllConfigs())
+            {
+                var item = NewItem(trainInfo.LocalizationCode);
+                item.Tag = trainInfo;
+            }
+            _deleteAllItem = NewItem("RemoveAll");
+            _deleteOtherItem = NewItem("RemoveOther");
         }
 
         public override void Menu_Closing(object sender, CancelEventArgs e)
@@ -42,23 +47,20 @@ namespace AdvancedTrainSystem.GUI
 
         public override void Menu_OnItemActivated(NativeItem sender, EventArgs e)
         {
-            GTA.UI.Screen.ShowSubtitle("OK");
             if (sender.Tag is TrainInfo trainInfo)
             {
                 TrainFactory.CreateTrain(trainInfo, Game.Player.Character.Position, true);
-                return;
             }
-
-            if(sender == _deleteAllItem)
+            else if(sender == _deleteAllItem)
             {
                 ATSPool.Trains.DisposeAllAndClear();
-                return;
-            }
-
-            if(sender == _deleteOtherItem)
+            } 
+            else if(sender == _deleteOtherItem)
             {
                 throw new NotImplementedException();
             }
+
+            Visible = false;
         }
 
         public override void Menu_OnItemCheckboxChanged(NativeCheckboxItem sender, EventArgs e, bool Checked)
@@ -78,21 +80,7 @@ namespace AdvancedTrainSystem.GUI
 
         public override void Menu_Shown(object sender, EventArgs e)
         {
-            Items.Clear();
 
-            foreach(TrainInfo trainInfo in TrainInfo.GetAllConfigs())
-            {
-                var item = new NativeItem(trainInfo.Name, trainInfo.Description)
-                {
-                    Tag = trainInfo
-                };
-
-                Items.Add(item);
-            }
-            Items.Add(_deleteAllItem);
-            Items.Add(_deleteOtherItem);
-
-            SelectedIndex = 0;
         }
 
         public override void Tick()
