@@ -121,6 +121,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AtsText.cs" />
     <Compile Include="Core\Components\Abstract\EngineComponent.cs" />
     <Compile Include="Core\Components\Abstract\ParticleComponent.cs" />
     <Compile Include="Core\Components\DrivingComponent.cs" />

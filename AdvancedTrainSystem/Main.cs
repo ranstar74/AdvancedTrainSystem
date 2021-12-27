@@ -125,17 +125,17 @@ namespace AdvancedTrainSystem
                 //}
             }
 
-            if (e.KeyCode == Keys.L)
-            {
-                var config = TrainInfo.Load("RogersSierra3");
+            //if (e.KeyCode == Keys.L)
+            //{
+            //    var config = TrainInfo.Load("RogersSierra3");
 
-                _ = (SteamTrain)TrainFactory.CreateTrain(config, Game.Player.Character.Position, true);
-            }
+            //   // _ = (SteamTrain)TrainFactory.CreateTrain(config, Game.Player.Character.Position, true);
+            //}
 
-            if (e.KeyCode == Keys.K)
-            {
-                ATSPool.Trains.DisposeAllAndClear();
-            }
+            //if (e.KeyCode == Keys.K)
+            //{
+            //    ATSPool.Trains.DisposeAllAndClear();
+            //}
         }
 
         private void Update(object sender, EventArgs e)

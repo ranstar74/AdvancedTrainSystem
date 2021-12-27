@@ -55,7 +55,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             _train = GetParent<Train>();
 
-            _train.TrainInfo.ControlBehaviourInfos.ForEach(bh =>
+            _train.TrainInfo.ControlBehaviourInfos.ToList().ForEach(bh =>
             {
                 InteractiveProp interactiveProp = null;
 

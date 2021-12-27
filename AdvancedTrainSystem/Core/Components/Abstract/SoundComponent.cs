@@ -6,6 +6,7 @@ using RageAudio;
 using RageComponent;
 using RageComponent.Core;
 using System;
+using System.Linq;
 
 namespace AdvancedTrainSystem.Core.Components.Abstract
 {
@@ -38,7 +39,7 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
 
             // Intialize audio player and load banks
             audioPlayer = new AudioPlayer();
-            _train.TrainInfo.SoundBanks.ForEach(bank =>
+            _train.TrainInfo.SoundBanks.ToList().ForEach(bank =>
             {
                 audioPlayer.LoadBank("scripts/ATS/Audio/" + bank);
             });
