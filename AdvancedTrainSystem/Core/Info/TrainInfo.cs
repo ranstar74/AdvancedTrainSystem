@@ -1,4 +1,4 @@
-﻿using AdvancedTrainSystem.Railroad.Enums;
+using AdvancedTrainSystem.Railroad.Enums;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -26,27 +26,28 @@ namespace AdvancedTrainSystem.Core.Info
         /// <summary>Type of this train.</summary>
         public TrainType TrainType { get; set; }
 
-        /// <summary>A List of the FMOD sound bank names used by train.</summary>
-        public List<string> SoundBanks { get; set; }
+        /// <summary>A Collection of the FMOD sound bank names used by train.</summary>
+        public IEnumerable<string> SoundBanks { get; set; }
 
         /// <summary>GTA Train mission infromation of this train.</summary>
         public TrainMissionInfo TrainMissionInfo { get; set; }
 
-        /// <summary>A List of interactive train controls.</summary>
-        public List<TrainControlBehaviourInfo> ControlBehaviourInfos { get; set; }
+        /// <summary>A Collection of interactive train controls.</summary>
+        public IEnumerable<TrainControlBehaviourInfo> ControlBehaviourInfos { get; set; }
 
-        private const string configDirectory = "scripts/ATS/Configs/";
+        /// <summary>System directory, where all configs are stored.</summary>
+        public string ConfigDirectory => _configDirectory;
 
-        /// <summary>
-        /// Reads a <see cref="TrainInfo"/> by config name.
-        /// </summary>
+        private const string _configDirectory = "scripts/ATS/Configs/";
+
+        /// <summary>Reads a <see cref="TrainInfo"/> by config name.</summary>
         /// <param name="name">Name of the config to read.</param>
         /// <returns>A new <see cref="TrainInfo"/> instance with loaded config.</returns>
         public static TrainInfo Load(string name)
         {
             // In case if name already contains .json in it
             string path = name.Contains(".json") ? name : name + ".json";
-            path = configDirectory + path;
+            path = _configDirectory + path;
 
             if (!File.Exists(path))
                 throw new Exception($"Config with name: {name} cannot be found.");
@@ -61,16 +62,33 @@ namespace AdvancedTrainSystem.Core.Info
         /// <returns>A new <see cref="TrainInfo"/> instance with loaded config.</returns>
         public static TrainInfo Load(int missionId)
         {
-            string[] files = Directory.GetFiles(configDirectory);
+            string[] files = Directory.GetFiles(_configDirectory);
 
-            foreach(string fileName in files)
+            foreach (string file in files)
             {
-                TrainInfo trainInfo = Load(Path.GetFileNameWithoutExtension(fileName));
-
+                TrainInfo trainInfo = LoadFromFile(file);
                 if (trainInfo.TrainMissionInfo.Id == missionId)
-                    return EnsureValid(trainInfo);
+                    return trainInfo;
             }
             throw new Exception($"Config with mission id: {missionId} cannot be found.");
+        }
+
+        /// <summary>Gets all train configs from <see cref="ConfigDirectory"/>.</summary>
+        /// <returns>A Collection, containing all readed configs.</returns>
+        public static IEnumerable<TrainInfo> GetAllConfigs()
+        {
+            string[] files = Directory.GetFiles(_configDirectory);
+
+            foreach (string file in files)
+            {
+                yield return LoadFromFile(file);
+            }
+        }
+
+        private static TrainInfo LoadFromFile(string file)
+        {
+            TrainInfo trainInfo = Load(Path.GetFileNameWithoutExtension(file));
+            return EnsureValid(trainInfo);
         }
 
         private static TrainInfo EnsureValid(TrainInfo trainInfo)

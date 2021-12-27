@@ -130,6 +130,7 @@
     <Compile Include="Core\TrainSpawnData.cs" />
     <Compile Include="Core\Utils\BoneUtils.cs" />
     <Compile Include="Core\Utils\TrainSpawnHelper.cs" />
+    <Compile Include="GUI\AtsMenu.cs" />
     <Compile Include="Core\Components\Abstract\AnimComponent.cs" />
     <Compile Include="ModelHandler.cs" />
     <Compile Include="Railroad\Components\AnimComponents\SierraBrakeAnimComponent.cs" />

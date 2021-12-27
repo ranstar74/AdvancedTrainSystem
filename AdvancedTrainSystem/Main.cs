@@ -1,6 +1,7 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Core.Info;
 using AdvancedTrainSystem.Extensions;
+using AdvancedTrainSystem.GUI;
 using AdvancedTrainSystem.Railroad;
 using FusionLibrary;
 using GTA;
@@ -80,7 +81,8 @@ namespace AdvancedTrainSystem
             if (e.KeyCode == Keys.Y)
             {
                 // Debugging code...
-
+                SpawnMenu.Instance.Visible = !SpawnMenu.Instance.Visible;
+                
                 //SteamTrain train = (SteamTrain) ATSPool.Trains[0];
                 //train.Components.Physx.Speed += 10;
                 //train.Components.Controls.Throttle = 1f;
@@ -98,7 +100,6 @@ namespace AdvancedTrainSystem
                 //if (veh != null)
                 //{
                 //    GTA.UI.Screen.ShowSubtitle("Requesting...");
-
                 //    string animDict = "anim@veh@sierra";
                 //    string animName = "front_wheels_move";
 
