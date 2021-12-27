@@ -1,5 +1,6 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Extensions;
+using AdvancedTrainSystem.GUI;
 using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
@@ -59,35 +60,36 @@ namespace AdvancedTrainSystem
             if (e.KeyCode == Keys.Y)
             {
                 // Debugging code...
+                SpawnMenu.Instance.Visible = !SpawnMenu.Instance.Visible;
 
-                var veh = Game.Player.Character.CurrentVehicle;
-                if (veh != null)
-                {
-                    GTA.UI.Screen.ShowSubtitle("Requesting...");
+                //var veh = Game.Player.Character.CurrentVehicle;
+                //if (veh != null)
+                //{
+                //    GTA.UI.Screen.ShowSubtitle("Requesting...");
 
-                    string animDict = "anim@veh@sierra";
-                    string animName = "front_wheels_move";
+                //    string animDict = "anim@veh@sierra";
+                //    string animName = "front_wheels_move";
 
-                    Function.Call(Hash.REQUEST_ANIM_DICT, animDict);
+                //    Function.Call(Hash.REQUEST_ANIM_DICT, animDict);
 
-                    var endtime = DateTime.UtcNow + new TimeSpan(0, 0, 0, 0, 1000);
-                    
-                    while (!Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
-                    {
-                        Yield();
+                //    var endtime = DateTime.UtcNow + new TimeSpan(0, 0, 0, 0, 1000);
 
-                        if (DateTime.UtcNow >= endtime)
-                        {
-                            return;
-                        }
-                    }
-                    GTA.UI.Screen.ShowSubtitle("Playing...");
+                //    while (!Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
+                //    {
+                //        Yield();
 
-                    Function.Call(Hash.PLAY_ENTITY_ANIM,
-                        veh.Handle,
-                        animName,
-                        animDict, 1f, false, false); //, false, 255, 0x4000);
-                }
+                //        if (DateTime.UtcNow >= endtime)
+                //        {
+                //            return;
+                //        }
+                //    }
+                //    GTA.UI.Screen.ShowSubtitle("Playing...");
+
+                //    Function.Call(Hash.PLAY_ENTITY_ANIM,
+                //        veh.Handle,
+                //        animName,
+                //        animDict, 1f, false, false); //, false, 255, 0x4000);
+                //}
             }
         }
 
