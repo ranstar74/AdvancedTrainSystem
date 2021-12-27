@@ -86,7 +86,7 @@ namespace AdvancedTrainSystem.Core.Components
             Vector3 seatPos = train.Bones["seat_dside_f"].Position;
 
             float distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
-            if (distanceToSeat > 2f)
+            if (distanceToSeat > 2.5f)
                 return;
 
             Enter();
@@ -133,6 +133,8 @@ namespace AdvancedTrainSystem.Core.Components
 
             isPlayerDriving = true;
             OnEnter?.Invoke();
+
+            train.Blip.Alpha = 0;
         }
 
         private void LeaveEvents()
@@ -141,6 +143,8 @@ namespace AdvancedTrainSystem.Core.Components
 
             isPlayerDriving = false;
             OnLeave?.Invoke();
+
+            train.Blip.Alpha = 255;
         }
 
         private void SetDelay()

@@ -1,13 +1,15 @@
 ﻿using AdvancedTrainSystem.Core;
-using AdvancedTrainSystem.Core.Components;
+using AdvancedTrainSystem.Core.Info;
 using AdvancedTrainSystem.Extensions;
 using AdvancedTrainSystem.Railroad;
 using FusionLibrary;
 using GTA;
-using GTA.Native;
-using RageAudio;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace AdvancedTrainSystem
@@ -17,22 +19,18 @@ namespace AdvancedTrainSystem
     /// </summary>
     public class Main : Script
     {
-        /// <summary>
-        /// Invokes after pool is populated with respawned trains.
-        /// </summary>
-        public Action OnPoolRepopulation { get; set; }
-
         private Version Version => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
 
         private bool _firstTick = true;
+        private static readonly DateTime _gtaLaunchTime;
+
+        static Main()
+        {
+            _gtaLaunchTime = Process.GetCurrentProcess().StartTime;
+        }
 
         /// <summary>
-        /// Fmod audio player of this script.
-        /// </summary>
-        public readonly AudioPlayer AudioPlayer;
-
-        /// <summary>
-        /// Constructs new instance of <see cref="Main"/>.
+        /// Creates a new instance of <see cref="Main"/>.
         /// </summary>
         public Main()
         {
@@ -44,11 +42,20 @@ namespace AdvancedTrainSystem
             Aborted += MainAborted;
         }
 
-        /// <summary>
-        /// Disposes trains.
-        /// </summary>
+        private struct AtsData
+        {
+            public DateTime SessionStartTime { get; set; }
+            public bool Direction { get; set; }
+            public List<Carriage> Carriages { get; set; }
+        }
+
+        private const string _atsData = "AtsData.json";
         private void MainAborted(object sender, EventArgs e)
         {
+            // Nothing to dispose and serialize
+            if (ATSPool.Trains.Count() == 0)
+                return;
+
             // Dispose only train components and invalidate handles
             // but keep vehicles, it will help to "hook" train after reloading
             foreach(Train train in ATSPool.Trains)
@@ -56,19 +63,36 @@ namespace AdvancedTrainSystem
                 train.MarkAsNonScripted();
                 train.Components.OnReload();
             }
-            ATSPool.Trains.DisposeComponents();
+
+            IEnumerable<AtsData> trains = ATSPool.Trains.Select(t => new AtsData()
+            {
+                SessionStartTime = _gtaLaunchTime,
+                Direction = t.Direction,
+                Carriages = t.Carriages
+            });
+            string json = JsonConvert.SerializeObject(trains);
+
+            File.WriteAllText(_atsData, json);
         }
 
-        /// <summary>
-        /// Handles debugging hotkeys.
-        /// </summary>
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Y)
             {
                 // Debugging code...
-                SteamTrain train = (SteamTrain) ATSPool.Trains[0];
-                train.Components.Physx.Speed += 10;
+
+                //SteamTrain train = (SteamTrain) ATSPool.Trains[0];
+                //train.Components.Physx.Speed += 10;
+                //train.Components.Controls.Throttle = 1f;
+                //train.Components.Controls.Gear = 1f;
+
+                //Train train = ATSPool.Trains[0] as Train;
+
+                //string json = ;
+
+                //List<Carriage> carriages = JsonConvert.DeserializeObject<List<Carriage>>(json);
+
+                //GTA.UI.Screen.ShowSubtitle(carriages.First().HiddenVehicle.Position.ToString());
 
                 //var veh = Game.Player.Character.CurrentVehicle;
                 //if (veh != null)
@@ -99,11 +123,20 @@ namespace AdvancedTrainSystem
                 //        animDict, 1f, false, false); //, false, 255, 0x4000);
                 //}
             }
+
+            if (e.KeyCode == Keys.L)
+            {
+                var config = TrainInfo.Load("RogersSierra3");
+
+                _ = (SteamTrain)TrainFactory.CreateTrain(config, Game.Player.Character.Position, true);
+            }
+
+            if (e.KeyCode == Keys.K)
+            {
+                ATSPool.Trains.DisposeAllAndClear();
+            }
         }
 
-        /// <summary>
-        /// Main loop function of the script.
-        /// </summary>
         private void Update(object sender, EventArgs e)
         {
             //AnimTest();
@@ -113,21 +146,30 @@ namespace AdvancedTrainSystem
                 Constants.RegisterDecorators();
                 ModelHandler.RequestAll();
 
-                // Hook trains from previous session
-
-                var trains = World.GetAllVehicles();
-                for (int i = 0; i < trains.Length; i++)
+                // Respawn trains from previous session
+                try
                 {
-                    var train = trains[i];
-
-                    // Make sure to pass only train head (locomotive hidden model)
-                    // cuz otherwise it will be respawned for each carriage... we don't need that
-                    if (train.IsAtsHead())
+                    if (File.Exists(_atsData))
                     {
-                        Train.Respawn(train);
+                        string json = File.ReadAllText(_atsData);
+                        IEnumerable<AtsData> trains = JsonConvert.DeserializeObject<IEnumerable<AtsData>>(json);
+
+                        foreach(AtsData data in trains)
+                        {
+                            if (data.SessionStartTime != _gtaLaunchTime)
+                                continue;
+
+                            Train.Respawn(data.Carriages, data.Direction);
+                        }
+
+                        File.Delete(_atsData);
                     }
                 }
-                OnPoolRepopulation?.Invoke();
+                catch (Exception ex)
+                {
+                    // Data is corruped... happens
+                    GTA.UI.Screen.ShowHelpText("Restore ATS Failed: " + ex.Message);
+                }
 
                 _firstTick = false;
             }

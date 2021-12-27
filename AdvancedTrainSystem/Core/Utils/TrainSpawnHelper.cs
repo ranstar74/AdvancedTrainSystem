@@ -3,7 +3,6 @@ using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
-using GTA.Native;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -16,14 +15,14 @@ namespace AdvancedTrainSystem.Core.Utils
     internal static class TrainSpawnHelper
     {
         /// <summary>
-        /// Spawns <see cref="TrainCarriage"/>'s from locomotive vehicle and <see cref="TrainModelInfo"/> list.
+        /// Spawns <see cref="Carriage"/>'s from locomotive vehicle and <see cref="TrainModelInfo"/> list.
         /// </summary>
         /// <param name="locomotive"><see cref="Vehicle"/> that represents vanila train locomotive</param>
         /// <param name="carriageData">Data to spawn carriage from</param>
-        /// <returns>List of spawned <see cref="TrainCarriage"/>'s</returns>
-        internal static List<TrainCarriage> SpawnCarriages(Vehicle locomotive, List<TrainModelInfo> carriageData)
+        /// <returns>List of spawned <see cref="Carriage"/>'s</returns>
+        internal static List<Carriage> SpawnCarriages(Vehicle locomotive, List<TrainModelInfo> carriageData)
         {
-            List<TrainCarriage> trainCarriages = new List<TrainCarriage>();
+            List<Carriage> carriages = new List<Carriage>();
 
             // Spawn vehicles slightly below player to prevent automatic despawn
             Vector3 spawnPos = Game.Player.Character.Position - Vector3.WorldUp * 10;
@@ -58,10 +57,10 @@ namespace AdvancedTrainSystem.Core.Utils
                 vehicle.AttachTo(hiddenVehicle);
 
                 // Create carriage from configured vehicles
-                trainCarriages.Add(new TrainCarriage(hiddenVehicle, vehicle));
+                carriages.Add(new Carriage(hiddenVehicle, vehicle));
             }
 
-            return trainCarriages;
+            return carriages;
         }
 
         /// <summary>
@@ -70,10 +69,10 @@ namespace AdvancedTrainSystem.Core.Utils
         /// <param name="carriages">Train carriages including locomotive.</param>
         /// <param name="direction">Direction of the train</param>
         /// <returns>A new <see cref="Train"/> instance</returns>
-        internal static T CreateFromCarriages<T>(TrainInfo trainInfo, List<TrainCarriage> carriages, bool direction) where T : Train
+        internal static T CreateFromCarriages<T>(TrainInfo trainInfo, List<Carriage> carriages, bool direction) where T : Train
         {
             // Separate locomotive from carriages
-            TrainCarriage locomotiveCarriage = carriages[0];
+            Carriage locomotiveCarriage = carriages[0];
             TrainLocomotive locomotive = new TrainLocomotive(locomotiveCarriage);
 
             // Create train from created locomotive and carriages

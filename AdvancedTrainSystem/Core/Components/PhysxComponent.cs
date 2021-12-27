@@ -52,14 +52,14 @@ namespace AdvancedTrainSystem.Core.Components
         }
 
         /// <summary>
-        /// For some reason TrainSetSpeed function cut any speed below about 0.15,
+        /// For some reason TrainSetSpeed function cut any speed below about 0.1~,
         /// we don't want wheels to spin when train is still so this 
         /// speed needs to be used for anything graphical such as wheels.
         /// <para>
         /// <see cref="DriveWheelSpeed"/> uses <see cref="VisualSpeed "/> internally.
         /// </para>
         /// </summary>
-        public float VisualSpeed => AbsoluteSpeed > 0.15f ? speed : 0;
+        public float VisualSpeed => AbsoluteSpeed > 0.135f ? speed : 0;
 
         /// <summary>
         /// Track speed is not depends on train direction. 

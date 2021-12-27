@@ -1,7 +1,6 @@
 ﻿using FusionLibrary.Extensions;
 using GTA;
 using GTA.Math;
-using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
 using System;
@@ -45,14 +44,14 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         private class RotationInfo
         {
-            public TrainCarriage Carriage { get; set; }
+            public Carriage Carriage { get; set; }
             public Vector3 PrevForwardVector { get; set; }
             public Vector3 Rotation { get; set; }
 
-            public RotationInfo(TrainCarriage trainCarriage)
+            public RotationInfo(Carriage carriage)
             {
-                Carriage = trainCarriage;
-                PrevForwardVector = trainCarriage.Vehicle.ForwardVector;
+                Carriage = carriage;
+                PrevForwardVector = carriage.Vehicle.ForwardVector;
             }
         }
 
@@ -147,7 +146,7 @@ namespace AdvancedTrainSystem.Core.Components
             // and that makes camera flick. After player is moved,
             // we can enable collision back.
             // Yes, such a hack.
-            foreach(TrainCarriage carriage in train.Carriages)
+            foreach(Carriage carriage in train.Carriages)
             {
                 Vehicle vehicle = carriage.Vehicle;
                 Vehicle hiddenVehicle = carriage.HiddenVehicle;
@@ -160,7 +159,7 @@ namespace AdvancedTrainSystem.Core.Components
             OnDerail?.Invoke();
 
             Script.Yield();
-            foreach(TrainCarriage carriage in train.Carriages)
+            foreach(Carriage carriage in train.Carriages)
             {
                 carriage.Vehicle.IsCollisionEnabled = true;
             }
@@ -209,7 +208,7 @@ namespace AdvancedTrainSystem.Core.Components
             for (int i = 0; i < _carriagePrevVecs.Count; i++)
             {
                 RotationInfo rotInfo = _carriagePrevVecs[i];
-                TrainCarriage carriage = rotInfo.Carriage;
+                Carriage carriage = rotInfo.Carriage;
 
                 Vector3 forwardVector = carriage.Vehicle.ForwardVector;
 
@@ -224,7 +223,7 @@ namespace AdvancedTrainSystem.Core.Components
 
                 // Make angle non linear
                 frameAngle *= frameAngle;
-                frameAngle /= 2;
+                frameAngle /= 10;
 
                 ApplyAngleOnCarriage(carriage, frameAngle, rotInfo);
 
@@ -232,7 +231,7 @@ namespace AdvancedTrainSystem.Core.Components
             }
         }
 
-        private void ApplyAngleOnCarriage(TrainCarriage carriage, float angle, RotationInfo rotInfo)
+        private void ApplyAngleOnCarriage(Carriage carriage, float angle, RotationInfo rotInfo)
         {
             if (float.IsNaN(angle))
                 angle = 0f;
