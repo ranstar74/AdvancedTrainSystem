@@ -20,6 +20,8 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public static bool BlinkCrosshairThisFrame { get; set; }
 
+        public static PointF CenterScreen => _centerScreen;
+
         private float _cabCameraYAxis;
         private float _prevTrainAngle = 0f;
 

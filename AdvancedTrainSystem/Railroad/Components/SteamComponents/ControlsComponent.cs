@@ -2,6 +2,7 @@
 using AdvancedTrainSystem.Core.Components;
 using AdvancedTrainSystem.Core.Info;
 using FusionLibrary;
+using GTA;
 using GTA.UI;
 using RageComponent;
 using RageComponent.Core;
@@ -201,16 +202,19 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             float value = info.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
 
+            //var pos = e.AnimateProp.WorldPosition;
+            //var driftOffset = _train.ForwardVector * _train.Speed * Game.LastFrameTime;
+
             // Draw interactable text
-            var textPosition = Screen.WorldToScreen(e.AnimateProp.WorldPosition + info.LabelOffset);
+            //var textPosition = Screen.WorldToScreen(pos + info.LabelOffset);
             var text = $"{info.ActionName}: {value * 100:0}%";
 
             var textElement = new TextElement(
                 caption: text, 
-                position: textPosition, 
-                scale: 0.6f,
+                position: CameraComponent.CenterScreen + new System.Drawing.Size(0, 45), 
+                scale: 0.53f,
                 color: System.Drawing.Color.White,
-                font: Font.ChaletComprimeCologne,
+                font: Font.ChaletLondon,
                 alignment: Alignment.Center,
                 shadow: true,
                 outline: true);
