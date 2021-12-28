@@ -57,14 +57,6 @@ namespace AdvancedTrainSystem
             if (ATSPool.Trains.Count() == 0)
                 return;
 
-            // Dispose only train components and invalidate handles
-            // but keep vehicles, it will help to "hook" train after reloading
-            foreach(Train train in ATSPool.Trains)
-            {
-                train.MarkAsNonScripted();
-                train.Components.OnReload();
-            }
-
             IEnumerable<AtsData> trains = ATSPool.Trains.Select(t => new AtsData()
             {
                 SessionStartTime = _gtaLaunchTime,
@@ -74,10 +66,27 @@ namespace AdvancedTrainSystem
             string json = JsonConvert.SerializeObject(trains);
 
             File.WriteAllText(_atsData, json);
+
+            // Dispose only train components and invalidate handles
+            // but keep vehicles, it will help to "hook" train after reloading
+            foreach (Train train in ATSPool.Trains)
+            {
+                train.MarkAsNonScripted();
+                train.Components.OnReload();
+            }
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            if (e.KeyCode == Keys.L)
+            {
+                SteamTrain train = (SteamTrain)ATSPool.Trains[0];
+                train.Components.Physx.Speed += 10;
+                train.Components.Controls.Throttle = 1f;
+                train.Components.Controls.Gear = 1f;
+            }
+
+
             if (e.KeyCode == Keys.Y)
             {
                 // Debugging code...
