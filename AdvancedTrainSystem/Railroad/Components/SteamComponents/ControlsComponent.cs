@@ -188,6 +188,12 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
             {
                 _interactableProps.UseAltControl = false;
             };
+
+            // Restore after reload
+            if(drive.IsControlledByPlayer)
+            {
+                _interactableProps.UseAltControl = true;
+            }
         }
 
         private void UpdateBehaviour(object sender, InteractiveProp e)
