@@ -1,4 +1,5 @@
 ﻿using AdvancedTrainSystem.Core;
+using AdvancedTrainSystem.Core.Components;
 using AdvancedTrainSystem.Core.Components.Enums;
 using AdvancedTrainSystem.Railroad.SharedComponents.Abstract;
 using AdvancedTrainSystem.Railroad.SharedComponents.Interfaces;
@@ -27,40 +28,48 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
         /// </remarks>
         public LightState LightState
         {
-            get => (LightState) train.Decorator.GetInt(Constants.TrainLightState);
+            get => (LightState) _train.Decorator.GetInt(Constants.TrainLightState);
             set
             {
-                train.Decorator.SetInt(Constants.TrainLightState, (int) value);
+                _train.Decorator.SetInt(Constants.TrainLightState, (int) value);
 
                 UpdateLight();
             }
         }
 
-        private readonly Train train;
+        private readonly Train _train;
         private NativeInput lightSwitchInput = new NativeInput(Control.VehicleHeadlight);
-        private GeneratorComponent generator;
+        private GeneratorComponent _generator;
+        private DrivingComponent _drive;
 
         public LightComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
+            _train = GetParent<Train>();
 
             UpdateTime = 100;
         }
 
         public override void Start()
         {
-            generator = Components.GetComponent<GeneratorComponent>();
+            _generator = Components.GetComponent<GeneratorComponent>();
+            _drive = Components.GetComponent<DrivingComponent>();
 
             // If we don't do this, all lights will appear dim
             // because lights are coming from visible model
             // but player is in invisible model
             // and gta makes lights dim for all traffic cars
-            for (int i = 0; i < train.Carriages.Count; i++)
+            for (int i = 0; i < _train.Carriages.Count; i++)
             {
-                train.Carriages[i].Vehicle.SetPlayerLights(true);
+                _train.Carriages[i].Vehicle.SetPlayerLights(true);
             }
 
-            lightSwitchInput.OnControlJustPressed += SwitchHeadlight;
+            lightSwitchInput.OnControlJustPressed += () =>
+            {
+                if (!_drive.IsControlledByPlayer)
+                    return;
+
+                SwitchHeadlight();
+            };
         }
 
         /// <summary>
@@ -86,7 +95,7 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             bool lightState = false;
             bool highBeamState = false;
 
-            if (generator.Output > 0f)
+            if (_generator.Output > 0f)
             {
                 switch (LightState)
                 {
@@ -112,18 +121,18 @@ namespace AdvancedTrainSystem.Railroad.SharedComponents
             }
 
             // TODO: Fix lights not working for tender
-            for (int i = 0; i < train.Carriages.Count; i++)
+            for (int i = 0; i < _train.Carriages.Count; i++)
             {
-                Vehicle carriage = train.Carriages[i].Vehicle;
+                Vehicle carriage = _train.Carriages[i].Vehicle;
 
                 carriage.AreLightsOn = lightState;
                 carriage.AreHighBeamsOn = highBeamState;
 
                 // Turn on/off engine cuz gta without engine
                 // running there's no light
-                carriage.IsEngineRunning = generator.Output > 0f;
+                carriage.IsEngineRunning = _generator.Output > 0f;
 
-                carriage.SetLightsBrightness(generator.Output);
+                carriage.SetLightsBrightness(_generator.Output);
             }
         }
     }
