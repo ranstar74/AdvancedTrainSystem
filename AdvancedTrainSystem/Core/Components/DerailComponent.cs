@@ -217,6 +217,9 @@ namespace AdvancedTrainSystem.Core.Components
                 // Find angle by difference of forward vectors of this and previous frame
                 float frameAngle = Vector3.SignedAngle(forwardVector, rotInfo.PrevForwardVector, Vector3.WorldUp);
 
+                // Flip angle cuz it appears to be on reversed
+                frameAngle *= -1;
+
                 // Since frameAngle is too low, we first multiply it on 10000 (just value i found work good)
                 // Then we multiply it one (Speed / 200), so on 200 m/s we will get multiplier 
                 //      Which basically will give higher angle on higher speed,

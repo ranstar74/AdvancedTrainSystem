@@ -64,7 +64,7 @@ namespace AdvancedTrainSystem.Core.Components.Abstract
 
             if(Math.Abs(_derail.Angle) > 0.4f && !_derail.IsDerailed)
             {
-                bool rightSparks = _derail.Angle <= 0;
+                bool rightSparks = _derail.Angle >= 0;
 
                 _wheelSparksRight.SetState(rightSparks);
                 _wheelSparksLeft.SetState(!rightSparks);
