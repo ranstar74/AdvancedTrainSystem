@@ -52,7 +52,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private readonly Train _train;
         private CameraComponent _camera;
         private DerailComponent _derail;
-        private DrivingComponent _driving;
+        private DrivingComponent drive;
 
         public ControlsComponent(ComponentCollection components) : base(components)
         {
@@ -102,7 +102,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
                                 movementType: anim.AnimationType,
                                 coordinateInteraction: anim.Coordinate,
                                 control: bh.ControlPrimary.Control,
-                                invert: bh.InvertValue,
+                                invert: bh.ControlPrimary.Invert,
                                 min: anim.Minimum,
                                 max: anim.Maximum,
                                 startValue: bh.StartValue,
@@ -178,12 +178,21 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             _camera = Components.GetComponent<CameraComponent>();
             _derail = Components.GetComponent<DerailComponent>();
-            _driving = Components.GetComponent<DrivingComponent>();
+            drive = Components.GetComponent<DrivingComponent>();
+
+            drive.OnEnter += () =>
+            {
+                _interactableProps.UseAltControl = true;
+            };
+            drive.OnLeave += () =>
+            {
+                _interactableProps.UseAltControl = false;
+            };
         }
 
         private void UpdateBehaviour(object sender, InteractiveProp e)
         {
-            if (!_driving.IsInCab)
+            if (!drive.IsInCab)
                 return;
 
             var behaviour = (TrainControlBehaviourInfo) e.Tag;
@@ -199,7 +208,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
         private void DisplayTextPreview(object sender, InteractiveProp e)
         {
-            if (!_driving.IsInCab)
+            if (!drive.IsInCab)
                 return;
 
             var info = (TrainControlBehaviourInfo) e.Tag;

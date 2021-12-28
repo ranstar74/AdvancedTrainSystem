@@ -67,6 +67,10 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
+            Vector3 seatPos = _train.Bones["seat_dside_f"].Position;
+            _distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
+            _isInCab = _distanceToSeat < 5f || _isPlayerDriving;
+
             // In case if player exits train some other way
             if (!_train.IsPlayerDriving)
             {
@@ -74,10 +78,6 @@ namespace AdvancedTrainSystem.Core.Components
                 if(_enterDelay < Game.GameTime)
                     LeaveEvents();
             }
-
-            Vector3 seatPos = _train.Bones["seat_dside_f"].Position;
-            _distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
-            _isInCab = _distanceToSeat < 5f;
         }
 
         private void OnEnterVehiclePressed()
