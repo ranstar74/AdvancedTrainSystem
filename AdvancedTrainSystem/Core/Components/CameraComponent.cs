@@ -94,6 +94,9 @@ namespace AdvancedTrainSystem.Core.Components
 
         private void UpdateCrosshair()
         {
+            if (!FusionUtils.IsCameraInFirstPerson())
+                return;
+
             // Allow interaction only when player is in cab and holds no weapon
             if (!_drive.IsInCab || GPlayer.Weapons.Current.DisplayName != "WT_UNARMED")
                 return;
