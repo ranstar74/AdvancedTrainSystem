@@ -52,6 +52,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         private readonly Train _train;
         private CameraComponent _camera;
         private DerailComponent _derail;
+        private DrivingComponent _driving;
 
         public ControlsComponent(ComponentCollection components) : base(components)
         {
@@ -177,10 +178,14 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
         {
             _camera = Components.GetComponent<CameraComponent>();
             _derail = Components.GetComponent<DerailComponent>();
+            _driving = Components.GetComponent<DrivingComponent>();
         }
 
         private void UpdateBehaviour(object sender, InteractiveProp e)
         {
+            if (!_driving.IsInCab)
+                return;
+
             var behaviour = (TrainControlBehaviourInfo) e.Tag;
 
             float value = behaviour.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
@@ -194,6 +199,9 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
         private void DisplayTextPreview(object sender, InteractiveProp e)
         {
+            if (!_driving.IsInCab)
+                return;
+
             var info = (TrainControlBehaviourInfo) e.Tag;
 
             // TODO: Add display name and translations
@@ -202,11 +210,7 @@ namespace AdvancedTrainSystem.Railroad.Components.SteamComponents
 
             float value = info.InvertValue ? e.CurrentValue : 1 - e.CurrentValue;
 
-            //var pos = e.AnimateProp.WorldPosition;
-            //var driftOffset = _train.ForwardVector * _train.Speed * Game.LastFrameTime;
-
-            // Draw interactable text
-            //var textPosition = Screen.WorldToScreen(pos + info.LabelOffset);
+            // Draw interactable text under corsshair
             var text = $"{info.ActionName}: {value * 100:0}%";
 
             var textElement = new TextElement(

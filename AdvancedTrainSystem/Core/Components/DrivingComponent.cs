@@ -25,57 +25,68 @@ namespace AdvancedTrainSystem.Core.Components
         /// <summary>
         /// Gets a value indicating whether the train is controlled by player.
         /// </summary>
-        public bool IsControlledByPlayer => isPlayerDriving;
+        public bool IsControlledByPlayer => _isPlayerDriving;
+
+        /// <summary>
+        /// Gets a value indicating whether player is in the train.
+        /// </summary>
+        public bool IsInCab => _isInCab;
 
         private DerailComponent _derail;
 
-        private readonly Train train;
-        private readonly NativeInput enterInput = new NativeInput(Control.Enter);
-        private bool isPlayerDriving = false;
-        private int enterDelay = 0;
+        private readonly Train _train;
+        private readonly NativeInput _enterInput = new NativeInput(Control.Enter);
+        private bool _isPlayerDriving = false;
+        private int _enterDelay = 0;
+        private bool _isInCab;
+        private float _distanceToSeat = 0f;
 
         public DrivingComponent(ComponentCollection components) : base(components)
         {
-            train = GetParent<Train>();
+            _train = GetParent<Train>();
         }
 
         public override void Start()
         {
-            enterInput.OnControlPressed = OnEnterVehiclePressed;
+            _enterInput.OnControlPressed = OnEnterVehiclePressed;
 
             // Restore enter after reload
-            if (GPlayer.CurrentVehicle == train.TrainLocomotive.HiddenVehicle)
+            if (GPlayer.CurrentVehicle == _train.TrainLocomotive.HiddenVehicle)
                 EnterEvents();
 
             _derail = Components.GetComponent<DerailComponent>();
 
             _derail.OnDerail += () =>
             {
-                if(train.Driver == GPlayer)
-                {
-                    GPlayer.Task.WarpIntoVehicle(train, VehicleSeat.Driver);
-                }
+                if (_train.Driver == GPlayer)
+                    return;
+
+                GPlayer.Task.WarpIntoVehicle(_train, VehicleSeat.Driver);
             };
         }
 
         public override void Update()
         {
             // In case if player exits train some other way
-            if (!train.IsPlayerDriving)
+            if (!_train.IsPlayerDriving)
             {
                 // To prevent fake alarm
-                if(enterDelay < Game.GameTime)
+                if(_enterDelay < Game.GameTime)
                     LeaveEvents();
             }
+
+            Vector3 seatPos = _train.Bones["seat_dside_f"].Position;
+            _distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
+            _isInCab = _distanceToSeat < 5f;
         }
 
         private void OnEnterVehiclePressed()
         {
             // Check if some time passed since player entered train
-            if (enterDelay > Game.GameTime)
+            if (_enterDelay > Game.GameTime)
                 return;
 
-            if (isPlayerDriving)
+            if (_isPlayerDriving)
             {
                 Leave();
 
@@ -83,10 +94,7 @@ namespace AdvancedTrainSystem.Core.Components
             }
 
             // Check if player is close enough to seat
-            Vector3 seatPos = train.Bones["seat_dside_f"].Position;
-
-            float distanceToSeat = GPlayer.Position.DistanceToSquared(seatPos);
-            if (distanceToSeat > 2.5f)
+            if (_distanceToSeat > 2.5f)
                 return;
 
             Enter();
@@ -105,14 +113,14 @@ namespace AdvancedTrainSystem.Core.Components
             // Maybe custom camera is solution? Someday...
             
             // A temporary code for "zero coordinates" bug
-            while(train.TrainLocomotive.HiddenVehicle.Handle == 0)
+            while(_train.TrainLocomotive.HiddenVehicle.Handle == 0)
             {
                 GTA.UI.Screen.ShowSubtitle("Handle is invalid.", 1);
 
                 Script.Yield();
             }
 
-            GPlayer.Task.WarpIntoVehicle(train.GetActiveLocomotiveVehicle(), VehicleSeat.Driver);
+            GPlayer.Task.WarpIntoVehicle(_train.GetActiveLocomotiveVehicle(), VehicleSeat.Driver);
 
             EnterEvents();
         }
@@ -131,27 +139,27 @@ namespace AdvancedTrainSystem.Core.Components
         {
             SetDelay();
 
-            isPlayerDriving = true;
+            _isPlayerDriving = true;
             OnEnter?.Invoke();
 
-            train.Blip.Alpha = 0;
+            _train.Blip.Alpha = 0;
         }
 
         private void LeaveEvents()
         {
             SetDelay();
 
-            isPlayerDriving = false;
+            _isPlayerDriving = false;
             OnLeave?.Invoke();
 
-            train.Blip.Alpha = 255;
+            _train.Blip.Alpha = 255;
         }
 
         private void SetDelay()
         {
             // Don't allow player to instantly leave train as if he holds enter button
             // it starts to rapidly switching between enter/leave
-            enterDelay = Game.GameTime + 350;
+            _enterDelay = Game.GameTime + 350;
         }
     }
 }

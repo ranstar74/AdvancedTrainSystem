@@ -20,12 +20,15 @@ namespace AdvancedTrainSystem.Core.Components
         /// </summary>
         public static bool BlinkCrosshairThisFrame { get; set; }
 
+        /// <summary>
+        /// Gets point with coordinates of center of the screen.
+        /// </summary>
         public static PointF CenterScreen => _centerScreen;
 
         private float _cabCameraYAxis;
         private float _prevTrainAngle = 0f;
 
-        private DrivingComponent driving;
+        private DrivingComponent _drive;
         private Camera _cabCamera;
         private static Pool<Camera> _cameraPool;
         private readonly Train _train;
@@ -41,7 +44,7 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Start()
         {
-            driving = Components.GetComponent<DrivingComponent>();
+            _drive = Components.GetComponent<DrivingComponent>();
 
             // We do that in start because it's unsafe 
             // to access gta stuff in constructors
@@ -55,7 +58,7 @@ namespace AdvancedTrainSystem.Core.Components
                 };
             }
 
-            driving.OnEnter += () =>
+            _drive.OnEnter += () =>
             {
                 // Restore camera rotation too, cuz otherwise
                 // prevAngle will be 0 and script will think
@@ -76,7 +79,7 @@ namespace AdvancedTrainSystem.Core.Components
 
                 SetupCamera();
             };
-            driving.OnLeave += () =>
+            _drive.OnLeave += () =>
             {
                 FreeCamera();
                 GPlayer.IsVisible = true;
@@ -85,39 +88,38 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
-            if (!driving.IsControlledByPlayer || _cabCamera == null)
+            UpdateCabCamera();
+            UpdateCrosshair();
+        }
+
+        private void UpdateCrosshair()
+        {
+            // Allow interaction only when player is in cab and holds no weapon
+            if (!_drive.IsInCab || GPlayer.Weapons.Current.DisplayName != "WT_UNARMED")
                 return;
 
-            if(!FusionUtils.IsCameraInFirstPerson())
-            {
-                if (World.RenderingCamera.Equals(_cabCamera))
-                {
-                    World.RenderingCamera = null;
-                    GPlayer.IsVisible = true;
-                }
-                return;
-            }
-
-            if(!World.RenderingCamera.Equals(_cabCamera))
-            {
-                World.RenderingCamera = _cabCamera;
-                SetupCamera();
-            }
-            GPlayer.IsVisible = false;
+            // Disable all fight/shot controls so it wont mess with interaction
+            Game.DisableControlThisFrame(Control.Aim);
+            Game.DisableControlThisFrame(Control.AccurateAim);
+            Game.DisableControlThisFrame(Control.Attack);
+            Game.DisableControlThisFrame(Control.Attack2);
+            Game.DisableControlThisFrame(Control.MeleeAttack1);
+            Game.DisableControlThisFrame(Control.MeleeAttack2);
+            Game.DisableControlThisFrame(Control.VehicleAim);
 
             // Show crosshair for easier interaction with controls
             _crosshair.Position = _centerScreen;
             _crosshair.Draw();
 
-            if(BlinkCrosshairThisFrame)
+            if (BlinkCrosshairThisFrame)
             {
                 // Cycle from 0 to 255 and so on
 
-                if(_currentLevel >= 255 && _isLevelGoingUp)
+                if (_currentLevel >= 255 && _isLevelGoingUp)
                 {
                     _isLevelGoingUp = false;
                 }
-                else if(_currentLevel <= 0 && !_isLevelGoingUp)
+                else if (_currentLevel <= 0 && !_isLevelGoingUp)
                 {
                     _isLevelGoingUp = true;
                 }
@@ -127,19 +129,42 @@ namespace AdvancedTrainSystem.Core.Components
                 _currentLevel += _isLevelGoingUp ? add : -add;
                 _currentLevel = _currentLevel.Clamp(0, 255);
 
-                _crosshair.Color = Color.FromArgb((int) _currentLevel, Color.White);
+                _crosshair.Color = Color.FromArgb((int)_currentLevel, Color.White);
             }
             else
             {
                 _crosshair.Color = Color.White;
             }
             BlinkCrosshairThisFrame = false;
+        }
+
+        private void UpdateCabCamera()
+        {
+            if (!_drive.IsControlledByPlayer || _cabCamera == null)
+                return;
+
+            if (!FusionUtils.IsCameraInFirstPerson())
+            {
+                if (World.RenderingCamera.Equals(_cabCamera))
+                {
+                    World.RenderingCamera = null;
+                    GPlayer.IsVisible = true;
+                }
+                return;
+            }
+
+            if (!World.RenderingCamera.Equals(_cabCamera))
+            {
+                World.RenderingCamera = _cabCamera;
+                SetupCamera();
+            }
+            GPlayer.IsVisible = false;
 
             // Zoom - Middle Mouse Btn
             Game.DisableControlThisFrame(Control.Phone);
-            
+
             float povTo = 65;
-            if(Game.IsControlPressed(Control.Phone))
+            if (Game.IsControlPressed(Control.Phone))
             {
                 povTo = 30;
             }
