@@ -84,6 +84,8 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
+            //GTA.UI.Screen.ShowSubtitle(Angle.ToString());
+
             ProcessSpeedDerail();
             ProcessAttachTrailer();
         }
@@ -204,7 +206,7 @@ namespace AdvancedTrainSystem.Core.Components
             _noise = Vector3.Lerp(_noise, noise, Game.LastFrameTime * noiseSpeed);
 
             // Explained below
-            float speedFactor = Game.LastFrameTime * 10000 * _physx.AbsoluteSpeed / 70;
+            float speedFactor = Game.LastFrameTime * 10000 * _physx.AbsoluteSpeed / 200;
             for (int i = 0; i < _carriagePrevVecs.Count; i++)
             {
                 RotationInfo rotInfo = _carriagePrevVecs[i];
@@ -216,13 +218,13 @@ namespace AdvancedTrainSystem.Core.Components
                 float frameAngle = Vector3.SignedAngle(forwardVector, rotInfo.PrevForwardVector, Vector3.WorldUp);
 
                 // Since frameAngle is too low, we first multiply it on 10000 (just value i found work good)
-                // Then we multiply it one (Speed / 70), so on 70 m/s we will get multiplier 
+                // Then we multiply it one (Speed / 200), so on 200 m/s we will get multiplier 
                 //      Which basically will give higher angle on higher speed,
                 //      lower value to get higher angle on lower speeds
                 frameAngle *= speedFactor;
 
                 // Make angle non linear
-                frameAngle *= frameAngle;
+                frameAngle *= Math.Abs(frameAngle);
                 frameAngle /= 10;
 
                 ApplyAngleOnCarriage(carriage, frameAngle, rotInfo);
@@ -235,6 +237,10 @@ namespace AdvancedTrainSystem.Core.Components
         {
             if (float.IsNaN(angle))
                 angle = 0f;
+
+            // For some reason game crashes on extreme angles, we derail on 30 anyway to 
+            // its irrelevant
+            angle = Math.Min(angle, 60f);
 
             Vector3 rotation = new Vector3(0, angle, 0);
 
