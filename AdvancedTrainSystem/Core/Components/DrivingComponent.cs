@@ -58,7 +58,7 @@ namespace AdvancedTrainSystem.Core.Components
 
             _derail.OnDerail += () =>
             {
-                if (_train.Driver == GPlayer)
+                if (!_isPlayerDriving)
                     return;
 
                 GPlayer.Task.WarpIntoVehicle(_train, VehicleSeat.Driver);
