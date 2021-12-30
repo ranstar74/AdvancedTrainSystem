@@ -84,6 +84,9 @@
       <HintPath>$(GTAPath)\scripts\RageComponent.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="RageMission">
+      <HintPath>S:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts\RageMission.dll</HintPath>
+    </Reference>
     <Reference Include="ScriptHookVDotNet3, Version=3.3.2.0, Culture=neutral, processorArchitecture=AMD64">
       <HintPath>..\packages\ScriptHookVDotNet3.3.3.2\lib\net48\ScriptHookVDotNet3.dll</HintPath>
       <Private>False</Private>
@@ -121,7 +124,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="GUI\AtsText.cs" />
+    <Compile Include="UI\AtsText.cs" />
     <Compile Include="Core\Components\Abstract\EngineComponent.cs" />
     <Compile Include="Core\Components\Abstract\ParticleComponent.cs" />
     <Compile Include="Core\Components\DrivingComponent.cs" />
@@ -131,7 +134,7 @@
     <Compile Include="Core\TrainSpawnData.cs" />
     <Compile Include="Core\Utils\BoneUtils.cs" />
     <Compile Include="Core\Utils\TrainSpawnHelper.cs" />
-    <Compile Include="GUI\AtsMenu.cs" />
+    <Compile Include="UI\AtsMenu.cs" />
     <Compile Include="Core\Components\Abstract\AnimComponent.cs" />
     <Compile Include="ModelHandler.cs" />
     <Compile Include="Railroad\Components\AnimComponents\SierraBrakeAnimComponent.cs" />
@@ -187,6 +190,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Missions\" />
     <Folder Include="Railroad\Components\DieselComponents\" />
     <Folder Include="Railroad\Components\ElectricComponents\" />
     <Folder Include="Railroad\Components\HandComponents\" />

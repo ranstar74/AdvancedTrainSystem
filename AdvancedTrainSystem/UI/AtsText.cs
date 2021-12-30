@@ -1,6 +1,6 @@
 ﻿using FusionLibrary;
 
-namespace AdvancedTrainSystem.GUI
+namespace AdvancedTrainSystem.UI
 {
     internal class AtsText : CustomText
     {

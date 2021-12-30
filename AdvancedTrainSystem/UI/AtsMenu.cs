@@ -7,7 +7,7 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 
-namespace AdvancedTrainSystem.GUI
+namespace AdvancedTrainSystem.UI
 {
     internal abstract class AtsMenu : CustomNativeMenu
     {

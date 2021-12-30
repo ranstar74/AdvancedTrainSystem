@@ -1,7 +1,7 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Core.Info;
 using AdvancedTrainSystem.Extensions;
-using AdvancedTrainSystem.GUI;
+using AdvancedTrainSystem.UI;
 using AdvancedTrainSystem.Railroad;
 using FusionLibrary;
 using GTA;
