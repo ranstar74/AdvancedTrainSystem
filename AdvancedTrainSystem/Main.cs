@@ -1,8 +1,7 @@
 ﻿using AdvancedTrainSystem.Core;
-using AdvancedTrainSystem.Core.Info;
-using AdvancedTrainSystem.Extensions;
-using AdvancedTrainSystem.UI;
+using AdvancedTrainSystem.Missions;
 using AdvancedTrainSystem.Railroad;
+using AdvancedTrainSystem.UI;
 using FusionLibrary;
 using GTA;
 using Newtonsoft.Json;
@@ -53,31 +52,35 @@ namespace AdvancedTrainSystem
         private const string _atsData = "AtsData.json";
         private void MainAborted(object sender, EventArgs e)
         {
-            // Nothing to dispose and serialize
+            AtsStoryMgr.Instance.Abort();
+
+            // Check if there's train we can serialize
             if (ATSPool.Trains.Count() == 0)
-                return;
-
-            IEnumerable<AtsData> trains = ATSPool.Trains.Select(t => new AtsData()
             {
-                SessionStartTime = _gtaLaunchTime,
-                Direction = t.Direction,
-                Carriages = t.Carriages
-            });
-            string json = JsonConvert.SerializeObject(trains);
+                IEnumerable<AtsData> trains = ATSPool.Trains.Select(t => new AtsData()
+                {
+                    SessionStartTime = _gtaLaunchTime,
+                    Direction = t.Direction,
+                    Carriages = t.Carriages
+                });
+                string json = JsonConvert.SerializeObject(trains);
 
-            File.WriteAllText(_atsData, json);
+                File.WriteAllText(_atsData, json);
 
-            // Dispose only train components and invalidate handles
-            // but keep vehicles, it will help to "hook" train after reloading
-            foreach (Train train in ATSPool.Trains)
-            {
-                train.MarkAsNonScripted();
-                train.Components.OnReload();
+                // Dispose only train components and invalidate handles
+                // but keep vehicles, it will help to "hook" train after reloading
+                foreach (Train train in ATSPool.Trains)
+                {
+                    train.MarkAsNonScripted();
+                    train.Components.OnReload();
+                }
             }
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
+            // Debugging code...
+
             if (e.KeyCode == Keys.L)
             {
                 SteamTrain train = (SteamTrain)ATSPool.Trains[0];
@@ -86,70 +89,15 @@ namespace AdvancedTrainSystem
                 train.Components.Controls.Gear = 1f;
             }
 
-
             if (e.KeyCode == Keys.Y)
             {
-                // Debugging code...
                 SpawnMenu.Instance.Visible = true;
-                
-                //SteamTrain train = (SteamTrain) ATSPool.Trains[0];
-                //train.Components.Physx.Speed += 10;
-                //train.Components.Controls.Throttle = 1f;
-                //train.Components.Controls.Gear = 1f;
-
-                //Train train = ATSPool.Trains[0] as Train;
-
-                //string json = ;
-
-                //List<Carriage> carriages = JsonConvert.DeserializeObject<List<Carriage>>(json);
-
-                //GTA.UI.Screen.ShowSubtitle(carriages.First().HiddenVehicle.Position.ToString());
-
-                //var veh = Game.Player.Character.CurrentVehicle;
-                //if (veh != null)
-                //{
-                //    GTA.UI.Screen.ShowSubtitle("Requesting...");
-                //    string animDict = "anim@veh@sierra";
-                //    string animName = "front_wheels_move";
-
-                //    Function.Call(Hash.REQUEST_ANIM_DICT, animDict);
-
-                //    var endtime = DateTime.UtcNow + new TimeSpan(0, 0, 0, 0, 1000);
-
-                //    while (!Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
-                //    {
-                //        Yield();
-
-                //        if (DateTime.UtcNow >= endtime)
-                //        {
-                //            return;
-                //        }
-                //    }
-                //    GTA.UI.Screen.ShowSubtitle("Playing...");
-
-                //    Function.Call(Hash.PLAY_ENTITY_ANIM,
-                //        veh.Handle,
-                //        animName,
-                //        animDict, 1f, false, false); //, false, 255, 0x4000);
-                //}
             }
-
-            //if (e.KeyCode == Keys.L)
-            //{
-            //    var config = TrainInfo.Load("RogersSierra3");
-
-            //   // _ = (SteamTrain)TrainFactory.CreateTrain(config, Game.Player.Character.Position, true);
-            //}
-
-            //if (e.KeyCode == Keys.K)
-            //{
-            //    ATSPool.Trains.DisposeAllAndClear();
-            //}
         }
 
         private void Update(object sender, EventArgs e)
         {
-            //AnimTest();
+            AtsStoryMgr.Instance.Update();
 
             if (_firstTick)
             {
@@ -167,7 +115,7 @@ namespace AdvancedTrainSystem
                         foreach(AtsData data in trains)
                         {
                             if (data.SessionStartTime != _gtaLaunchTime)
-                                continue;
+                                break;
 
                             Train.Respawn(data.Carriages, data.Direction);
                         }
@@ -186,35 +134,5 @@ namespace AdvancedTrainSystem
 
             FusionUtils.RandomTrains = false;
         }
-
-        //float curr = 0f;
-        //private void AnimTest()
-        //{
-        //    //var veh = Game.Player.Character.CurrentVehicle;
-        //    //if (veh != null)
-        //    //{
-        //    //    string animDict = "anim@veh@sierra";
-        //    //    string animName = "front_wheels_move";
-
-        //    //    float totalTime = Function.Call<float>(Hash.GET_ENTITY_ANIM_TOTAL_TIME, veh, animDict, animName);
-        //    //    Function.Call(Hash.SET_ENTITY_ANIM_CURRENT_TIME, veh, animDict, animName, curr);
-
-        //    //    curr += 0.1f * Game.LastFrameTime;
-
-        //    //    if (curr >= 0.98f)
-        //    //        curr = 0;
-
-        //    //    GTA.UI.Screen.ShowSubtitle($"Current: {curr:0.00}");
-        //    //}
-
-
-        //    //    // Remove dirt because it's not supported by train model
-        //    //    LocomotiveCarriage.VisibleVehicle.DirtLevel = 0;
-        //    //    TenderCarriage.VisibleVehicle.DirtLevel = 0;
-
-        //    //    // May be damaged when spawning, we don't need it anyway
-        //    //    LocomotiveCarriage.VisibleVehicle.PetrolTankHealth = 1000;
-        //    //    TenderCarriage.VisibleVehicle.PetrolTankHealth = 1000;
-        //}
     }
 }
