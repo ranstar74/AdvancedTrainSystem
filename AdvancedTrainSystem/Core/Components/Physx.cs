@@ -191,9 +191,10 @@ namespace AdvancedTrainSystem.Core.Components
 
             // Im too tired of this fucking high speed, i have no fucking clue why it doesnt work
             // and debugging it is fucking hell SO EAT UR ASS U DUMB FUCK IM CLIPPING U
-            slipSpeed = MathExtensions.Clamp(slipSpeed, -25, 25);
+            float sLimit = 35;
+            slipSpeed = MathExtensions.Clamp(slipSpeed, -sLimit, sLimit);
 
-            float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
+            float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed.Clamp(-sLimit, sLimit);
 
             if (AreDriveWheelsLockedThisFrame)
             {
