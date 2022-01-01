@@ -146,6 +146,7 @@
     <Compile Include="Missions\TutorialMission.cs" />
     <Compile Include="Core\TrainReloadMgr.cs" />
     <Compile Include="Railroad\Components\Common\TrainFuel.cs" />
+    <Compile Include="Railroad\Components\Steam\Hydrobrake.cs" />
     <Compile Include="UI\AtsText.cs" />
     <Compile Include="Core\Components\Particles.cs" />
     <Compile Include="Core\Components\Driving.cs" />

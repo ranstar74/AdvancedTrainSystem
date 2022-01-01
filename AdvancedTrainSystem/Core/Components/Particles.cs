@@ -50,9 +50,9 @@ namespace AdvancedTrainSystem.Core.Components
         public override void Update()
         {
             // TODO: || _physx.WheelLocked
-            _wheelSparks.SetState(Physx.DoWheelSlip && Physx.DriveWheelSpeed > 5f);
+            _wheelSparks.SetState((Physx.DoWheelSlip && Physx.DriveWheelSpeed > 5f) || (Physx.AreDriveWheelsLockedThisFrame && Physx.AbsoluteSpeed > 2f));
 
-            if(Math.Abs(Motion.Angle) > 0.4f && !Derail.IsDerailed)
+            if(Math.Abs(Motion.Angle) > 0.4f && !Derail.IsDerailed && !Physx.AreDriveWheelsLockedThisFrame)
             {
                 bool rightSparks = Motion.Angle >= 0;
 

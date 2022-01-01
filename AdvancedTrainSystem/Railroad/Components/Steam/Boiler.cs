@@ -1,9 +1,10 @@
 ﻿using AdvancedTrainSystem.Core;
+using AdvancedTrainSystem.Core.Components;
 using AdvancedTrainSystem.Railroad.Components.Common;
+using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
 using GTA.UI;
-using RageComponent;
 using RageComponent.Core;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.Linq;
 namespace AdvancedTrainSystem.Railroad.Components.Steam
 {
     /// <summary>Simulates steam train boiler behaviour.</summary>
-    public class Boiler : Component
+    public class Boiler : TrainComponent
     {
         /// <summary>Gets a value indicating boiler pressure in PSI.</summary>
         public float PressurePSI { get; private set; }
@@ -31,33 +32,36 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
         public float WaterInjector { get; private set; }
 
         /// <summary>Amount of heat gained this frame from burning fuel.</summary>
-        public float HeatGainThisFrame => _heatGain;
+        public float HeatGainThisFrame { get; private set; }
 
         /// <summary>Gets a value indicating fuel capacity of firebox.</summary>
-        public int FireboxCapacity => _maxCapacity;
+        public int FireboxCapacity { get; } = 25;
+
+        /// <summary>Gets a normalized value indicating amount of water in cylinders,
+        /// if this value raises to high it could cause piston hydrolock.</summary>
+        public float WaterInCylinders { get; private set; } = 0.6f;
 
         /// <summary>Maximum pressure of the boiler in PSI.</summary>
         private const float _maxPsiPressure = 300;
 
         private readonly List<TrainFuel> _fuel = new List<TrainFuel>();
 
-        private const int _maxCapacity = 25;
-        private float _heatGain = 0;
-
-        private readonly Train _train;
-
         private SteamControls _controls;
         private SafetyValve _safetyValve;
+        private Hydrobrake _hydrobrake;
 
         public Boiler(ComponentCollection components) : base(components)
         {
-            _train = GetParent<Train>();
+
         }
 
         public override void Start()
         {
+            base.Start();
+
             _controls = Components.GetComponent<SteamControls>();
             _safetyValve = Components.GetComponent<SafetyValve>();
+            _hydrobrake = Components.GetComponent<Hydrobrake>();
 
             PressurePSI = 300f;
         }
@@ -74,14 +78,15 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
 
             PressurePSI = Math.Max(PressurePSI, 0);
 
-            if(_train.Driver == GPlayer)
-            {            
-                GTA.UI.Screen.ShowHelpText(
+            if(Train.Driver == GPlayer)
+            {
+                Screen.ShowHelpText(
                     $"Capacity Left: {FuelCapacityLeft():0.0}\n" + 
-                    $"Boiler Pressure: {PressurePSI:0}", 1, false, false);
+                    $"Boiler Pressure: {PressurePSI:0}\n" + 
+                    $"Water in Cylinders: {WaterInCylinders:0.0}", 1, false, false);
             }
 
-            if (Game.IsControlJustPressed(Control.ThrowGrenade) && _train.Driver == GPlayer)
+            if (Game.IsControlJustPressed(Control.ThrowGrenade) && Train.Driver == GPlayer)
             {
                 string message;
                 if (AddFuel<Coal>())
@@ -96,6 +101,27 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
                     message = $"Not enough free space in firebox to add more fuel.";
 
                 Screen.ShowHelpText(message, 1500);
+            }
+
+            WaterInCylinders = WaterInCylinders.Clamp(0f, 1f);
+            if(Physx.Speed < 1f)
+            {
+                WaterInCylinders += Game.LastFrameTime / 150;
+            }
+
+            WaterInCylinders -= _controls.DrainCocks * Game.LastFrameTime / 20;
+
+            if (WaterInCylinders > 0.5f)
+            {
+                if(!_hydrobrake.IsHydrolocked && Physx.Speed > 6f)
+                {
+                    // Raise chances with higher amount of water, eventually it will be 100%
+                    _hydrobrake.IsHydrolocked = FusionUtils.Random.NextDouble() * 100 < WaterInCylinders;
+                }
+            }
+            else
+            {
+                _hydrobrake.IsHydrolocked = false;
             }
         }
 
@@ -123,15 +149,15 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
         /// <summary>Calculates how much there's size left in firebox.</summary>
         public float FuelCapacityLeft()
         {
-            return Math.Max(_maxCapacity - _fuel.Sum(x => x.CurrentSize), 0);
+            return Math.Max(FireboxCapacity - _fuel.Sum(x => x.CurrentSize), 0);
         }
 
         /// <summary>Calculates pressure gain from burning coal.</summary>
         private float GetSteamGain()
         {
-            _heatGain = _fuel.Sum(coal => coal.GetHeat());
+            HeatGainThisFrame = _fuel.Sum(coal => coal.GetHeat());
 
-            return _heatGain;
+            return HeatGainThisFrame;
         }
 
         /// <summary>Calculates pressure consumption by safety valves, drain cocks,

@@ -23,11 +23,18 @@ namespace AdvancedTrainSystem.Railroad.Components.Common
         {
             // Speed resistance force, when train drives slower it gets higher.
             // So train will stop faster on lower speed
-            float resistanceForce = (float) Math.Log(Physx.AbsoluteSpeed / 5, 0.5);
+            float resistanceForce = (float) Math.Log(Physx.AbsoluteSpeed / 5, 0.5) / 10;
             resistanceForce = Math.Max(1, resistanceForce);
 
+            if(Physx.VisualSpeed == 0)
+            {
+                resistanceForce = 0;
+            }
+
             if (Physx.Speed < 0)
+            {
                 resistanceForce *= -1;
+            }
 
             float brakeForce = Force * resistanceForce * Efficiently * Game.LastFrameTime;
             Physx.ApplyResistanceForce(-brakeForce);

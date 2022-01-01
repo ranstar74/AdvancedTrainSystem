@@ -85,6 +85,13 @@ namespace AdvancedTrainSystem.Core.Components
         /// <summary>Train acceleration this frame.</summary>
         public float TrainAcceleration { get; private set; }
 
+        /// <summary>Gets or sets a value indicating whether drive wheels are locked or not.</summary>
+        public bool AreDriveWheelsLockedThisFrame { get; set; }
+
+        /// <summary>Gets or sets a value that defines whether drive forces needs to be applied
+        /// this frame or not.</summary>
+        public bool DontApplyDriveForcesThisFrame { get; set; }
+
         private const float _forceMultiplier = 0.2f;
         private readonly Dictionary<int, float> _speeds = new Dictionary<int, float>();
         private float _prevSpeed;
@@ -112,10 +119,10 @@ namespace AdvancedTrainSystem.Core.Components
 
             // Train don't really go uphill
             float slopeForce = Train.Rotation.X / 4;
-            
+
             // These are not fully physical based but i found these values
             // to work good enough
-            float dragForce = (float) (0.02f * Math.Pow(Speed, 2)) / 8;
+            float dragForce = (float)(0.02f * Math.Pow(Speed, 2)) / 8;
             float inerciaForce = -_newDriveForces / 10;
             float frictionForce = 0.2f * Speed / 2;
 
@@ -128,18 +135,29 @@ namespace AdvancedTrainSystem.Core.Components
 
             _prevSpeed = Speed;
 
+            if (DontApplyDriveForcesThisFrame)
+            {
+                _newDriveForces = 0f;
+            }
+
             // Apply forces of this frame to speed
             Speed += _newDriveForces + _newResistanceForces;
-            
+
             _newDriveForces = 0f;
             _newResistanceForces = 0f;
+        }
+
+        public override void LateUpdate()
+        {
+            DontApplyDriveForcesThisFrame = false;
+            AreDriveWheelsLockedThisFrame = false;
         }
 
         /// <summary>Calculates averega speed within last second.</summary>
         private void UpdateAverageSpeed()
         {
             // May happen if game is in slow motion
-            if(!_speeds.Keys.Contains(Game.GameTime))
+            if (!_speeds.Keys.Contains(Game.GameTime))
                 _speeds.Add(Game.GameTime, Speed);
 
             List<int> gameTimeToRemove = _speeds
@@ -147,12 +165,12 @@ namespace AdvancedTrainSystem.Core.Components
                 .Select(x => x.Key)
                 .ToList();
 
-            foreach(int time in gameTimeToRemove)
+            foreach (int time in gameTimeToRemove)
             {
                 _speeds.Remove(time);
             }
 
-            if(_averageUpdateTime < Game.GameTime)
+            if (_averageUpdateTime < Game.GameTime)
             {
                 AverageSpeed = _speeds.Sum(x => x.Value) / _speeds.Count;
                 _averageUpdateTime = Game.GameTime + 1000;
@@ -177,6 +195,11 @@ namespace AdvancedTrainSystem.Core.Components
 
             float wheelSpeedTo = DoWheelSlip ? slipSpeed : VisualSpeed;
 
+            if (AreDriveWheelsLockedThisFrame)
+            {
+                wheelSpeedTo = 0f;
+            }
+
             // Can't really think of a way calculating these in one line
             // And since wheel slip is faked im not sure there point to
             WheelSlip = MathExtensions.Lerp(WheelSlip, DoWheelSlip ? 1f : 0f, Game.LastFrameTime * 2);
@@ -200,10 +223,10 @@ namespace AdvancedTrainSystem.Core.Components
                     maxDistance: 0.5f,
                     options: IntersectFlags.Map);
 
-                if(ray.DidHit)
+                if (ray.DidHit)
                     vehicle.ApplyForce(
-                        direction: Train.ForwardVector * force * 40, 
-                        rotation: Vector3.Zero, 
+                        direction: Train.ForwardVector * force * 40,
+                        rotation: Vector3.Zero,
                         forceType: ForceType.MaxForceRot);
             }
         }

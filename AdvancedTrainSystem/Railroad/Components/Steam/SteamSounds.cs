@@ -1,4 +1,5 @@
 ﻿using AdvancedTrainSystem.Core.Components;
+using FusionLibrary;
 using FusionLibrary.Extensions;
 using FusionLibrary.Other;
 using GTA;
@@ -16,6 +17,7 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
         private AudioEvent _chugsEvent;
         private AudioEvent _hissEvent;
         private AudioEvent _wheelSlipEvent;
+        private AudioEvent _wheelHydrolockEvent;
         private AudioEvent _moveEvent;
 
         // FMOD Params
@@ -60,6 +62,7 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
             _chugsEvent = mainAudioSource.CreateEvent("event:/Ambient/Chug", true);
             _hissEvent = mainAudioSource.CreateEvent("event:/Ambient/Hiss", true);
             _wheelSlipEvent = mainAudioSource.CreateEvent("event:/Ambient/Slip", true);
+            _wheelHydrolockEvent = mainAudioSource.CreateEvent("event:/Ambient/Hydrolock", true);
             _moveEvent = mainAudioSource.CreateEvent("event:/Ambient/Move", true);
         }
 
@@ -105,9 +108,26 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
 
         private void ProcessWheelSlip()
         {
-            float slip = Physx.WheelSlip + Motion.Angle * 2;
+            float wheelSlip = Physx.WheelSlip + Motion.Angle * 2;
+            float wheelLock = 0f;
 
-            _wheelSlipEvent.SetParameter(_slipParam, slip);
+            if (Physx.AreDriveWheelsLockedThisFrame)
+            {
+                wheelLock = 1f;
+            }
+
+            if(Math.Abs(Physx.VisualSpeed) < 0.2f)
+            {
+                wheelSlip = 0f;
+            }
+
+            if(Physx.AbsoluteSpeed < 6f)
+            {
+                wheelLock = 0f;
+            }
+
+            _wheelHydrolockEvent.SetParameter(_slipParam, wheelLock);
+            _wheelSlipEvent.SetParameter(_slipParam, wheelSlip);
         }
 
         private void ProcessHissEvent()

@@ -21,6 +21,7 @@ namespace AdvancedTrainSystem.Railroad.Components
         public SteamParticles SteamParticles;
         public Chimney Chimney;
         public SteamGauges SteamGauges;
+        public Hydrobrake Hydrobrake;
 
         // To remove later...
         public S3Drivetrain S3Drivetrain;
@@ -44,6 +45,7 @@ namespace AdvancedTrainSystem.Railroad.Components
             SteamParticles = Create<SteamParticles>();
             Chimney = Create<Chimney>();
             SteamGauges = Create<SteamGauges>();
+            Hydrobrake = Create<Hydrobrake>();
 
             S3Drivetrain = Create<S3Drivetrain>();
             S3Wheel = Create<S3Wheel>();
