@@ -109,7 +109,7 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
                 WaterInCylinders += Game.LastFrameTime / 150;
             }
 
-            WaterInCylinders -= _controls.DrainCocks * Game.LastFrameTime / 20;
+            WaterInCylinders -= (_controls.DrainCocks * Pressure > 0.1f ? 1f : 0f) * Game.LastFrameTime / 5;
 
             if (WaterInCylinders > 0.5f)
             {
