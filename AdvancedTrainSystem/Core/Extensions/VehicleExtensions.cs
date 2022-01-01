@@ -33,64 +33,64 @@ namespace AdvancedTrainSystem.Extensions
         /// <returns><see cref="Train"/> handle if <see cref="Vehicle"/> is a <see cref="Train"/>, otherwise -1.</returns>
         public static int GetAtsHandle(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetInt(Constants.TrainHandle);
+            return vehicle.Decorator().GetInt(TrainConstants.TrainHandle);
         }
 
         public static int GetAtsCarriagesCount(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetInt(Constants.CarriagesNumber);
+            return vehicle.Decorator().GetInt(TrainConstants.CarriagesNumber);
         }
 
         public static bool GetAtsDirection(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetBool(Constants.TrainDirection);
+            return vehicle.Decorator().GetBool(TrainConstants.TrainDirection);
         }
 
         public static int GetAdvancedTrainMissionId(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetInt(Constants.TrainMissionId);
+            return vehicle.Decorator().GetInt(TrainConstants.TrainMissionId);
         }
 
         public static int GetAtsHeadVehicleHandle(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetInt(Constants.TrainHeadHandle);
+            return vehicle.Decorator().GetInt(TrainConstants.TrainHeadHandle);
         }
 
         public static bool IsAtsDerailed(this Vehicle vehicle)
         {
-            return vehicle.Decorator().GetBool(Constants.IsDerailed);
+            return vehicle.Decorator().GetBool(TrainConstants.IsDerailed);
         }
 
         public static bool IsAtsDerailed(this Train train)
         {
-            return IsAtsDerailed(train);
+            return IsAtsDerailed((Vehicle) train);
         }
 
         /// <summary>
-        /// Returns the <see cref="Carriage.Vehicle"/> of <see cref="Carriage.HiddenVehicle"/>.
+        /// Returns the <see cref="TrainCarriage.Vehicle"/> of <see cref="TrainCarriage.HiddenVehicle"/>.
         /// </summary>
         /// <param name="vehicle">Hidden carriage context.</param>
-        /// <returns>A <see cref="Vehicle"/> instance that is attached to <see cref="Carriage.HiddenVehicle"/>.</returns>
+        /// <returns>A <see cref="Vehicle"/> instance that is attached to <see cref="TrainCarriage.HiddenVehicle"/>.</returns>
         public static Vehicle GetAtsCarriageVehicle(this Vehicle vehicle)
         {
-            return (Vehicle) Entity.FromHandle(vehicle.Decorator().GetInt(Constants.TrainVisibleCarriageHandle));
+            return (Vehicle) Entity.FromHandle(vehicle.Decorator().GetInt(TrainConstants.TrainVisibleCarriageHandle));
         }
 
         public static TrainType GetAtsType(this Vehicle vehicle)
         {
-            return (TrainType) vehicle.Decorator().GetInt(Constants.TrainType);
+            return (TrainType) vehicle.Decorator().GetInt(TrainConstants.TrainType);
         }
 
         /// <summary>
-        /// Finds a <see cref="Train"/> by <see cref="Vehicle"/> of a <see cref="Carriage"/>.
+        /// Finds a <see cref="Train"/> by <see cref="Vehicle"/> of a <see cref="TrainCarriage"/>.
         /// </summary>
-        /// <param name="carriage"><see cref="Carriage"/> of a <see cref="Train"/>.</param>
-        /// <returns><see cref="Train"/>, <see cref="Carriage"/> attached to.</returns>
+        /// <param name="carriage"><see cref="TrainCarriage"/> of a <see cref="Train"/>.</param>
+        /// <returns><see cref="Train"/>, <see cref="TrainCarriage"/> attached to.</returns>
         public static Train GetAtsByCarriage(this Vehicle carriage)
         {
             int handle = carriage.GetAtsHandle();
 
-            return ATSPool.Trains.GetByHandle(handle);
+            return TrainPool.Trains.GetByHandle(handle);
         }
     }
 }

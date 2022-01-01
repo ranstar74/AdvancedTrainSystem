@@ -139,78 +139,78 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\Components\Controls.cs" />
+    <Compile Include="Core\Components\Motion.cs" />
+    <Compile Include="Core\Components\TrainComponent.cs" />
     <Compile Include="Missions\AtsStoryMgr.cs" />
     <Compile Include="Missions\TutorialMission.cs" />
+    <Compile Include="Core\TrainReloadMgr.cs" />
+    <Compile Include="Railroad\Components\Common\TrainFuel.cs" />
     <Compile Include="UI\AtsText.cs" />
-    <Compile Include="Core\Components\Abstract\EngineComponent.cs" />
-    <Compile Include="Core\Components\Abstract\ParticleComponent.cs" />
-    <Compile Include="Core\Components\DrivingComponent.cs" />
-    <Compile Include="Core\Components\Abstract\SoundComponent.cs" />
-    <Compile Include="Core\Info\TrainControlBehaviourInfo.cs" />
-    <Compile Include="Core\Info\TrainInfo.cs" />
+    <Compile Include="Core\Components\Particles.cs" />
+    <Compile Include="Core\Components\Driving.cs" />
+    <Compile Include="Core\Components\Sounds.cs" />
+    <Compile Include="Core\Data\TrainControlBehaviourData.cs" />
+    <Compile Include="Core\Data\TrainData.cs" />
     <Compile Include="Core\TrainSpawnData.cs" />
     <Compile Include="Core\Utils\BoneUtils.cs" />
     <Compile Include="Core\Utils\TrainSpawnHelper.cs" />
     <Compile Include="UI\AtsMenu.cs" />
-    <Compile Include="Core\Components\Abstract\AnimComponent.cs" />
-    <Compile Include="ModelHandler.cs" />
-    <Compile Include="Railroad\Components\AnimComponents\SierraBrakeAnimComponent.cs" />
-    <Compile Include="Railroad\Components\AnimComponents\SierraDrivetrainAnimComponent.cs" />
-    <Compile Include="Railroad\Components\AnimComponents\SierraWheelAnimComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\AirbrakeComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\ChimneyComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\ControlsComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SteamEngineComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SteamGaugesComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SteamParticleComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SteamSoundsComponent.cs" />
-    <Compile Include="Railroad\SharedComponents\Abstract\GeneratorComponent.cs" />
-    <Compile Include="Railroad\SharedComponents\LightComponent.cs" />
-    <Compile Include="Core\Components\CameraComponent.cs" />
+    <Compile Include="Railroad\Components\Animation\ModelHandler.cs" />
+    <Compile Include="Railroad\Components\Animation\S3Brake.cs" />
+    <Compile Include="Railroad\Components\Animation\S3Drivetrain.cs" />
+    <Compile Include="Railroad\Components\Animation\S3Wheel.cs" />
+    <Compile Include="Railroad\Components\Steam\Airbrake.cs" />
+    <Compile Include="Railroad\Components\Steam\Chimney.cs" />
+    <Compile Include="Railroad\Components\Steam\SteamControls.cs" />
+    <Compile Include="Railroad\Components\Steam\SteamEngine.cs" />
+    <Compile Include="Railroad\Components\Steam\SteamGauges.cs" />
+    <Compile Include="Railroad\Components\Steam\SteamParticles.cs" />
+    <Compile Include="Railroad\Components\Steam\SteamSounds.cs" />
+    <Compile Include="Railroad\Components\Common\Generator.cs" />
+    <Compile Include="Railroad\Components\Common\Illumination.cs" />
+    <Compile Include="Core\Components\CinematicCamera.cs" />
     <Compile Include="Core\Extensions\PedExtensions.cs" />
-    <Compile Include="Core\Carriage.cs" />
+    <Compile Include="Core\TrainCarriage.cs" />
     <Compile Include="Core\Train.cs" />
     <Compile Include="Core\TrainComponentCollection.cs" />
-    <Compile Include="Core\Components\Enums\LightStates.cs" />
-    <Compile Include="Core\Constants.cs" />
+    <Compile Include="Core\TrainConstants.cs" />
     <Compile Include="Core\Extensions\VehicleExtensions.cs" />
-    <Compile Include="Core\Components\Physics\TrainCollisionSolver.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\BoilerComponent.cs" />
-    <Compile Include="Core\Components\Abstract\BrakeComponent.cs" />
-    <Compile Include="Core\Components\CollisionComponent.cs" />
-    <Compile Include="Core\Components\DerailComponent.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\DynamoComponent.cs" />
-    <Compile Include="Core\Components\PhysxComponent.cs" />
+    <Compile Include="Core\Components\Utils\TrainCollisionSolver.cs" />
+    <Compile Include="Railroad\Components\Steam\Boiler.cs" />
+    <Compile Include="Railroad\Components\Common\Brake.cs" />
+    <Compile Include="Core\Components\Collision.cs" />
+    <Compile Include="Core\Components\Derail.cs" />
+    <Compile Include="Railroad\Components\Steam\Dynamo.cs" />
+    <Compile Include="Core\Components\Physx.cs" />
     <Compile Include="Core\TrainLocomotive.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Core\Info\TrainMissionInfo.cs" />
-    <Compile Include="Core\Info\TrainModelInfo.cs" />
-    <Compile Include="Railroad\Components\SteamComponents\SafetyValveComponent.cs" />
+    <Compile Include="Core\Data\TrainMissionData.cs" />
+    <Compile Include="Core\Data\TrainModelData.cs" />
+    <Compile Include="Railroad\Components\Steam\SafetyValve.cs" />
     <Compile Include="Railroad\DieselTrain.cs" />
     <Compile Include="Railroad\ElectricTrain.cs" />
     <Compile Include="Railroad\Handcar.cs" />
-    <Compile Include="Railroad\SharedComponents\Interfaces\IHasElectricity.cs" />
     <Compile Include="Railroad\Minecart.cs" />
     <Compile Include="Railroad\Components\SteamTrainComponentCollection.cs" />
     <Compile Include="Railroad\SteamTrain.cs" />
     <Compile Include="Railroad\Enums\TrainType.cs" />
-    <Compile Include="TrainFactory.cs" />
-    <Compile Include="ATSPool.cs" />
+    <Compile Include="Railroad\TrainFactory.cs" />
+    <Compile Include="Core\TrainPool.cs" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="ILMerge.props" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Railroad\Components\DieselComponents\" />
-    <Folder Include="Railroad\Components\ElectricComponents\" />
-    <Folder Include="Railroad\Components\HandComponents\" />
-    <Folder Include="Railroad\Components\MineComponents\" />
+    <Folder Include="Railroad\Components\Diesel\" />
+    <Folder Include="Railroad\Components\Electric\" />
+    <Folder Include="Railroad\Components\Hand\" />
+    <Folder Include="Railroad\Components\Mine\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ILMergeOrder.txt" />

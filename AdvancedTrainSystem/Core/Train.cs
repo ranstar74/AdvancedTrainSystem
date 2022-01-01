@@ -1,4 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Info;
+﻿using AdvancedTrainSystem.Core.Data;
 using AdvancedTrainSystem.Core.Utils;
 using AdvancedTrainSystem.Extensions;
 using AdvancedTrainSystem.Railroad;
@@ -125,7 +125,7 @@ namespace AdvancedTrainSystem.Core
         /// <summary>
         /// All carriages of the <see cref="Train"/>.
         /// </summary>
-        public List<Carriage> Carriages => _carriages;
+        public List<TrainCarriage> Carriages => _carriages;
 
         /// <summary>
         /// Gets components of the <see cref="Train"/>.
@@ -133,9 +133,9 @@ namespace AdvancedTrainSystem.Core
         public TrainComponentCollection Components => (TrainComponentCollection)GetComponents();
 
         /// <summary>
-        /// <see cref="TrainInfo"/> this train was created from.
+        /// <see cref="TrainData"/> this train was created from.
         /// </summary>
-        public TrainInfo TrainInfo => _spawnData.TrainInfo;
+        public TrainData TrainData => _spawnData.TrainInfo;
 
         /// <summary>
         /// Map blip of this train.
@@ -148,7 +148,7 @@ namespace AdvancedTrainSystem.Core
         public int Handle => _trainLocomotive.HiddenVehicle.Handle;
 
         private readonly TrainLocomotive _trainLocomotive;
-        private readonly List<Carriage> _carriages;
+        private readonly List<TrainCarriage> _carriages;
         private readonly TrainSpawnData _spawnData;
         private readonly bool _trainDirection;
 
@@ -180,24 +180,24 @@ namespace AdvancedTrainSystem.Core
                 var decorator = vehicle.Decorator();
 
                 // Direction
-                decorator.SetBool(Constants.TrainDirection, Direction);
+                decorator.SetBool(TrainConstants.TrainDirection, Direction);
 
                 // Type
                 int trainType = (int)_spawnData.TrainInfo.TrainType;
-                decorator.SetInt(Constants.TrainType, trainType);
+                decorator.SetInt(TrainConstants.TrainType, trainType);
 
                 // Set number of carriages as decorator so we can recover them after reload
-                int carriageCount = _spawnData.TrainInfo.TrainMissionInfo.Models.Count;
-                decorator.SetInt(Constants.CarriagesNumber, carriageCount);
+                int carriageCount = _spawnData.TrainInfo.TrainMissionData.Models.Count;
+                decorator.SetInt(TrainConstants.CarriagesNumber, carriageCount);
 
                 // Mission id
-                decorator.SetInt(Constants.TrainMissionId, _spawnData.TrainInfo.TrainMissionInfo.Id);
+                decorator.SetInt(TrainConstants.TrainMissionId, _spawnData.TrainInfo.TrainMissionData.Id);
 
                 // Train head
-                decorator.SetInt(Constants.TrainHeadHandle, TrainLocomotive.HiddenVehicle.Handle);
+                decorator.SetInt(TrainConstants.TrainHeadHandle, TrainLocomotive.HiddenVehicle.Handle);
 
                 // Handle
-                decorator.SetInt(Constants.TrainHandle, Handle);
+                decorator.SetInt(TrainConstants.TrainHandle, Handle);
             });
         }
 
@@ -207,19 +207,19 @@ namespace AdvancedTrainSystem.Core
         /// <param name="action">Action to invoke.</param>
         internal void ForEachCarriage(Action<Vehicle> action)
         {
-            foreach(Carriage carriage in Carriages)
+            foreach(TrainCarriage carriage in Carriages)
             {
                 action.Invoke(carriage.HiddenVehicle);
                 action.Invoke(carriage.Vehicle);
             }
         }
 
-        internal static T Create<T>(TrainInfo trainInfo, Vector3 position, bool direction) where T : Train
+        internal static T Create<T>(TrainData trainInfo, Vector3 position, bool direction) where T : Train
         {
-            TrainMissionInfo trainMission = trainInfo.TrainMissionInfo;
+            TrainMissionData trainMission = trainInfo.TrainMissionData;
 
             // Load all models before spawning train
-            trainInfo.TrainMissionInfo.Models.ForEach(modelInfo =>
+            trainInfo.TrainMissionData.Models.ForEach(modelInfo =>
             {
                 CustomModel vehModel = new CustomModel(modelInfo.VehicleModel);
                 CustomModel hidModel = new CustomModel(modelInfo.HiddenVehicleModel);
@@ -232,7 +232,7 @@ namespace AdvancedTrainSystem.Core
             Vehicle hiddenLocomotive = FusionUtils.CreateMissionTrain(trainMission.Id, position, direction);
 
             // Spawn and configure all train carriages
-            List<Carriage> carriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
+            List<TrainCarriage> carriages = TrainSpawnHelper.SpawnCarriages(hiddenLocomotive, trainMission.Models);
 
             return TrainSpawnHelper.CreateFromCarriages<T>(trainInfo, carriages, direction);
         }
@@ -244,10 +244,10 @@ namespace AdvancedTrainSystem.Core
         /// </para>
         /// </summary>
         /// <returns>A new instance of <see cref="Train"/></returns>
-        internal static Train Respawn(List<Carriage> carriages, bool direction)
+        internal static Train Respawn(List<TrainCarriage> carriages, bool direction)
         {
             Vehicle locomotive = carriages[0].HiddenVehicle;
-            TrainInfo trainInfo = TrainInfo.Load(locomotive.GetAdvancedTrainMissionId());
+            TrainData trainInfo = TrainData.Load(locomotive.GetAdvancedTrainMissionId());
 
             // Copy-pasted from train factory. Needs to be updated when new train is implemented.
             Train train;
@@ -267,7 +267,7 @@ namespace AdvancedTrainSystem.Core
                 default:
                     throw new NotSupportedException();
             }
-            ATSPool.Trains.Add(train);
+            TrainPool.Trains.Add(train);
             return train;
         }
 
@@ -282,7 +282,7 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         /// <param name="index">Index of the carriage.</param>
         /// <returns>Carriage of specified index.</returns>
-        public Carriage GetCarriageAt(int index)
+        public TrainCarriage GetCarriageAt(int index)
         {
             return Carriages[index];
         }
@@ -292,7 +292,7 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         /// <param name="model">Model of hidden or visible vehicle of carriage.</param>
         /// <returns>Array of carriages of specified model.</returns>
-        public Carriage[] GetCarriages(CustomModel model)
+        public TrainCarriage[] GetCarriages(CustomModel model)
         {
             return GetCarriages(model.Model);
         }
@@ -302,11 +302,11 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         /// <param name="model">Model of hidden or visible vehicle of carriage.</param>
         /// <returns>Array of carriages of specified model.</returns>
-        public Carriage[] GetCarriages(Model model)
+        public TrainCarriage[] GetCarriages(Model model)
         {
             var searchModel = model;
 
-            List<Carriage> carriages = new List<Carriage>();
+            List<TrainCarriage> carriages = new List<TrainCarriage>();
             for (int i = 0; i < Carriages.Count; i++)
             {
                 var carriage = Carriages[i];

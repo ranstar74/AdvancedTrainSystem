@@ -1,29 +1,16 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Railroad.Components;
-using AdvancedTrainSystem.Railroad.SharedComponents;
-using AdvancedTrainSystem.Railroad.SharedComponents.Abstract;
-using AdvancedTrainSystem.Railroad.SharedComponents.Interfaces;
 using RageComponent.Core;
 
 namespace AdvancedTrainSystem.Railroad
 {
-    /// <summary>
-    /// This class defines a steam train.
-    /// </summary>
-    public class SteamTrain : Train, IHasElectricity
+    /// <summary>This class defines a steam train.</summary>
+    public class SteamTrain : Train
     {
-        /// <summary>
-        /// Components of the <see cref="SteamTrain"/>.
-        /// </summary>
+        /// <summary>Components of the <see cref="SteamTrain"/>.</summary>
         public new SteamTrainComponentCollection Components => (SteamTrainComponentCollection) GetComponents();
 
-        public LightComponent LightComponent => Components.Light;
-
-        public GeneratorComponent GeneratorComponent => Components.Generator;
-
-        /// <summary>
-        /// Components of the <see cref="SteamTrain"/>.
-        /// </summary>
+        /// <summary>Components of the <see cref="SteamTrain"/>.</summary>
         protected SteamTrainComponentCollection components;
 
         internal SteamTrain(TrainSpawnData spawnData) : base(spawnData)
@@ -32,9 +19,7 @@ namespace AdvancedTrainSystem.Railroad
 
         }
 
-        /// <summary>
-        /// Gets <see cref="TrainComponentCollection"/>.
-        /// </summary>
+        /// <summary>Gets the <see cref="TrainComponentCollection"/>.</summary>
         /// <returns>A <see cref="TrainComponentCollection"/> instance of the <see cref="Train"/></returns>
         public override ComponentCollection GetComponents()
         {

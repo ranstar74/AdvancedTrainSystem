@@ -8,41 +8,41 @@ namespace AdvancedTrainSystem.Core
     /// </summary>
     public abstract class TrainComponentCollection : ComponentCollection
     {
-        /// <summary>
-        /// Handles train speed.
-        /// </summary>
-        public PhysxComponent Physx;
+        /// <inheritdoc cref="Components.Physx"/>
+        public Physx Physx { get; private set; }
 
-        /// <summary>
-        /// Handles train collision.
-        /// </summary>
-        public CollisionComponent Collision;
+        /// <inheritdoc cref="Components.Sounds"/>
+        public Sounds Sounds { get; private set; }
 
-        /// <summary>
-        /// Handles train derailnment.
-        /// </summary>
-        public DerailComponent Derail;
+        /// <inheritdoc cref="Components.Particles"/>
+        public Particles Particle { get; private set; }
 
-        /// <summary>
-        /// Defines behaviour of train cab camera.
-        /// </summary>
-        public CameraComponent Camera;
+        /// <inheritdoc cref="Components.Driving"/>
+        public Driving Driving { get; private set; }
 
-        /// <summary>
-        /// Defines base enter / leave train actions.
-        /// </summary>
-        public DrivingComponent Driving;
+        /// <inheritdoc cref="Components.Derail"/>
+        public Derail Derail { get; private set; }
 
-        /// <summary>
-        /// Creates a new instance of <see cref="TrainComponentCollection"/>.
-        /// </summary>
+        /// <inheritdoc cref="Components.Collision"/>
+        public Collision Collision { get; private set; }
+
+        /// <inheritdoc cref="Components.CinematicCamera"/>
+        public CinematicCamera Camera { get; private set; }
+
+        /// <inheritdoc cref="Components.Motion"/>
+        public Motion Motion { get; private set; }
+
+        /// <summary>Creates a new <see cref="TrainComponentCollection"/> instance.</summary>
         public TrainComponentCollection(Train train) : base(train)
         {
-            Physx = Create<PhysxComponent>();
-            Collision = Create<CollisionComponent>();
-            Derail = Create<DerailComponent>();
-            Camera = Create<CameraComponent>();
-            Driving = Create<DrivingComponent>();
+            Physx = Create<Physx>();
+            Sounds = Create<Sounds>();
+            Particle = Create<Particles>();
+            Driving = Create<Driving>();
+            Derail = Create<Derail>();
+            Collision = Create<Collision>();
+            Camera = Create<CinematicCamera>();
+            Motion = Create<Motion>();
 
             OnStart();
         }

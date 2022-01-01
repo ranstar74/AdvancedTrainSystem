@@ -1,7 +1,7 @@
 ﻿using AdvancedTrainSystem.Core;
 using AdvancedTrainSystem.Railroad.Components.AnimComponents;
-using AdvancedTrainSystem.Railroad.Components.SteamComponents;
-using AdvancedTrainSystem.Railroad.SharedComponents;
+using AdvancedTrainSystem.Railroad.Components.Common;
+using AdvancedTrainSystem.Railroad.Components.Steam;
 
 namespace AdvancedTrainSystem.Railroad.Components
 {
@@ -10,22 +10,22 @@ namespace AdvancedTrainSystem.Railroad.Components
     /// </summary>
     public class SteamTrainComponentCollection : TrainComponentCollection
     {
-        public BoilerComponent Boiler;
-        public DynamoComponent Generator;
-        public LightComponent Light;
-        public AirbrakeComponent Airbrake;
-        public ControlsComponent Controls;
-        public SteamEngineComponent SteamEngine;
-        public SteamSoundsComponent SteamSounds;
-        public SafetyValveComponent SafetyValve;
-        public SteamParticleComponent SteamParticle;
-        public ChimneyComponent Chimney;
-        public SteamGaugesComponent SteamGauges;
+        public Boiler Boiler;
+        public Dynamo Dynamo;
+        public Illumination Illumination;
+        public Airbrake Airbrake;
+        public SteamControls SteamControls;
+        public SteamEngine SteamEngine;
+        public SteamSounds SteamSounds;
+        public SafetyValve SafetyValve;
+        public SteamParticles SteamParticles;
+        public Chimney Chimney;
+        public SteamGauges SteamGauges;
 
         // To remove later...
-        public SierraDrivetrainAnimComponent SierraDrivetrainAnimComponent;
-        public SierraWheelAnimComponent SierraWheelAnimComponent;
-        public SierraBrakeAnimComponent SierraBrakeAnimComponent;
+        public S3Drivetrain S3Drivetrain;
+        public S3Wheel S3Wheel;
+        public S3Brake S3Brake;
 
         /// <summary>
         /// Creates a new instance of <see cref="SteamTrainComponentCollection"/>.
@@ -33,21 +33,21 @@ namespace AdvancedTrainSystem.Railroad.Components
         /// <param name="train"></param>
         public SteamTrainComponentCollection(SteamTrain train) : base(train)
         {
-            Boiler = Create<BoilerComponent>();
-            Generator = Create<DynamoComponent>();
-            Light = Create<LightComponent>();
-            Airbrake = Create<AirbrakeComponent>();
-            Controls = Create<ControlsComponent>();
-            SteamEngine = Create<SteamEngineComponent>();
-            SteamSounds = Create<SteamSoundsComponent>();
-            SafetyValve = Create<SafetyValveComponent>();
-            SteamParticle = Create<SteamParticleComponent>();
-            Chimney = Create<ChimneyComponent>();
-            SteamGauges = Create<SteamGaugesComponent>();
+            Boiler = Create<Boiler>();
+            Dynamo = Create<Dynamo>();
+            Illumination = Create<Illumination>();
+            Airbrake = Create<Airbrake>();
+            SteamControls = Create<SteamControls>();
+            SteamEngine = Create<SteamEngine>();
+            SteamSounds = Create<SteamSounds>();
+            SafetyValve = Create<SafetyValve>();
+            SteamParticles = Create<SteamParticles>();
+            Chimney = Create<Chimney>();
+            SteamGauges = Create<SteamGauges>();
 
-            SierraDrivetrainAnimComponent = Create<SierraDrivetrainAnimComponent>();
-            SierraWheelAnimComponent = Create<SierraWheelAnimComponent>();
-            SierraBrakeAnimComponent = Create<SierraBrakeAnimComponent>();
+            S3Drivetrain = Create<S3Drivetrain>();
+            S3Wheel = Create<S3Wheel>();
+            S3Brake = Create<S3Brake>();
 
             OnStart();
         }

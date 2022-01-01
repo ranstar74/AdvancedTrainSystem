@@ -1,4 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Info;
+﻿using AdvancedTrainSystem.Core.Data;
 using AdvancedTrainSystem.Railroad;
 using GTA;
 using GTA.Math;
@@ -18,15 +18,15 @@ namespace AdvancedTrainSystem.Missions
 
         public override void Start()
         {
-            _targetTrain = (SteamTrain) TrainFactory.CreateTrain(TrainInfo.Load("RogersSierra3"), _trainStationPos, false);
+            _targetTrain = (SteamTrain) TrainFactory.CreateTrain(TrainData.Load("RogersSierra3"), _trainStationPos, false);
 
-            _goToTrainStation = new WaypointObjective(_trainStationPos, "ATS_TRAIN_STATION");
+            _goToTrainStation = new WaypointObjective(_trainStationPos, "ATS_STORY_BLIP_TRAIN_STATION");
             _getInTrain = new PredicateObjective<SteamTrain>(
                 target: _targetTrain,
                 success: t => t.Driver == Game.Player.Character);
 
-            _goToTrainStation.StartMessageKey = "VSTORY_GO_TO_TRAIN_STATION";
-            _getInTrain.StartMessageKey = "VSTORY_ENTER_TRAIN";
+            _goToTrainStation.StartMessageKey = "ATS_STORY_OBJECTIVE_GO_TO_TRAIN_STATION";
+            _getInTrain.StartMessageKey = "ATS_STORY_OBJECTIVE_ENTER_TRAIN";
 
             AddObjective(_goToTrainStation);
             AddObjective(_getInTrain);
@@ -38,9 +38,19 @@ namespace AdvancedTrainSystem.Missions
         {
             base.Abort();
 
-            ATSPool.Trains.Remove(_targetTrain.Handle);
+            TrainPool.Trains.Remove(_targetTrain.Handle);
 
             _targetTrain.Dispose();
+        }
+
+        protected override void OnFinish(bool success)
+        {
+            base.OnFinish(success);
+
+            if (success)
+            {
+                AtsStoryMgr.Instance.SetFlagState(AtsStoryFlags.AtsTutorialFinished, true);
+            }
         }
     }
 }

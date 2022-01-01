@@ -1,25 +1,22 @@
-﻿using AdvancedTrainSystem.Core.Info;
+﻿using AdvancedTrainSystem.Core.Data;
 using System.Collections.Generic;
 
 namespace AdvancedTrainSystem.Core
 {
-    /// <summary>
-    /// Contains information required to create <see cref="Train"/> instance.
-    /// </summary>
     internal struct TrainSpawnData
     {
-        public TrainInfo TrainInfo { get; }
+        public TrainData TrainInfo { get; }
 
         public TrainLocomotive Locomotive { get; }
 
-        public List<Carriage> Carriages { get; }
+        public List<TrainCarriage> Carriages { get; }
 
         public bool Direction { get; }
 
         public TrainSpawnData(
-            TrainInfo trainInfo, 
+            TrainData trainInfo, 
             TrainLocomotive locomotive, 
-            List<Carriage> carriages, 
+            List<TrainCarriage> carriages, 
             bool direction)
         {
             TrainInfo = trainInfo;

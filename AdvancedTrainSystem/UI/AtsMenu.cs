@@ -1,4 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Info;
+﻿using AdvancedTrainSystem.Core.Data;
 using FusionLibrary;
 using GTA;
 using LemonUI.Elements;
@@ -31,7 +31,7 @@ namespace AdvancedTrainSystem.UI
             // SizeF - first param does nothing, second one sets height in pixels i guess
             Banner = new ScaledTexture(new PointF(0, 0), new SizeF(0, 220), "ats_textures", "ats_menu_banner");
 
-            foreach (TrainInfo trainInfo in TrainInfo.GetAllConfigs())
+            foreach (TrainData trainInfo in TrainData.GetAllConfigs())
             {
                 var item = NewItem(trainInfo.LocalizationCode);
                 item.Tag = trainInfo;
@@ -47,13 +47,13 @@ namespace AdvancedTrainSystem.UI
 
         public override void Menu_OnItemActivated(NativeItem sender, EventArgs e)
         {
-            if (sender.Tag is TrainInfo trainInfo)
+            if (sender.Tag is TrainData trainInfo)
             {
                 TrainFactory.CreateTrain(trainInfo, Game.Player.Character.Position, true);
             }
             else if(sender == _deleteAllItem)
             {
-                ATSPool.Trains.DisposeAllAndClear();
+                TrainPool.Trains.DisposeAllAndClear();
             } 
             else if(sender == _deleteOtherItem)
             {

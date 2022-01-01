@@ -10,6 +10,8 @@ namespace AdvancedTrainSystem.Missions
     {
         public static AtsStoryMgr Instance { get; } = new AtsStoryMgr();
 
+        protected override string SaveFileName => "ats.sav";
+
         protected override List<StoryMission> Missions { get; } = new List<StoryMission>()
         {
             new StoryMission()
@@ -17,7 +19,8 @@ namespace AdvancedTrainSystem.Missions
                 MissionName = "ATS_TUTORIAL",
                 Position = new Vector3(2465f, 1579f, 31.7f),
                 BlipSprite = BlipSprite.StrangersAndFreaks,
-                RequiredFlag = string.Empty
+                RequiredFlag = string.Empty,
+                FinishedFlag = AtsStoryFlags.AtsTutorialFinished
             }
         };
 

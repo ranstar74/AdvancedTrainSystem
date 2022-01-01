@@ -1,4 +1,4 @@
-﻿using AdvancedTrainSystem.Core.Info;
+﻿using AdvancedTrainSystem.Core.Data;
 using FusionLibrary;
 using FusionLibrary.Extensions;
 using GTA;
@@ -15,21 +15,21 @@ namespace AdvancedTrainSystem.Core.Utils
     internal static class TrainSpawnHelper
     {
         /// <summary>
-        /// Spawns <see cref="Carriage"/>'s from locomotive vehicle and <see cref="TrainModelInfo"/> list.
+        /// Spawns <see cref="TrainCarriage"/>'s from locomotive vehicle and <see cref="TrainModelData"/> list.
         /// </summary>
         /// <param name="locomotive"><see cref="Vehicle"/> that represents vanila train locomotive</param>
         /// <param name="carriageData">Data to spawn carriage from</param>
-        /// <returns>List of spawned <see cref="Carriage"/>'s</returns>
-        internal static List<Carriage> SpawnCarriages(Vehicle locomotive, List<TrainModelInfo> carriageData)
+        /// <returns>List of spawned <see cref="TrainCarriage"/>'s</returns>
+        internal static List<TrainCarriage> SpawnCarriages(Vehicle locomotive, List<TrainModelData> carriageData)
         {
-            List<Carriage> carriages = new List<Carriage>();
+            List<TrainCarriage> carriages = new List<TrainCarriage>();
 
             // Spawn vehicles slightly below player to prevent automatic despawn
             Vector3 spawnPos = Game.Player.Character.Position - Vector3.WorldUp * 10;
 
             for (int i = 0; i < carriageData.Count; i++)
             {
-                TrainModelInfo data = carriageData[i];
+                TrainModelData data = carriageData[i];
 
                 // Create visible vehicle from model
                 CustomModel model = new CustomModel(data.VehicleModel);
@@ -50,14 +50,14 @@ namespace AdvancedTrainSystem.Core.Utils
                 }
 
                 // Set handle of visible vehicle as decorator for hidden vehicle so we can recover it after reload
-                hiddenVehicle.Decorator().SetInt(Constants.TrainVisibleCarriageHandle, vehicle.Handle);
+                hiddenVehicle.Decorator().SetInt(TrainConstants.TrainVisibleCarriageHandle, vehicle.Handle);
 
                 // Attach visible vehicle to invisible one
                 hiddenVehicle.IsVisible = false;
                 vehicle.AttachTo(hiddenVehicle);
 
                 // Create carriage from configured vehicles
-                carriages.Add(new Carriage(hiddenVehicle, vehicle));
+                carriages.Add(new TrainCarriage(hiddenVehicle, vehicle));
             }
 
             return carriages;
@@ -69,10 +69,10 @@ namespace AdvancedTrainSystem.Core.Utils
         /// <param name="carriages">Train carriages including locomotive.</param>
         /// <param name="direction">Direction of the train</param>
         /// <returns>A new <see cref="Train"/> instance</returns>
-        internal static T CreateFromCarriages<T>(TrainInfo trainInfo, List<Carriage> carriages, bool direction) where T : Train
+        internal static T CreateFromCarriages<T>(TrainData trainInfo, List<TrainCarriage> carriages, bool direction) where T : Train
         {
             // Separate locomotive from carriages
-            Carriage locomotiveCarriage = carriages[0];
+            TrainCarriage locomotiveCarriage = carriages[0];
             TrainLocomotive locomotive = new TrainLocomotive(locomotiveCarriage);
 
             // Create train from created locomotive and carriages
