@@ -35,7 +35,7 @@ namespace AdvancedTrainSystem.Core.Components
 
         public override void Update()
         {
-            if (Math.Abs(Motion.Angle) > 30f)
+            if (Math.Abs(Motion.Angle) > 20f)
             {
                 DoDerail();
             }

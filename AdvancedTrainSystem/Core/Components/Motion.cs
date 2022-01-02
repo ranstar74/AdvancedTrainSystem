@@ -96,7 +96,17 @@ namespace AdvancedTrainSystem.Core.Components
 
                 // Not sure how this happens but it does
                 if (float.IsNaN(frameAngle))
+                {
                     frameAngle = 0f;
+                }
+
+                // Add more dynamic to turns, though it possibly still needs adjustements
+                // so first it goes in normal turn mode, where longest turning side
+                // gets higher, but then it other side lifts up when its nearly derailed
+                if(frameAngle > 10f)
+                {
+                    frameAngle *= -1;
+                }    
 
                 ApplyAngleOnCarriage(carriage, frameAngle, rotInfo);
 
