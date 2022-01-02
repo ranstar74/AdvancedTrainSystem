@@ -76,7 +76,7 @@ namespace AdvancedTrainSystem.Core
             catch (Exception ex)
             {
                 // Data is corruped... happens
-                GTA.UI.Screen.ShowHelpText("Restore ATS Failed: " + ex.Message);
+                //GTA.UI.Screen.ShowHelpText("Restore ATS Failed: " + ex.Message);
             }
         }
     }

@@ -5,6 +5,7 @@ using AdvancedTrainSystem.Railroad.Components.AnimComponents;
 using AdvancedTrainSystem.UI;
 using FusionLibrary;
 using GTA;
+using RageMission.Core;
 using System;
 using System.Linq;
 using System.Windows.Forms;
@@ -44,6 +45,11 @@ namespace AdvancedTrainSystem
                     train.Components.SteamControls.Throttle = 1f;
                     train.Components.SteamControls.Gear = 1f;
                 }
+            }
+
+            if(e.KeyCode == Keys.K)
+            {
+                MissionMgr.StartMission(new TutorialMission());
             }
 
             if (e.KeyCode == Keys.Y)

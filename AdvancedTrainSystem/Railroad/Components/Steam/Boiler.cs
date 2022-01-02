@@ -78,13 +78,13 @@ namespace AdvancedTrainSystem.Railroad.Components.Steam
 
             PressurePSI = Math.Max(PressurePSI, 0);
 
-            if(Train.Driver == GPlayer)
-            {
-                Screen.ShowHelpText(
-                    $"Capacity Left: {FuelCapacityLeft():0.0}\n" + 
-                    $"Boiler Pressure: {PressurePSI:0}\n" + 
-                    $"Water in Cylinders: {WaterInCylinders:0.0}", 1, false, false);
-            }
+            //if(Train.Driver == GPlayer)
+            //{
+            //    Screen.ShowHelpText(
+            //        $"Capacity Left: {FuelCapacityLeft():0.0}\n" + 
+            //        $"Boiler Pressure: {PressurePSI:0}\n" + 
+            //        $"Water in Cylinders: {WaterInCylinders:0.0}", 1, false, false);
+            //}
 
             if (Game.IsControlJustPressed(Control.ThrowGrenade) && Train.Driver == GPlayer)
             {
