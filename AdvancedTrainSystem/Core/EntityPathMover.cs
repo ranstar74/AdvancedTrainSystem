@@ -14,7 +14,8 @@ namespace AdvancedTrainSystem.Core
     public enum PathMoverFlags
     {
         None = 0,
-        NoCollision = 1
+        NoCollision = 1,
+        DisableSteering = 2
     }
 
     /// <summary>
@@ -128,12 +129,13 @@ namespace AdvancedTrainSystem.Core
         /// Creates a new <see cref="EntityPathMover"/> instance, aligning entity with closest point on given track.
         /// </summary>
         /// <param name="entity">Entity that will be moved on path.</param>
-        /// <param name="track">Track on which Entity will move on</param>
         /// <param name="flags">Flags to use.</param>
         /// <param name="zOffset">Vertical offset of entity above ground.</param>
-        public static EntityPathMover CreateOnClosestNode(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset = 0.0f)
+        public static EntityPathMover CreateOnClosestNode(Entity entity, PathMoverFlags flags, float zOffset = 0.0f)
         {
-            (int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestNodeOnTrack(track, entity.Position);
+            (int trackIndex,int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestTrackNode(entity.Position);
+
+            CTrainTrack track = CTrainTrackCollection.Instance[trackIndex];
 
             // Check if entity looks in next node direction
             Vector3 nodeDir = Vector3
@@ -176,7 +178,7 @@ namespace AdvancedTrainSystem.Core
 
                 velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
 
-                if (distToNode < 0.08f)
+                if (distToNode < 0.05f)
                 {
                     _isAligning = false;
                 }
@@ -200,6 +202,11 @@ namespace AdvancedTrainSystem.Core
             else if (prevNodeDist < currentNodeDist)
             {
                 MoveToNode(_currentNodeIndex);
+            }
+
+            if(Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle is Entity)
+            {
+                // TODO: Figure out blocking control
             }
         }
 
