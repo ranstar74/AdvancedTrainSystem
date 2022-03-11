@@ -4,16 +4,17 @@ using GTA;
 using GTA.Math;
 using GTA.Native;
 using System;
-using System.Drawing;
 
 namespace AdvancedTrainSystem.Core
 {
+    /// <summary>
+    /// Flags for <see cref="EntityPathMover"/>.
+    /// </summary>
     [Flags]
     public enum PathMoverFlags
     {
         None = 0,
-        IgnoreWorld = 1,
-        OverrideHeight = 2,
+        NoCollision = 1
     }
 
     /// <summary>
@@ -21,111 +22,226 @@ namespace AdvancedTrainSystem.Core
     /// </summary>
     public class EntityPathMover
     {
+        /// <summary>
+        /// Entity that being moved on path. This property is read-only.
+        /// </summary>
         public Entity Entity { get; }
 
+        /// <summary>
+        /// Additional entity rotation.
+        /// </summary>
         public Vector3 RotationOffset { get; set; } = Vector3.Zero;
 
+        /// <summary>
+        /// Direction of the Entity on path.
+        /// If set to True, Entity will go from start to end,
+        /// with False Entity will move in opposite direciton, from end to start.
+        /// </summary>
         public bool Direction { get; }
 
+        /// <summary>
+        /// Vertical Entity offset above ground.
+        /// </summary>
         public float VerticalOffset { get; }
 
-        public float NodePosition { get; private set; }
-
+        /// <summary>
+        /// Track on which Entity is moving.
+        /// </summary>
         public CTrainTrack Track { get; private set; }
 
+        /// <summary>
+        /// Current node of the Track.
+        /// </summary>
         public CTrainTrackNode CurrentNode { get; private set; }
 
+        /// <summary>
+        /// Next node of the Track with taking direction into account.
+        /// </summary>
         public CTrainTrackNode NextNode { get; private set; }
 
-        public PathMoverFlags Flags { get; set; }
+        /// <summary>
+        /// Previous node of the Track with taking direction into account.
+        /// </summary>
+        public CTrainTrackNode PreviousNode { get; private set; }
 
+        /// <summary>
+        /// Flags of this <see cref="EntityPathMover"/>.
+        /// </summary>
+        public PathMoverFlags Flags { get; }
+
+        /// <summary>
+        /// Speed at which Entity is moving along the Track, relative to direction.
+        /// </summary>
         public float Speed { get; set; }
 
-        public float TrackSpeed => Direction ? Speed : Speed * -1;
+        /// <summary>
+        /// Speed at which Entity is moving along the Track, without taking direction into account.
+        /// </summary>
+        public float TrackSpeed
+        {
+            get => Direction ? Speed : Speed * -1;
+            set => Speed = Direction ? value : value * -1;
+        }
 
+        private bool _isAligning;
+        private int _currentNodeIndex;
         private int _nextNodeIndex;
-        private float _nodeLength;
-        private Vector3 _nodeDirectionLength;
+        private int _previousNodeIndex;
         private Vector3 _nodeDirection;
-        private Vector3 _nodeRotation;
-        private readonly int _moveDirection;
 
-        public EntityPathMover(
-            Entity entity, CTrainTrack track, PathMoverFlags flags, int nodeIndex = 0, bool direction = true, float verticalOffset = 0.0f)
+        private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
             Entity = entity;
             Track = track;
-            Direction = direction;
             Flags = flags;
-            VerticalOffset = verticalOffset;
+            Direction = dir;
+            VerticalOffset = zOffset;
 
-            CurrentNode = track[nodeIndex];
-
-            Entity.Position = CurrentNode.Position;
-
-            _moveDirection = Direction ? 1 : -1;
-            _nextNodeIndex = GetNextNodeIndex(nodeIndex);
-
-            NextNode = track[_nextNodeIndex];
-
-            UpdateNode();
-        }
-
-        public void Update()
-        {
-            if(Flags.HasFlag(PathMoverFlags.IgnoreWorld))
+            if (Flags.HasFlag(PathMoverFlags.NoCollision))
             {
                 Function.Call(Hash._DISABLE_VEHICLE_WORLD_COLLISION, Entity);
+
+                // To prevent from falling under map
+                Entity.HasGravity = false;
             }
-
-            // Calculate how much we've moved
-            NodePosition += Speed * Game.LastFrameTime / _nodeLength;
-
-            // Interpolate vehicle rotation
-            Vector3 currentRotation = Entity.Rotation;
-            Vector3 nextRotation = new Vector3(currentRotation.X, currentRotation.Y, _nodeRotation.Z);
-            Entity.Rotation = Vector3.Lerp(currentRotation, nextRotation, Game.LastFrameTime * 6) + RotationOffset;
-
-            // Move to next node
-            if (NodePosition > 1.0f)
-            {
-                // Get difference that will move on next node
-                NodePosition -= 1.0f;
-
-                CurrentNode = NextNode;
-
-                _nextNodeIndex = GetNextNodeIndex(_nextNodeIndex);
-                NextNode = Track[_nextNodeIndex];
-
-                UpdateNode();
-            }
-
-            // Apply movement which is node position (on map) + velocity * track move direction
-            Vector3 trackVelocity = _nodeDirectionLength * NodePosition * _moveDirection;
-            Vector3 desiredPosition = CurrentNode.Position + trackVelocity;
-
-            World.DrawLine(desiredPosition, desiredPosition + Vector3.WorldUp, Color.Red);
-
-            if(Flags.HasFlag(PathMoverFlags.OverrideHeight))
-            {
-                desiredPosition += Vector3.WorldUp * VerticalOffset;
-            }
-
-            // Apply resulting velocity on entity
-            Vector3 entityVelocity = (desiredPosition - Entity.Position) / Game.LastFrameTime;
-
-            if(!Flags.HasFlag(PathMoverFlags.OverrideHeight))
-            {
-                entityVelocity.Z = Entity.Velocity.Z;
-            }
-
-            Entity.Velocity = entityVelocity;
         }
 
-        private void UpdateNode()
+        /// <summary>
+        /// Creates a new <see cref="EntityPathMover"/> instance, warping entity to given point on given track.
+        /// </summary>
+        /// <param name="entity">Entity that will be moved on path.</param>
+        /// <param name="track">Track on which Entity will move on</param>
+        /// <param name="flags">Flags to use.</param>
+        /// <param name="zOffset">Vertical offset of entity above ground.</param>
+        /// <param name="direction">Direction of entity on the Track.</param>
+        /// <param name="nodeIndex">Track node index which will be used as start position.</param>
+        public static EntityPathMover CreateOnNode(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset = 0.0f, bool direction = true, int nodeIndex = 0)
         {
-            _nodeLength = Vector3.Distance(CurrentNode.Position, NextNode.Position);
+            EntityPathMover pathMover = new EntityPathMover(entity, track, flags, zOffset, direction);
 
+            pathMover.WarpToNode(nodeIndex);
+
+            return pathMover;
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="EntityPathMover"/> instance, aligning entity with closest point on given track.
+        /// </summary>
+        /// <param name="entity">Entity that will be moved on path.</param>
+        /// <param name="track">Track on which Entity will move on</param>
+        /// <param name="flags">Flags to use.</param>
+        /// <param name="zOffset">Vertical offset of entity above ground.</param>
+        public static EntityPathMover CreateOnClosestNode(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset = 0.0f)
+        {
+            (int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestNodeOnTrack(track, entity.Position);
+
+            // Check if entity looks in next node direction
+            Vector3 nodeDir = Vector3
+                .Subtract(track[GetNextNodeIndex(nodeIndex, true, track)].Position, track[nodeIndex].Position)
+                .Normalized;
+            bool direction = Vector3.Dot(nodeDir, entity.ForwardVector) >= 0;
+
+            EntityPathMover pathMover = new EntityPathMover(entity, track, flags, zOffset, direction);
+
+            pathMover.MoveToNode(nodeIndex);
+            pathMover.AlignWithCurrentNode();
+
+            return pathMover;
+        }
+
+        /// <summary>
+        /// Updates entity movement on path. Needs to be called every tick.
+        /// </summary>
+        public void Update()
+        {
+            // Make entity move with node direction at specified speed
+            Vector3 nextPos = NextNode.Position;
+            nextPos.Z += VerticalOffset;
+
+            Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Speed;
+
+            // Align entity with closest position on track
+            if(_isAligning)
+            {
+                float distToNode = VectorExtensions.DistanceToLine2D(
+                    CurrentNode.Position, NextNode.Position, Entity.Position);
+
+                float distToNodeNext = VectorExtensions.DistanceToLine2D(
+                    CurrentNode.Position, NextNode.Position, Entity.Position + Entity.RightVector * distToNode);
+
+                if (distToNode < distToNodeNext)
+                {
+                    distToNode *= -1;
+                }
+
+                velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
+
+                if (distToNode < 0.08f)
+                {
+                    _isAligning = false;
+                }
+            }
+
+            Entity.Velocity = velocity;
+
+            // Smoothly align vehicle rotation with node, and a bit faster in aligning mode
+            Quaternion rotation = _nodeDirection.LookRotation(Vector3.WorldUp);
+            Entity.Quaternion = Quaternion.Slerp(Entity.Quaternion, rotation, Game.LastFrameTime * (_isAligning ? 4 : 2));
+
+            // Check if we can move to next/previous node by comparing distances
+            float currentNodeDist = Vector3.DistanceSquared2D(Entity.Position, CurrentNode.Position);
+            float nextNodeDist = Vector3.DistanceSquared2D(Entity.Position, NextNode.Position);
+            float prevNodeDist = Vector3.DistanceSquared2D(Entity.Position, PreviousNode.Position);
+
+            if (nextNodeDist < currentNodeDist)
+            {
+                MoveToNode(_nextNodeIndex);
+            }
+            else if (prevNodeDist < currentNodeDist)
+            {
+                MoveToNode(_currentNodeIndex);
+            }
+        }
+
+        /// <summary>
+        /// Warps entity to given node index.
+        /// </summary>
+        /// <param name="nodeIndex">Index of the Track node.</param>
+        public void WarpToNode(int nodeIndex)
+        {
+            MoveToNode(nodeIndex);
+
+            Entity.Position = CurrentNode.Position;
+            Entity.Quaternion = _nodeDirection.LookRotation(Vector3.WorldUp);
+        }
+
+        /// <summary>
+        /// Sets node as current node, without warping entity.
+        /// </summary>
+        /// <param name="nodeIndex">Index of the Track node.</param>
+        public void MoveToNode(int nodeIndex)
+        {
+            _currentNodeIndex = nodeIndex;
+            _nextNodeIndex = GetNextNodeIndex(nodeIndex, Direction, Track);
+            _previousNodeIndex = GetPreviousNodeIndex(nodeIndex, Direction, Track);
+
+            CurrentNode = Track[nodeIndex];
+            NextNode = Track[_nextNodeIndex];
+            PreviousNode = Track[_previousNodeIndex];
+
+            UpdateNodeDirection();
+        }
+
+        /// <summary>
+        /// Aligns entity with path, only moving it side wise.
+        /// </summary>
+        public void AlignWithCurrentNode()
+        {
+            _isAligning = true;
+        }
+
+        private void UpdateNodeDirection()
+        {
             Vector3 currentPos = CurrentNode.Position;
             Vector3 nextPos = NextNode.Position;
 
@@ -137,19 +253,21 @@ namespace AdvancedTrainSystem.Core
             {
                 _nodeDirection = nextPos.GetDirectionTo(currentPos);
             }
-
-            _nodeRotation = _nodeDirection.DirectionToRotation(0.0f);
-            _nodeDirectionLength = _nodeDirection * _nodeLength;
         }
 
-        private int GetNextNodeIndex(int currentNodeIndex)
+        private static int GetNextNodeIndex(int currentNodeIndex, bool direction, CTrainTrack track)
         {
-            if (Direction)
+            if (direction)
             {
-                return currentNodeIndex == Track.Length ? 0 : currentNodeIndex + 1;
+                return currentNodeIndex == track.Length ? 0 : currentNodeIndex + 1;
             }
 
-            return currentNodeIndex == 0 ? Track.Length : currentNodeIndex - 1;
+            return currentNodeIndex == 0 ? track.Length : currentNodeIndex - 1;
+        }
+
+        private static int GetPreviousNodeIndex(int currentNodeIndex, bool direction, CTrainTrack track)
+        {
+            return GetNextNodeIndex(currentNodeIndex, !direction, track);
         }
     }
 }
