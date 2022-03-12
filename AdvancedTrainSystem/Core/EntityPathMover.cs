@@ -133,7 +133,7 @@ namespace AdvancedTrainSystem.Core
         /// <param name="zOffset">Vertical offset of entity above ground.</param>
         public static EntityPathMover CreateOnClosestNode(Entity entity, PathMoverFlags flags, float zOffset = 0.0f)
         {
-            (int trackIndex,int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestTrackNode(entity.Position);
+            (int trackIndex, int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestTrackNode(entity.Position);
 
             CTrainTrack track = CTrainTrackCollection.Instance[trackIndex];
 
@@ -163,7 +163,7 @@ namespace AdvancedTrainSystem.Core
             Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Speed;
 
             // Align entity with closest position on track
-            if(_isAligning)
+            if (_isAligning)
             {
                 float distToNode = VectorExtensions.DistanceToLine2D(
                     CurrentNode.Position, NextNode.Position, Entity.Position);
@@ -178,13 +178,19 @@ namespace AdvancedTrainSystem.Core
 
                 velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
 
-                if (distToNode < 0.05f)
+                if (Math.Abs(distToNode) < 0.05f)
                 {
                     _isAligning = false;
                 }
             }
 
             Entity.Velocity = velocity;
+
+            //// For some reason gta sets weird velocity to player so it slowly slips from entity so we set it manually
+            //if (Entity.IsTouching(Game.Player.Character))
+            //{
+            //    Game.Player.Character.Velocity = velocity;
+            //}
 
             // Smoothly align vehicle rotation with node, and a bit faster in aligning mode
             Quaternion rotation = _nodeDirection.LookRotation(Vector3.WorldUp);
@@ -204,7 +210,7 @@ namespace AdvancedTrainSystem.Core
                 MoveToNode(_currentNodeIndex);
             }
 
-            if(Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle is Entity)
+            if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle is Entity)
             {
                 // TODO: Figure out blocking control
             }
