@@ -100,10 +100,7 @@ namespace AdvancedTrainSystem.Core
 
             if (Flags.HasFlag(PathMoverFlags.NoCollision))
             {
-                Function.Call(Hash._DISABLE_VEHICLE_WORLD_COLLISION, Entity);
-
-                // To prevent from falling under map
-                Entity.HasGravity = false;
+                TogglePhysics(false);
             }
         }
 
@@ -131,7 +128,7 @@ namespace AdvancedTrainSystem.Core
         /// <param name="entity">Entity that will be moved on path.</param>
         /// <param name="flags">Flags to use.</param>
         /// <param name="zOffset">Vertical offset of entity above ground.</param>
-        public static EntityPathMover CreateOnClosestNode(Entity entity, PathMoverFlags flags, float zOffset = 0.0f)
+        public static EntityPathMover CreateOnClosestNode(Entity entity, PathMoverFlags flags = PathMoverFlags.None, float zOffset = 0.0f)
         {
             (int trackIndex, int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestTrackNode(entity.Position);
 
@@ -178,23 +175,26 @@ namespace AdvancedTrainSystem.Core
 
                 velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
 
-                if (Math.Abs(distToNode) < 0.05f)
+                // If car is close enough and aligned with node direction
+                float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
+                GTA.UI.Screen.ShowSubtitle($"{distToNode} {dot}");
+                if (Math.Abs(distToNode) < 0.025f && dot > 0.9995f)
                 {
+                    // Return world collision back
+                    if (!Flags.HasFlag(PathMoverFlags.NoCollision))
+                    {
+                        TogglePhysics(true);
+                    }
+
                     _isAligning = false;
                 }
             }
 
             Entity.Velocity = velocity;
 
-            //// For some reason gta sets weird velocity to player so it slowly slips from entity so we set it manually
-            //if (Entity.IsTouching(Game.Player.Character))
-            //{
-            //    Game.Player.Character.Velocity = velocity;
-            //}
-
             // Smoothly align vehicle rotation with node, and a bit faster in aligning mode
             Quaternion rotation = _nodeDirection.LookRotation(Vector3.WorldUp);
-            Entity.Quaternion = Quaternion.Slerp(Entity.Quaternion, rotation, Game.LastFrameTime * (_isAligning ? 4 : 2));
+            Entity.Quaternion = Quaternion.Slerp(Entity.Quaternion, rotation, Game.LastFrameTime * 1);//(_isAligning ? 4 : 2));
 
             // Check if we can move to next/previous node by comparing distances
             float currentNodeDist = Vector3.DistanceSquared2D(Entity.Position, CurrentNode.Position);
@@ -250,7 +250,23 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void AlignWithCurrentNode()
         {
+            // Set it temporary or car may hit obstacles
+            TogglePhysics(false);
+
             _isAligning = true;
+        }
+
+        private void TogglePhysics(bool on)
+        {
+            Function.Call(Hash.SET_VEHICLE_GRAVITY, Entity, on);
+            if (on)
+            {
+                Entity.IsCollisionEnabled = true;
+            }
+            else
+            {
+                Function.Call(Hash._DISABLE_VEHICLE_WORLD_COLLISION, Entity);
+            }
         }
 
         private void UpdateNodeDirection()
