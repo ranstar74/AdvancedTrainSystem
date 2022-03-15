@@ -177,7 +177,6 @@ namespace AdvancedTrainSystem.Core
 
                 // If car is close enough and aligned with node direction
                 float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
-                GTA.UI.Screen.ShowSubtitle($"{distToNode} {dot}");
                 if (Math.Abs(distToNode) < 0.025f && dot > 0.9995f)
                 {
                     // Return world collision back
@@ -194,7 +193,7 @@ namespace AdvancedTrainSystem.Core
 
             // Smoothly align vehicle rotation with node, and a bit faster in aligning mode
             Quaternion rotation = _nodeDirection.LookRotation(Vector3.WorldUp);
-            Entity.Quaternion = Quaternion.Slerp(Entity.Quaternion, rotation, Game.LastFrameTime * 1);//(_isAligning ? 4 : 2));
+            Entity.Quaternion = Quaternion.Slerp(Entity.Quaternion, rotation, Game.LastFrameTime * (_isAligning ? 6 : 1));
 
             // Check if we can move to next/previous node by comparing distances
             float currentNodeDist = Vector3.DistanceSquared2D(Entity.Position, CurrentNode.Position);
