@@ -86,7 +86,11 @@ namespace AdvancedTrainSystem.Core
         /// Speed at which Entity is moving along the Track, relative to direction.
         /// <para>Equal to <see cref="Entity.Speed"/>.</para>
         /// </summary>
-        public float Speed { get; set; }
+        public float Speed
+        {
+            get => Entity.Speed;
+            set => Entity.Speed = value;
+        }
 
         /// <summary>
         /// Speed at which Entity is moving along the Track, without taking direction into account.
@@ -169,9 +173,9 @@ namespace AdvancedTrainSystem.Core
         public void Update()
         {
             // Make entity move with node direction at specified speed
-            Vector3 nextPos = NextNode.Position;
+            Vector3 nextPos = Speed >= 0 ? NextNode.Position : PreviousNode.Position;
             nextPos.Z += VerticalOffset;
-
+            GTA.UI.Screen.ShowSubtitle($"{Entity.Velocity.ToString("0.0")}");
             Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Entity.Velocity.Length();
 
             // Align entity with closest position on track
