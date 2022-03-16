@@ -233,7 +233,7 @@ namespace AdvancedTrainSystem.Core
                 MoveToNode(_currentNodeIndex);
             }
 
-            if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle is Entity)
+            if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle == Entity)
             {
                 Function.Call(Hash.DISABLE_CONTROL_ACTION, 27, 59, true);
             }
