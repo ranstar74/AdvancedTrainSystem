@@ -1,4 +1,5 @@
 ﻿using FusionLibrary.Extensions;
+using FusionLibrary.Memory;
 using FusionLibrary.Memory.Paths;
 using GTA;
 using GTA.Math;
@@ -13,9 +14,20 @@ namespace AdvancedTrainSystem.Core
     [Flags]
     public enum PathMoverFlags
     {
+        /// <summary>
+        /// No flags.
+        /// </summary>
         None = 0,
+        /// <summary>
+        /// Entity collision with world will be disabled.
+        /// Useful for trains without actual wheels.
+        /// <para>Collision with player will remain.</para>
+        /// </summary>
         NoCollision = 1,
-        DisableSteering = 2
+        /// <summary>
+        /// Disables ability to steer vehicle.
+        /// </summary>
+        DisableSteering = 2,
     }
 
     /// <summary>
@@ -72,6 +84,7 @@ namespace AdvancedTrainSystem.Core
 
         /// <summary>
         /// Speed at which Entity is moving along the Track, relative to direction.
+        /// <para>Equal to <see cref="Entity.Speed"/>.</para>
         /// </summary>
         public float Speed { get; set; }
 
@@ -88,7 +101,9 @@ namespace AdvancedTrainSystem.Core
         private int _currentNodeIndex;
         private int _nextNodeIndex;
         private int _previousNodeIndex;
+        private float[] _suspensionCompressions;
         private Vector3 _nodeDirection;
+        private bool _aborted;
 
         private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
@@ -157,7 +172,7 @@ namespace AdvancedTrainSystem.Core
             Vector3 nextPos = NextNode.Position;
             nextPos.Z += VerticalOffset;
 
-            Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Speed;
+            Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Entity.Velocity.Length();
 
             // Align entity with closest position on track
             if (_isAligning)
@@ -174,6 +189,15 @@ namespace AdvancedTrainSystem.Core
                 }
 
                 velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
+
+                // Force wheel compression, explained in AlignWithCurrentNode method
+                if (Entity is Vehicle vehicle)
+                {
+                    for (int i = 0; i < _suspensionCompressions.Length; i++)
+                    {
+                        VehicleControl.SetWheelCompression(vehicle, i, _suspensionCompressions[i]);
+                    }
+                }
 
                 // If car is close enough and aligned with node direction
                 float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
@@ -211,7 +235,7 @@ namespace AdvancedTrainSystem.Core
 
             if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle is Entity)
             {
-                // TODO: Figure out blocking control
+                Function.Call(Hash.DISABLE_CONTROL_ACTION, 27, 59, true);
             }
         }
 
@@ -252,7 +276,24 @@ namespace AdvancedTrainSystem.Core
             // Set it temporary or car may hit obstacles
             TogglePhysics(false);
 
+            // Since we disable world collision, car suspension
+            // will straight up just like in air, so will cause visible
+            // 'flickering'. As solution for this we force
+            // the same wheel compression ratio during alignment
+            if (Entity is Vehicle vehicle)
+            {
+                _suspensionCompressions = VehicleControl.GetWheelCompressions(vehicle);
+            }
+
             _isAligning = true;
+        }
+
+        /// <summary>
+        /// Aborts execution and detaches entity from track. Cannot be undone.
+        /// </summary>
+        public void Abort()
+        {
+            throw new NotImplementedException();
         }
 
         private void TogglePhysics(bool on)
