@@ -102,6 +102,11 @@ namespace AdvancedTrainSystem.Core
             set => Speed = Direction ? value : value * -1;
         }
 
+        /// <summary>
+        /// Gets a value that indicates if this path mover was aborted.
+        /// </summary>
+        public bool IsAborted => _aborted;
+
         private bool _isAligning;
         private int _currentNodeIndex;
         private int _nextNodeIndex;
@@ -109,6 +114,8 @@ namespace AdvancedTrainSystem.Core
         private float[] _suspensionCompressions;
         private Vector3 _nodeDirection;
         private bool _aborted;
+
+        private Vector3 _closestAlignPoint;
 
         private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
@@ -175,6 +182,11 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Update()
         {
+            if(_aborted)
+            {
+                throw new Exception("Path mover was aborted.");
+            }
+
             //World.DrawLine(CurrentNode.Position, NextNode.Position, Color.Red);
             //World.DrawLine(CurrentNode.Position, PreviousNode.Position, Color.Blue);
 
@@ -188,27 +200,15 @@ namespace AdvancedTrainSystem.Core
                 Vector3.Subtract(NextNode.Position + hOffset, Entity.Position) :
                 Vector3.Subtract(Entity.Position, PreviousNode.Position + hOffset);
 
-            Vector3 velocity = destination.Normalized * Entity.Velocity.Length();
-            if (relativeVelocity < 0)
-            {
-                velocity *= -1;
-            }
-
             // Align entity with closest position on track
+            Vector3 velocity;
             if (_isAligning)
             {
-                float distToNode = VectorExtensions.DistanceToLine2D(
-                    CurrentNode.Position, NextNode.Position, Entity.Position);
+                Vector3 headingToClosestPoint = _closestAlignPoint - Entity.Position;
+                float distanceToPoint = Entity.Position.DistanceToSquared(_closestAlignPoint);
 
-                float distToNodeNext = VectorExtensions.DistanceToLine2D(
-                    CurrentNode.Position, NextNode.Position, Entity.Position + Entity.RightVector * distToNode);
-
-                if (distToNode < distToNodeNext)
-                {
-                    distToNode *= -1;
-                }
-
-                velocity += Entity.RightVector * distToNode / (Game.LastFrameTime * 5);
+                headingToClosestPoint += hOffset;
+                velocity = headingToClosestPoint / (Game.LastFrameTime * 4.5f);
 
                 // Force wheel compression, explained in AlignWithCurrentNode method
                 if (Entity is Vehicle vehicle)
@@ -221,15 +221,17 @@ namespace AdvancedTrainSystem.Core
 
                 // If car is close enough and aligned with node direction
                 float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
-                if (Math.Abs(distToNode) < 0.025f && dot > 0.9995f)
+                if (Math.Abs(distanceToPoint) <= 0.7f && dot > 0.9995f)
                 {
-                    // Return world collision back
-                    if (!Flags.HasFlag(PathMoverFlags.NoCollision))
-                    {
-                        TogglePhysics(true);
-                    }
-
-                    _isAligning = false;
+                    FinishAligning();
+                }
+            }
+            else
+            {
+                velocity = destination.Normalized * Entity.Velocity.Length();
+                if (relativeVelocity < 0)
+                {
+                    velocity *= -1;
                 }
             }
 
@@ -305,6 +307,9 @@ namespace AdvancedTrainSystem.Core
                 _suspensionCompressions = VehicleControl.GetWheelCompressions(vehicle);
             }
 
+            _closestAlignPoint = Entity.Position.GetClosestPointOnFiniteLine(
+                PreviousNode.Position, NextNode.Position);
+
             _isAligning = true;
         }
 
@@ -313,7 +318,26 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Abort()
         {
-            throw new NotImplementedException();
+            FinishAligning();
+            TogglePhysics(true);
+
+            _aborted = true;
+        }
+
+        private void FinishAligning()
+        {
+            if(!_isAligning)
+            {
+                return;
+            }
+
+            // Return world collision back
+            if (!Flags.HasFlag(PathMoverFlags.NoCollision))
+            {
+                TogglePhysics(true);
+            }
+
+            _isAligning = false;
         }
 
         private void TogglePhysics(bool on)
