@@ -153,10 +153,12 @@ namespace AdvancedTrainSystem.Core
             (int trackIndex, int nodeIndex, float _) = CTrainTrackCollection.Instance.GetClosestTrackNode(entity.Position);
 
             CTrainTrack track = CTrainTrackCollection.Instance[trackIndex];
+            CTrainTrackNode currentNode = track[nodeIndex];
+            CTrainTrackNode nextNode = track[GetNextNodeIndex(nodeIndex, true, track)];
 
             // Check if entity looks in next node direction
             Vector3 nodeDir = Vector3
-                .Subtract(track[GetNextNodeIndex(nodeIndex, true, track)].Position, track[nodeIndex].Position)
+                .Subtract(nextNode.Position, currentNode.Position)
                 .Normalized;
             bool direction = Vector3.Dot(nodeDir, entity.ForwardVector) >= 0;
 
@@ -173,11 +175,10 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Update()
         {
-            World.DrawLine(CurrentNode.Position, NextNode.Position, Color.Red);
-            World.DrawLine(CurrentNode.Position, PreviousNode.Position, Color.Blue);
+            //World.DrawLine(CurrentNode.Position, NextNode.Position, Color.Red);
+            //World.DrawLine(CurrentNode.Position, PreviousNode.Position, Color.Blue);
 
             float relativeVelocity = Entity.RelativeVelocity().Y;
-            GTA.UI.Screen.ShowSubtitle($"{relativeVelocity}");
 
             // Make entity move with node direction at specified speed
 
@@ -243,7 +244,6 @@ namespace AdvancedTrainSystem.Core
             float nextNodeDist = Vector3.DistanceSquared2D(Entity.Position, NextNode.Position);
             float prevNodeDist = Vector3.DistanceSquared2D(Entity.Position, PreviousNode.Position);
 
-            GTA.UI.Screen.ShowSubtitle($"C: {currentNodeDist:0} N: {nextNodeDist:0} P: {prevNodeDist:0}");
             if (nextNodeDist < currentNodeDist)
             {
                 MoveToNode(_nextNodeIndex);
@@ -341,7 +341,7 @@ namespace AdvancedTrainSystem.Core
             }
             else
             {
-                _nodeDirection = nextPos.GetDirectionTo(previousPos);
+                _nodeDirection = previousPos.GetDirectionTo(currentPos);
             }
         }
 
