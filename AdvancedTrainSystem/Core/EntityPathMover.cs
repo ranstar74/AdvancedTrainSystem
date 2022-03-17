@@ -29,6 +29,11 @@ namespace AdvancedTrainSystem.Core
         /// Disables ability to steer vehicle.
         /// </summary>
         DisableSteering = 2,
+        /// <summary>
+        /// Calculates vertical offset based on entity height.
+        /// Suitable for most of the vehicles.
+        /// </summary>
+        AutoHeight = 4,
     }
 
     /// <summary>
@@ -113,9 +118,8 @@ namespace AdvancedTrainSystem.Core
         private int _previousNodeIndex;
         private float[] _suspensionCompressions;
         private Vector3 _nodeDirection;
-        private bool _aborted;
-
         private Vector3 _closestAlignPoint;
+        private bool _aborted;
 
         private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
@@ -128,6 +132,12 @@ namespace AdvancedTrainSystem.Core
             if (Flags.HasFlag(PathMoverFlags.NoCollision))
             {
                 TogglePhysics(false);
+            }
+
+            if(flags.HasFlag(PathMoverFlags.AutoHeight))
+            {
+                (float _, float height, float _) = entity.Model.GetSize();
+                VerticalOffset = height / 2.0f;
             }
         }
 
