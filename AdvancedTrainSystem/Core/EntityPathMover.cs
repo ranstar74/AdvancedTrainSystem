@@ -5,6 +5,7 @@ using GTA;
 using GTA.Math;
 using GTA.Native;
 using System;
+using System.Drawing;
 
 namespace AdvancedTrainSystem.Core
 {
@@ -172,11 +173,25 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Update()
         {
+            World.DrawLine(CurrentNode.Position, NextNode.Position, Color.Red);
+            World.DrawLine(CurrentNode.Position, PreviousNode.Position, Color.Blue);
+
+            float relativeVelocity = Entity.RelativeVelocity().Y;
+            GTA.UI.Screen.ShowSubtitle($"{relativeVelocity}");
+
             // Make entity move with node direction at specified speed
-            Vector3 nextPos = Speed >= 0 ? NextNode.Position : PreviousNode.Position;
-            nextPos.Z += VerticalOffset;
-            GTA.UI.Screen.ShowSubtitle($"{Entity.Velocity.ToString("0.0")}");
-            Vector3 velocity = Vector3.Subtract(nextPos, Entity.Position).Normalized * Entity.Velocity.Length();
+
+            // Direction * Speed * Sign
+            Vector3 hOffset = Vector3.WorldUp * VerticalOffset;
+            Vector3 destination = relativeVelocity >= 0 ?
+                Vector3.Subtract(NextNode.Position + hOffset, Entity.Position) :
+                Vector3.Subtract(Entity.Position, PreviousNode.Position + hOffset);
+
+            Vector3 velocity = destination.Normalized * Entity.Velocity.Length();
+            if (relativeVelocity < 0)
+            {
+                velocity *= -1;
+            }
 
             // Align entity with closest position on track
             if (_isAligning)
@@ -228,13 +243,14 @@ namespace AdvancedTrainSystem.Core
             float nextNodeDist = Vector3.DistanceSquared2D(Entity.Position, NextNode.Position);
             float prevNodeDist = Vector3.DistanceSquared2D(Entity.Position, PreviousNode.Position);
 
+            GTA.UI.Screen.ShowSubtitle($"C: {currentNodeDist:0} N: {nextNodeDist:0} P: {prevNodeDist:0}");
             if (nextNodeDist < currentNodeDist)
             {
                 MoveToNode(_nextNodeIndex);
             }
             else if (prevNodeDist < currentNodeDist)
             {
-                MoveToNode(_currentNodeIndex);
+                MoveToNode(_previousNodeIndex);
             }
 
             if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle == Entity)
@@ -317,6 +333,7 @@ namespace AdvancedTrainSystem.Core
         {
             Vector3 currentPos = CurrentNode.Position;
             Vector3 nextPos = NextNode.Position;
+            Vector3 previousPos = PreviousNode.Position;
 
             if (Direction)
             {
@@ -324,7 +341,7 @@ namespace AdvancedTrainSystem.Core
             }
             else
             {
-                _nodeDirection = nextPos.GetDirectionTo(currentPos);
+                _nodeDirection = nextPos.GetDirectionTo(previousPos);
             }
         }
 
