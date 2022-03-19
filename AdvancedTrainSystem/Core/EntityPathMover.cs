@@ -5,6 +5,7 @@ using GTA;
 using GTA.Math;
 using GTA.Native;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 
 namespace AdvancedTrainSystem.Core
@@ -30,10 +31,10 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         DisableSteering = 2,
         /// <summary>
-        /// Calculates vertical offset based on entity height.
-        /// Suitable for most of the vehicles.
+        /// Uses game physics for entity vertical offset. 
+        /// Suitable for regular vehicles.
         /// </summary>
-        AutoHeight = 4,
+        ForceHeight = 4,
     }
 
     /// <summary>
@@ -108,18 +109,26 @@ namespace AdvancedTrainSystem.Core
         }
 
         /// <summary>
+        /// Invoked on entity derail.
+        /// </summary>
+        public event EventHandler Derailed;
+
+        /// <summary>
         /// Gets a value that indicates if this path mover was aborted.
         /// </summary>
         public bool IsAborted => _aborted;
 
+        private int _alignTime = -1;
         private bool _isAligning;
         private int _currentNodeIndex;
         private int _nextNodeIndex;
         private int _previousNodeIndex;
         private float[] _suspensionCompressions;
-        private Vector3 _nodeDirection;
-        private Vector3 _closestAlignPoint;
+        private float _distanceToGround;
+        private float _speedBeforeAligning;
+        private int _alignStartTime;
         private bool _aborted;
+        private Vector3 _nodeDirection;
 
         private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
@@ -132,12 +141,6 @@ namespace AdvancedTrainSystem.Core
             if (Flags.HasFlag(PathMoverFlags.NoCollision))
             {
                 TogglePhysics(false);
-            }
-
-            if(flags.HasFlag(PathMoverFlags.AutoHeight))
-            {
-                (float _, float height, float _) = entity.Model.GetSize();
-                VerticalOffset = height / 2.0f;
             }
         }
 
@@ -192,33 +195,38 @@ namespace AdvancedTrainSystem.Core
         /// </summary>
         public void Update()
         {
-            if(_aborted)
+            if (_aborted)
             {
                 throw new Exception("Path mover was aborted.");
             }
 
-            //World.DrawLine(CurrentNode.Position, NextNode.Position, Color.Red);
-            //World.DrawLine(CurrentNode.Position, PreviousNode.Position, Color.Blue);
-
             float relativeVelocity = Entity.RelativeVelocity().Y;
 
-            // Make entity move with node direction at specified speed
-
-            // Direction * Speed * Sign
-            Vector3 hOffset = Vector3.WorldUp * VerticalOffset;
-            Vector3 destination = relativeVelocity >= 0 ?
-                Vector3.Subtract(NextNode.Position + hOffset, Entity.Position) :
-                Vector3.Subtract(Entity.Position, PreviousNode.Position + hOffset);
-
             // Align entity with closest position on track
-            Vector3 velocity;
+            Vector3 velocity = Vector3.Zero;
+
             if (_isAligning)
             {
-                Vector3 headingToClosestPoint = _closestAlignPoint - Entity.Position;
-                float distanceToPoint = Entity.Position.DistanceToSquared(_closestAlignPoint);
+                Vector3 closestAlignPoint = Entity.Position.GetClosestPointOnFiniteLine(
+                    PreviousNode.Position, NextNode.Position);
 
-                headingToClosestPoint += hOffset;
-                velocity = headingToClosestPoint / (Game.LastFrameTime * 4.5f);
+                if (Flags.HasFlag(PathMoverFlags.ForceHeight))
+                {
+                    closestAlignPoint.Z += VerticalOffset;
+                }
+                else
+                {
+                    closestAlignPoint.Z += _distanceToGround;
+                }
+
+                Vector3 headingToClosestPoint = closestAlignPoint - Entity.Position;
+
+                // Keep only side velocity
+                float headingDot = Math.Abs(headingToClosestPoint.Dot2d(Entity.RightVector));
+                if (headingDot > 0.75f)
+                {
+                    velocity += headingToClosestPoint / (Game.LastFrameTime * 4.5f);
+                }
 
                 // Force wheel compression, explained in AlignWithCurrentNode method
                 if (Entity is Vehicle vehicle)
@@ -229,20 +237,32 @@ namespace AdvancedTrainSystem.Core
                     }
                 }
 
-                // If car is close enough and aligned with node direction
-                float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
-                if (Math.Abs(distanceToPoint) <= 0.7f && dot > 0.9995f)
+                // If car is close enough and aligned with node direction or if aligning timed out
+                float nodeDot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
+                float dist = headingToClosestPoint.LengthSquared();
+                if (Math.Abs(dist) <= 0.1f && nodeDot > 0.9995f || _alignStartTime > Game.GameTime + 500)
                 {
                     FinishAligning();
                 }
             }
-            else
+
+            // Make entity move with node direction at specified speed
+
+            // Direction * Speed * Sign
+            Vector3 hOffset = Vector3.WorldUp * VerticalOffset;
+            Vector3 destination = relativeVelocity >= 0 ?
+                Vector3.Subtract(NextNode.Position + hOffset, Entity.Position) :
+                Vector3.Subtract(Entity.Position, PreviousNode.Position + hOffset);
+
+            velocity += destination.Normalized * Entity.Velocity.Length();
+            if (relativeVelocity < 0)
             {
-                velocity = destination.Normalized * Entity.Velocity.Length();
-                if (relativeVelocity < 0)
-                {
-                    velocity *= -1;
-                }
+                velocity *= -1;
+            }
+
+            if (!Flags.HasFlag(PathMoverFlags.ForceHeight))
+            {
+                velocity.Z = Entity.Velocity.Z;
             }
 
             Entity.Velocity = velocity;
@@ -268,6 +288,16 @@ namespace AdvancedTrainSystem.Core
             if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle == Entity)
             {
                 Function.Call(Hash.DISABLE_CONTROL_ACTION, 27, 59, true);
+            }
+
+            // Derail entity if its in air or wheels are too far from tracks
+            if (!_isAligning && (Game.GameTime - _alignTime > 500 && _alignTime != -1))
+            {
+                float dot = Vector3.Dot(Entity.ForwardVector, _nodeDirection);
+                if (Entity.IsInAir || Math.Abs(dot) < 0.9f)
+                {
+                    Derail();
+                }
             }
         }
 
@@ -317,10 +347,51 @@ namespace AdvancedTrainSystem.Core
                 _suspensionCompressions = VehicleControl.GetWheelCompressions(vehicle);
             }
 
-            _closestAlignPoint = Entity.Position.GetClosestPointOnFiniteLine(
-                PreviousNode.Position, NextNode.Position);
+            // Make point position more accurate by using actual vertical entity offset from ground
+            if (!Flags.HasFlag(PathMoverFlags.ForceHeight))
+            {
+                RaycastResult result = World.Raycast(Entity.Position, Vector3.WorldDown, 1.0f, IntersectFlags.Map);
+                if (result.DidHit)
+                {
+                    _distanceToGround = Vector3.Distance(Entity.Position, result.HitPosition);
+                }
+            }
+
+            _alignStartTime = Game.GameTime;
+            _speedBeforeAligning = Speed;
 
             _isAligning = true;
+        }
+
+        /// <summary>
+        /// Instantly moves entity on specified distance.
+        /// </summary>
+        /// <param name="distance">Distance to move entity on.</param>
+        public void Move(float distance)
+        {
+            //Vector3 velocity = Entity.Velocity;
+
+            //Entity.Velocity += _nodeDirection * distance / Game.LastFrameTime;
+            //Script.Yield();
+
+            //Entity.Velocity = velocity;
+
+            // We can't just apply velocity because we need to move 
+            // entity on given distance relative to track
+            float distanceLeft = distance;
+            while (distanceLeft > 0)
+            {
+                float distanceToNext = Entity.Position.DistanceTo(NextNode.Position);
+
+                float totalDistanceToNext = Math.Min(distanceToNext, distance);
+                if (distanceToNext > totalDistanceToNext)
+                {
+                    WarpToNode(_nextNodeIndex);
+                }
+                distance -= totalDistanceToNext;
+
+                Script.Yield();
+            }
         }
 
         /// <summary>
@@ -334,9 +405,25 @@ namespace AdvancedTrainSystem.Core
             _aborted = true;
         }
 
+        /// <summary>
+        /// Derails train, invoking <see cref="Derailed"/>. 
+        /// If event wasn't canceled, <see cref="Abort"/> called.
+        /// </summary>
+        public void Derail()
+        {
+            CancelEventArgs e = new CancelEventArgs();
+
+            Derailed?.Invoke(this, e);
+
+            if (!e.Cancel)
+            {
+                Abort();
+            }
+        }
+
         private void FinishAligning()
         {
-            if(!_isAligning)
+            if (!_isAligning)
             {
                 return;
             }
@@ -347,6 +434,11 @@ namespace AdvancedTrainSystem.Core
                 TogglePhysics(true);
             }
 
+            // Restore speed as it was modified by aligning code
+            // and we don't want that affect actual speed
+            Speed = _speedBeforeAligning;
+
+            _alignTime = Game.GameTime;
             _isAligning = false;
         }
 
