@@ -237,7 +237,7 @@ namespace AdvancedTrainSystem.Core
         {
             // Get closest point should also work for height but this requires less operations
 
-            Vector3 interpolatedPos = CurrentNode.Position + _closestNodeDirection * (float)Math.Sqrt(_distanceToCurrentNode);
+            Vector3 interpolatedPos = CurrentNode.Position + _closestNodeDirection * _distanceToCurrentNode;
 
             _currentHeight = interpolatedPos.Z;
 
