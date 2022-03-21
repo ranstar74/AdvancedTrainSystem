@@ -6,6 +6,7 @@ using GTA.Math;
 using GTA.Native;
 using System;
 using System.ComponentModel;
+using System.Drawing;
 
 namespace AdvancedTrainSystem.Core
 {
@@ -128,6 +129,8 @@ namespace AdvancedTrainSystem.Core
         private float _speedBeforeAligning;         // Stored speed before aligning to be restored after
         private float _currentHeight;               // Interpolated Z between current and next node
         private float _distanceToCurrentNode;       // Distance from entity to current node
+        private float _toNextNodeSquaredDist;       // Squared distance to next node from current node, used for checking if entity passed node
+        private float _toPreviousNodeSquaredDist;   // Squared distance to previous node from current node, used for checking if entity passed node
         private Vector3 _nodeDirection;             // Unit vector representing current -> next node direction
         private Vector3 _previousNodeDirection;     // Unit vector representing current -> previous node direction
         private Vector3 _closestNodeDirection;      // Direction of closest node (which is previousNodeDirection or nodeDirection)
@@ -203,8 +206,8 @@ namespace AdvancedTrainSystem.Core
                 throw new Exception("Path mover was aborted.");
             }
 
-            //World.DrawLine(CurrentNode.Position + Vector3.WorldUp, NextNode.Position + Vector3.WorldUp, Color.Blue);
-            //World.DrawLine(CurrentNode.Position + Vector3.WorldUp, PreviousNode.Position + Vector3.WorldUp, Color.Red);
+            World.DrawLine(CurrentNode.Position + Vector3.WorldUp, NextNode.Position + Vector3.WorldUp, Color.Blue);
+            World.DrawLine(CurrentNode.Position + Vector3.WorldUp, PreviousNode.Position + Vector3.WorldUp, Color.Red);
 
             if(Flags.HasFlag(PathMoverFlags.NoCollision))
             {
@@ -231,6 +234,11 @@ namespace AdvancedTrainSystem.Core
 
             // Check if theres conditions to derail entity
             UpdateDerail();
+
+            if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle == Entity)
+            {
+                Function.Call(Hash.DISABLE_CONTROL_ACTION, 27, 59, true);
+            }
         }
 
         private void UpdateZPosition()
@@ -241,7 +249,8 @@ namespace AdvancedTrainSystem.Core
 
             _currentHeight = interpolatedPos.Z;
 
-            //World.DrawLine(interpolatedPos, interpolatedPos + Vector3.WorldUp, Color.Green);
+            World.DrawLine(Entity.Position + Vector3.WorldUp * 2, Entity.Position + Vector3.WorldUp * 2 + _closestNodeDirection * 5, Color.Green);
+            //World.DrawLine(interpolatedPos, interpolatedPos + Vector3.WorldUp, Color.Yellow);
         }
 
         private void UpdateVelocity(ref Vector3 velocity)
@@ -342,20 +351,22 @@ namespace AdvancedTrainSystem.Core
             float prevNodeDist = Vector3.DistanceSquared(Entity.Position, PreviousNode.Position);
 
             _distanceToCurrentNode = (float)Math.Sqrt(currentNodeDist);
-            _closestNodeDirection = nextNodeDist < prevNodeDist ? _nodeDirection : _previousNodeDirection;
 
-            if (nextNodeDist < currentNodeDist)
+            // Get closest node direction (current / previous)
+            float nextNodeRatio = nextNodeDist / _toNextNodeSquaredDist;
+            float prevNodeRatio = prevNodeDist / _toPreviousNodeSquaredDist;
+            _closestNodeDirection =  nextNodeRatio < prevNodeRatio ? _nodeDirection : _previousNodeDirection;
+
+            // If car sudennly stuttering on switching nodes - increase tolerance for IsClose
+
+            // Check if we passed beyond next / previous node
+            if (nextNodeDist < currentNodeDist && currentNodeDist.IsClose(_toNextNodeSquaredDist, 5.0f))
             {
                 MoveToNode(_nextNodeIndex);
             }
-            else if (prevNodeDist < currentNodeDist)
+            else if (prevNodeDist < currentNodeDist && currentNodeDist.IsClose(_toPreviousNodeSquaredDist, 5.0f))
             {
                 MoveToNode(_previousNodeIndex);
-            }
-
-            if (Flags.HasFlag(PathMoverFlags.DisableSteering) && Game.Player.Character.CurrentVehicle == Entity)
-            {
-                Function.Call(Hash.DISABLE_CONTROL_ACTION, 27, 59, true);
             }
         }
 
@@ -399,7 +410,7 @@ namespace AdvancedTrainSystem.Core
             NextNode = Track[_nextNodeIndex];
             PreviousNode = Track[_previousNodeIndex];
 
-            UpdateNodeDirection();
+            UpdateNodeData();
         }
 
         /// <summary>
@@ -519,7 +530,7 @@ namespace AdvancedTrainSystem.Core
             }
         }
 
-        private void UpdateNodeDirection()
+        private void UpdateNodeData()
         {
             Vector3 currentPos = CurrentNode.Position;
             Vector3 nextPos = NextNode.Position;
@@ -535,6 +546,12 @@ namespace AdvancedTrainSystem.Core
                 _nodeDirection = previousPos.GetDirectionTo(currentPos);
                 _previousNodeDirection = nextPos.GetDirectionTo(currentPos);
             }
+
+            _toNextNodeSquaredDist = currentPos.DistanceToSquared(nextPos);
+            _toPreviousNodeSquaredDist = currentPos.DistanceToSquared(previousPos);
+
+            // If we don't reset it, we will use old distance on new direction causing micro lag
+            _distanceToCurrentNode = 0.0f;
         }
 
         private static int GetNextNodeIndex(int currentNodeIndex, bool direction, CTrainTrack track)
