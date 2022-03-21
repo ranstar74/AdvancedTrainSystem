@@ -135,6 +135,7 @@ namespace AdvancedTrainSystem.Core
         private Vector3 _previousNodeDirection;     // Unit vector representing current -> previous node direction
         private Vector3 _closestNodeDirection;      // Direction of closest node (which is previousNodeDirection or nodeDirection)
         private Quaternion _rotationOffset;         // Rotation offset stored in quaternion
+        private readonly bool _isDebugging = false; // Draws debug information in game
 
         private EntityPathMover(Entity entity, CTrainTrack track, PathMoverFlags flags, float zOffset, bool dir)
         {
@@ -206,10 +207,13 @@ namespace AdvancedTrainSystem.Core
                 throw new Exception("Path mover was aborted.");
             }
 
-            World.DrawLine(CurrentNode.Position + Vector3.WorldUp, NextNode.Position + Vector3.WorldUp, Color.Blue);
-            World.DrawLine(CurrentNode.Position + Vector3.WorldUp, PreviousNode.Position + Vector3.WorldUp, Color.Red);
+            if (_isDebugging)
+            {
+                World.DrawLine(CurrentNode.Position + Vector3.WorldUp, NextNode.Position + Vector3.WorldUp, Color.Blue);
+                World.DrawLine(CurrentNode.Position + Vector3.WorldUp, PreviousNode.Position + Vector3.WorldUp, Color.Red);
+            }
 
-            if(Flags.HasFlag(PathMoverFlags.NoCollision))
+            if (Flags.HasFlag(PathMoverFlags.NoCollision))
             {
                 // Without collision we have to manually calculate Z position between current and next node
                 UpdateZPosition();
@@ -249,8 +253,13 @@ namespace AdvancedTrainSystem.Core
 
             _currentHeight = interpolatedPos.Z;
 
-            World.DrawLine(Entity.Position + Vector3.WorldUp * 2, Entity.Position + Vector3.WorldUp * 2 + _closestNodeDirection * 5, Color.Green);
-            //World.DrawLine(interpolatedPos, interpolatedPos + Vector3.WorldUp, Color.Yellow);
+            if (_isDebugging)
+            {
+                World.DrawLine(
+                    Entity.Position + Vector3.WorldUp * 2, Entity.Position + Vector3.WorldUp * 2 + _closestNodeDirection * 5, Color.Green);
+                World.DrawLine(
+                    interpolatedPos, interpolatedPos + Vector3.WorldUp, Color.Yellow);
+            }
         }
 
         private void UpdateVelocity(ref Vector3 velocity)
@@ -355,7 +364,7 @@ namespace AdvancedTrainSystem.Core
             // Get closest node direction (current / previous)
             float nextNodeRatio = nextNodeDist / _toNextNodeSquaredDist;
             float prevNodeRatio = prevNodeDist / _toPreviousNodeSquaredDist;
-            _closestNodeDirection =  nextNodeRatio < prevNodeRatio ? _nodeDirection : _previousNodeDirection;
+            _closestNodeDirection = nextNodeRatio < prevNodeRatio ? _nodeDirection : _previousNodeDirection;
 
             // If car sudennly stuttering on switching nodes - increase tolerance for IsClose
 
